@@ -346,9 +346,7 @@ class ProductDetailScreen extends ConsumerWidget {
     PriceLevels? levels,
   ) {
     if (!ref.watch(permissionServiceProvider).canCompleteSales) {
-      return Text(
-        'Product information only. You do not have permission to create sales.',
-      );
+      return const SizedBox.shrink();
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
