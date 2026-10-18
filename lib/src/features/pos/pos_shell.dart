@@ -11,6 +11,7 @@ import 'cart_provider.dart';
 import 'pending_sale_provider.dart';
 import '../auth/branch_context.dart';
 import 'employee_settings_screen.dart';
+import 'help_safe_recovery_screen.dart';
 import 'package:trexven_operations/trexven_operations.dart';
 
 /// Tabs retain the existing repositories and checkout. Auth, pending-sale and
@@ -359,15 +360,10 @@ context: context,
                 icon: Icons.help_outline_rounded,
                 title: 'Help & Safe Recovery',
                 subtitle: 'Guidance for offline sales & troubleshooting',
-                onTap: () => showDialog<void>(
-                  animationStyle: AnimationStyle(duration: PosMotion.duration(context, PosMotion.component)),
-context: context,
-                  builder: (context) => const AlertDialog(
-                    scrollable: true,
-                    title: Text('Safe recovery'),
-                    content: Text(
-                      'Keep pending transactions and retry their original request. Never collect payment twice. Contact the business owner for access or payment discrepancies. Do not uninstall while sales are unsynced.',
-                    ),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const HelpSafeRecoveryScreen(),
                   ),
                 ),
               ),
