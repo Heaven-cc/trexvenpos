@@ -80,16 +80,30 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(child: Column(children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 8, 12),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
           child: Row(children: [
             if (Navigator.of(context).canPop())
-              IconButton(tooltip: 'Back', onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_rounded)),
-            Expanded(child: Text('Inventory',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700,
-                color: scheme.onSurface))),
+              IconButton(
+                tooltip: 'Back',
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.arrow_back_rounded),
+              ),
+            Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Inventory', style: TextStyle(
+                  fontSize: 22, fontWeight: FontWeight.w700,
+                  color: scheme.onSurface)),
+                Text('Products & stock management',
+                  style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+              ],
+            )),
             if (canView)
-              IconButton(tooltip: 'Stocktaking & stock management',
-                onPressed: _openOperations, icon: const Icon(Icons.fact_check_outlined)),
+              IconButton(
+                tooltip: 'Stocktaking & stock management',
+                onPressed: _openOperations,
+                icon: const Icon(Icons.tune_rounded),
+              ),
           ]),
         ),
         Padding(padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -107,12 +121,40 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
             ),
           ),
         ),
+        if (canView)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Row(children: [
+              Expanded(child: _InventoryShortcut(
+                icon: Icons.inventory_2_outlined,
+                title: 'Products',
+                subtitle: 'Browse catalog',
+                emphasized: true,
+                onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
+              )),
+              const SizedBox(width: 12),
+              Expanded(child: _InventoryShortcut(
+                icon: Icons.fact_check_outlined,
+                title: 'Stocktaking',
+                subtitle: 'Count & reconcile',
+                emphasized: false,
+                onTap: _openOperations,
+              )),
+            ]),
+          ),
         if (ref.watch(authStateProvider).activeBusiness?.branchesEnabled == true)
           Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: Text('Catalog quantities are shown here. Open stock operations for branch stock.',
               style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12))),
-        if (_query.isNotEmpty)
-          Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text('Product search',
+              style: Theme.of(context).textTheme.titleMedium),
+          ),
+        ),
+        Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Align(alignment: Alignment.centerLeft, child: Wrap(spacing: 8, children: [
               for (final filter in const [('all', 'All results'), ('low', 'Low stock'), ('out', 'Out of stock')])
                 ChoiceChip(label: Text(filter.$2), selected: _stockFilter == filter.$1,
@@ -171,9 +213,12 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
     );
   }
 
-  Widget _buildInitialState() => const PosStateView(key: ValueKey('initial'),
-    title: 'Search your inventory', message: 'Find products by name, barcode or part number.',
-    icon: Icons.search_rounded);
+  Widget _buildInitialState() => const PosStateView(
+    key: ValueKey('initial'),
+    title: 'Product results',
+    message: 'Search products by name, barcode or part number to browse your catalog.',
+    icon: Icons.inventory_2_outlined,
+  );
   Widget _buildLoadingState() => const Center(key: ValueKey('loading'),
     child: TrexvenLoading(message: 'Searching products…'));
   Widget _buildNoResultsState() => PosStateView(key: const ValueKey('no-results'),
@@ -237,5 +282,60 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
         ]),
       ),
     ));
+  }
+}
+
+/// Presentation-only shortcut. Stocktaking still uses the existing authorized workflow.
+class _InventoryShortcut extends StatelessWidget {
+  const _InventoryShortcut({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.emphasized,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool emphasized;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Material(
+      color: emphasized ? colors.primary.withValues(alpha: 0.10) : colors.surface,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 120),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            border: Border.all(color: emphasized
+                ? colors.primary.withValues(alpha: 0.25)
+                : colors.outlineVariant),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, size: 24, color: colors.primary),
+              const SizedBox(height: 12),
+              Text(title, style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 4),
+              Text(subtitle, style: Theme.of(context).textTheme.bodySmall,
+                maxLines: 2, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 8),
+              Align(alignment: Alignment.centerRight,
+                child: Icon(Icons.arrow_outward_rounded,
+                  size: 18, color: colors.primary)),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
