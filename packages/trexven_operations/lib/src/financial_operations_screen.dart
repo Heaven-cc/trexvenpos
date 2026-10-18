@@ -1063,7 +1063,10 @@ context: context,
         ),
       const SizedBox(height: 12),
       for (final request in _returns.rows.reversed)
-        Padding(
+        if (widget.posWorkspace)
+          _posReturnCard(request)
+        else
+          Padding(
           padding: EdgeInsets.only(bottom: TrexvenPresentation.spacing(context, 10)),
           child: _CreditCard(
             child: Column(
@@ -1134,6 +1137,96 @@ context: context,
         ),
     ],
   ];
+
+  // POS-only detail presentation. The Owner workspace keeps its existing UI.
+  Widget _posReturnCard(_Row request) {
+    final status = request['status']?.toString() ?? 'unknown';
+    final approved = status == 'approved';
+    final canInspect = status == 'requested' && _can('inspect_returns');
+    final canApprove = status == 'inspected' &&
+        _can('approve_refund', sensitive: true);
+    final saleId = request['sale_id']?.toString() ?? '';
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: _CreditCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Icon(Icons.assignment_return_outlined,
+                  size: 20, color: scheme.primary),
+              const SizedBox(width: 8),
+              Expanded(child: Text('Return details',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700))),
+              _CreditBadge(CustomerPresentation.label(status),
+                  active: status == 'inspected'),
+            ]),
+            const SizedBox(height: 12),
+            Text('Original sale', style: Theme.of(context).textTheme.labelMedium),
+            const SizedBox(height: 3),
+            SelectableText(saleId.isEmpty ? 'Receipt unavailable' : saleId,
+                style: Theme.of(context).textTheme.bodySmall),
+            const SizedBox(height: 10),
+            Text('Return reason', style: Theme.of(context).textTheme.labelMedium),
+            const SizedBox(height: 3),
+            Text(request['reason']?.toString() ?? 'Not provided'),
+            const SizedBox(height: 8),
+            Text(CustomerPresentation.date(request['created_at'],
+                includeTime: true),
+                style: Theme.of(context).textTheme.bodySmall),
+            const Divider(height: 24),
+            if (approved) ...[
+              _posReturnAmount('Return value',
+                  _money(request['value'], _currency)),
+              _posReturnAmount('Debt reduced',
+                  _money(request['debt_reduction'], _currency)),
+              _posReturnAmount('Actual refund',
+                  _money(request['refund_amount'], _currency)),
+              if (request['refund_method'] != null)
+                _posReturnAmount('Refund method',
+                    CustomerPresentation.label(request['refund_method'])),
+              const SizedBox(height: 8),
+            ] else ...[
+              Text('Refund review',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600)),
+              const SizedBox(height: 5),
+              Text('Outstanding credit is reduced first. The server verifies the final refundable amount before approval.',
+                  style: Theme.of(context).textTheme.bodySmall),
+              const SizedBox(height: 12),
+            ],
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              _button('View original receipt',
+                  () => unawaited(_prepare(
+                      () => _receipt(request['sale_id'] as String)))),
+              if (canInspect)
+                _button('Inspect returned items',
+                    () => unawaited(_inspect(request)),
+                    primary: true, icon: Icons.fact_check_outlined),
+              if (canApprove)
+                _button('Review refund approval',
+                    () => unawaited(_approveReturn(request)),
+                    primary: true, icon: Icons.verified_outlined),
+            ]),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _posReturnAmount(String label, String value) => Padding(
+    padding: const EdgeInsets.only(bottom: 7),
+    child: Row(children: [
+      Expanded(child: Text(label,
+          style: Theme.of(context).textTheme.bodySmall)),
+      const SizedBox(width: 8),
+      Flexible(child: Text(value, textAlign: TextAlign.end,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600))),
+    ]),
+  );
 
   Widget _secondary() => Column(
     children: [
