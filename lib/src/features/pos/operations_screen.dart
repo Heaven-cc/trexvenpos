@@ -1,4 +1,3 @@
-import 'package:trexven_design_system/trexven_design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trexven_operations/trexven_operations.dart';
@@ -11,124 +10,174 @@ import '../inventory/inventory_operations_screen.dart';
 
 class PosOperationsScreen extends ConsumerWidget {
   const PosOperationsScreen({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authStateProvider);
     final access = ref.watch(permissionServiceProvider);
-
     if (auth.activeBusiness == null) {
       return Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(title: const Text('Operations')),
-        body: Center(child: TrexvenEmptyState(title: 'Select a business.')),
+        body: const Center(child: TrexvenEmptyState(title: 'Select a business.')),
       );
     }
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        elevation: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Operational Workflows',
-              style: TextStyle(
-                fontSize: TrexvenFontSize.section,
-                fontWeight: FontWeight.w700,
-              ),
+    final workflows = <_Workflow>[
+      if (access.hasPermission('cash_shifts'))
+        _Workflow(
+          'Cash Drawers', 'Shifts & balances', Icons.account_balance_wallet_outlined,
+          () => Navigator.push(context, MaterialPageRoute(
+            builder: (_) => CashShiftScreen(
+              api: OperationsClient.pos(ref.read(supabaseProvider), auth.activeBusiness!.id),
+              owner: access.isOwner,
+              reviewer: access.hasPermission('review_cash_shifts'),
             ),
-            Text(
-              'Cash drawers, inventory stocktakes, credit & offline sync',
-              style: TextStyle(
-                fontSize: TrexvenFontSize.caption,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
+          )),
         ),
+      if (access.hasPermission('view_inventory'))
+        _Workflow(
+          'Inventory', 'Stock & adjustments', Icons.inventory_2_outlined,
+          () => Navigator.push(context, MaterialPageRoute(
+            builder: (_) => const PosInventoryOperationsScreen(),
+          )),
+        ),
+      _Workflow(
+        'Credit & Returns', 'Repayments & refunds', Icons.receipt_long_outlined,
+        () => Navigator.push(context, MaterialPageRoute(
+          builder: (_) => const PosCreditReturnsScreen(),
+        )),
       ),
+      if (access.hasPermission('offline_cash'))
+        _Workflow(
+          'Offline Sync', 'Pending transactions', Icons.sync_rounded,
+          () => Navigator.push(context, MaterialPageRoute(
+            builder: (_) => const OfflineCashScreen(),
+          )),
+        ),
+    ];
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Operations')),
       body: ListView(
-        padding: TrexvenSpacing.cardPadding,
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
-          if (access.hasPermission('cash_shifts'))
-            _OpTile(
-              icon: Icons.point_of_sale_rounded,
-              title: 'Shared Cash Drawers',
-              subtitle: 'Manage shift drawers, floats, and cash balances',
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => CashShiftScreen(
-                    api: OperationsClient.pos(
-                      ref.read(supabaseProvider),
-                      auth.activeBusiness!.id,
-                    ),
-                    owner: access.isOwner,
-                    reviewer: access.hasPermission('review_cash_shifts'),
+          Text('Manage daily business workflows',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            )),
+          const SizedBox(height: 24),
+          Text('DAILY OPERATIONS',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.1,
+            )),
+          const SizedBox(height: 12),
+          LayoutBuilder(builder: (context, constraints) {
+            final width = (constraints.maxWidth - 12) / 2;
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                for (final workflow in workflows)
+                  SizedBox(
+                    width: width,
+                    child: _WorkflowCard(workflow: workflow),
                   ),
-                ),
-              ),
+              ],
+            );
+          }),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
             ),
-
-          if (access.hasPermission('view_inventory'))
-            _OpTile(
-              icon: Icons.inventory_2_rounded,
-              title: 'Stocktaking & Inventory',
-              subtitle: 'Count stock, record adjustments & audit inventory',
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const PosInventoryOperationsScreen(),
-                ),
-              ),
-            ),
-
-          _OpTile(
-            icon: Icons.receipt_long_rounded,
-            title: 'Credit, Repayments & Returns',
-            subtitle:
-                'Process customer credit accounts, settlements and returns',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const PosCreditReturnsScreen()),
-            ),
+            child: Row(children: [
+              Icon(Icons.shield_outlined, size: 20,
+                color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 12),
+              Expanded(child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Permission-aware access',
+                    style: Theme.of(context).textTheme.labelLarge),
+                  const SizedBox(height: 3),
+                  Text('Only authorized workflows are displayed',
+                    style: Theme.of(context).textTheme.bodySmall),
+                ],
+              )),
+            ]),
           ),
-
-          if (access.hasPermission('offline_cash'))
-            _OpTile(
-              icon: Icons.sync_rounded,
-              title: 'Offline Cash & Synchronization',
-              subtitle: 'Manage offline queue and sync pending cash sales',
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const OfflineCashScreen()),
-              ),
-            ),
         ],
       ),
     );
   }
 }
 
-class _OpTile extends StatelessWidget {
-  final IconData icon;
+class _Workflow {
   final String title;
   final String subtitle;
+  final IconData icon;
   final VoidCallback onTap;
+  const _Workflow(this.title, this.subtitle, this.icon, this.onTap);
+}
 
-  const _OpTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
+class _WorkflowCard extends StatelessWidget {
+  final _Workflow workflow;
+  const _WorkflowCard({required this.workflow});
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
-      PosActionRow(icon: icon, title: title, subtitle: subtitle, onTap: onTap),
-      const Divider(indent: 64),
-    ]);
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final background = dark ? const Color(0xFF1C2D46) : Theme.of(context).colorScheme.surface;
+    final foreground = dark ? Colors.white : Theme.of(context).colorScheme.onSurface;
+    final muted = dark ? const Color(0xFFA9BDD8) : Theme.of(context).colorScheme.onSurfaceVariant;
+    return Material(
+      color: background,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: workflow.onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 150),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: dark
+              ? const Color(0xFF344761)
+              : Theme.of(context).colorScheme.outlineVariant),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: dark ? const Color(0xFF294A79) : Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Icon(workflow.icon, size: 20,
+                  color: dark ? const Color(0xFFA9CBFF) : Theme.of(context).colorScheme.onPrimaryContainer),
+              ),
+              const SizedBox(height: 12),
+              Text(workflow.title, maxLines: 2, overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700, color: foreground)),
+              const SizedBox(height: 4),
+              Text(workflow.subtitle, maxLines: 2, overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: muted)),
+              const Spacer(),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Icon(Icons.arrow_outward_rounded, size: 17, color: muted),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
