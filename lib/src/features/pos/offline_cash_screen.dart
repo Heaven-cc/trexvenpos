@@ -149,7 +149,7 @@ context: context,
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text('Offline cash · Pending Sync')),
+    appBar: AppBar(title: const Text('Offline Cash & Sync')),
     body: ref
         .watch(offlineCashQueueProvider)
         .when(
@@ -194,8 +194,21 @@ context: context,
                 children: [
                   if (message != null) Text(message!),
                   if (busy) LinearProgressIndicator(),
-                  Text(
-                    'Cash only. Encrypted requests remain on this device until server receipt acknowledgement. Noncash, credit and refunds require an online connection.',
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.shield_outlined,
+                            color: Theme.of(context).colorScheme.primary),
+                          const SizedBox(width: 10),
+                          const Expanded(child: Text(
+                            'Cash only. Encrypted requests stay on this device until the server receipt is acknowledged. Transfers, credit and refunds require online access.',
+                          )),
+                        ],
+                      ),
+                    ),
                   ),
                   if (auth.offlineCashOnly)
                     OutlinedButton(
@@ -265,6 +278,7 @@ context: context,
                     ),
                   const SizedBox(height: 16),
                   Text('Retained requests', style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 8),
                   if (!entries.any((e) => e.belongsTo(auth.employee?.userId ?? '',
                       auth.activeBusiness?.id ?? '', auth.employee?.membershipId ?? '')))
                     const TrexvenEmptyState(title: 'No retained cash requests',
@@ -277,14 +291,21 @@ context: context,
                       auth.employee?.membershipId ?? '',
                     ),
                   ))
-                    ListTile(
-                      title: Text(
-                        '${entry.sale.total} · ${entry.receipt == null ? "Pending Sync" : "Receipt retained"}',
+                    Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        leading: Icon(entry.receipt == null
+                            ? Icons.sync_outlined : Icons.receipt_long_outlined,
+                          color: Theme.of(context).colorScheme.primary),
+                        title: Text('${entry.sale.total}'),
+                        subtitle: Text(entry.receipt == null
+                            ? 'Pending synchronization · original request retained'
+                            : 'Server receipt verified · acknowledgement required'),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: busy || auth.offlineCashOnly
+                            ? null
+                            : () => operation((q) => sync(q, entry)),
                       ),
-                      subtitle: const Text('Original request retained · tap to synchronize'),
-                      onTap: busy || auth.offlineCashOnly
-                          ? null
-                          : () => operation((q) => sync(q, entry)),
                     ),
                 ],
               );
