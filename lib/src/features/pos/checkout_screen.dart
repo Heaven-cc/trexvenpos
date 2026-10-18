@@ -73,42 +73,46 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       _isProcessing = true;
     });
 
+    // The durable journal, not this screen's transient flag, decides whether
+    // another payment can be collected after a restart or route recreation.
     Sale? recoverySale;
-    if (_hasUnconfirmedSale) {
-      try {
-        final retained = await (await ref.read(
-          pendingSaleStoreProvider.future,
-        )).read();
-        if (retained == null ||
-            !retained.belongsTo(
-              employee.userId,
-              business.id,
-              employee.membershipId,
-            )) {
+    try {
+      final retained = await (await ref.read(
+        pendingSaleStoreProvider.future,
+      )).read();
+      if (retained != null) {
+        if (!retained.belongsTo(
+          employee.userId,
+          business.id,
+          employee.membershipId,
+        )) {
           throw StateError(
-            'Original employee and retained sale are required for recovery.',
+            'A sale from another employee or business is retained. Recover it with the original account before collecting another payment.',
+          );
+        }
+        final branch = ref.read(branchContextProvider);
+        if (retained.sale.branchId != null &&
+            branch?.id != retained.sale.branchId) {
+          throw StateError(
+            'Select the original authorized branch before recovering the retained sale.',
           );
         }
         recoverySale = retained.sale;
-        final branch = ref.read(branchContextProvider);
-        if (recoverySale.branchId != null &&
-            branch?.id != recoverySale.branchId) {
-          throw StateError(
-            'Select the original authorized branch before recovery.',
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          setState(() => _isProcessing = false);
-          _showError(
-            CustomerPresentation.error(
-              e,
-              fallback: 'Request retained. Please try again.',
-            ),
-          );
-        }
-        return;
+        if (mounted) setState(() => _hasUnconfirmedSale = true);
+      } else if (_hasUnconfirmedSale) {
+        throw StateError(
+          'The original request is no longer available. Check sale history before collecting payment again.',
+        );
       }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        _showError(CustomerPresentation.error(
+          e,
+          fallback: 'Unable to verify pending sales. Do not collect payment again.',
+        ));
+      }
+      return;
     }
     final Sale sale;
     if (recoverySale != null) {
