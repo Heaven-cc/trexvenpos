@@ -282,141 +282,174 @@ context: context,
     }
   }
 
+  Widget _section(String title, Widget child, {bool initiallyExpanded = true}) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        initiallyExpanded: initiallyExpanded,
+        tilePadding: const EdgeInsets.symmetric(horizontal: 14),
+        childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+        children: [child],
+      ),
+    );
+  }
+
+  Widget _field(String key, {String? label, int maxLines = 1}) =>
+      Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: TrexvenTextField(
+          controller: _fields[key],
+          enabled: !_busy && _intent == null && _stockIntent == null,
+          maxLines: maxLines,
+          decoration: TrexvenInputDecoration(
+            labelText: label ?? CustomerPresentation.label(key),
+          ),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final permission = ref.watch(permissionServiceProvider);
     return Scaffold(
-      appBar: AppBar(title: Text('Edit product')),
+      appBar: AppBar(title: const Text('Edit Product')),
       body: ListView(
-        padding: TrexvenSpacing.cardPadding,
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
         children: [
           if (_error != null)
-            Text(
-              _error!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(_error!, style: TextStyle(
+                color: Theme.of(context).colorScheme.error)),
             ),
-          for (final key in [
-            'name',
-            'barcode',
-            'sku',
-            'brand',
-            'category',
-            'description',
-            'image_url',
-          ])
-            TrexvenTextField(
-              controller: _fields[key],
-              enabled: !_busy && _intent == null && _stockIntent == null,
-              maxLines: key == 'description' ? 3 : 1,
-              decoration: TrexvenInputDecoration(
-                labelText: CustomerPresentation.label(key),
-              ),
-            ),
-          TrexvenDropdown<String>(
-            initialValue: _fields['unit']!.text,
-            decoration: TrexvenInputDecoration(labelText: 'Unit'),
-            items: [
-              for (final unit in {
-                'piece',
-                'kg',
-                'g',
-                'litre',
-                'ml',
-                'metre',
-                'cm',
-                _fields['unit']!.text,
-              })
-                DropdownMenuItem(value: unit, child: Text(unit)),
-            ],
-            onChanged: _busy || _intent != null
-                ? null
-                : (v) => setState(() => _fields['unit']!.text = v ?? 'piece'),
-          ),
-          Text('Variants', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 12),
-          TrexvenDropdown<String>(
-            initialValue: _groups.any((g) => g['id'] == _group) ? _group : null,
-            decoration: TrexvenInputDecoration(labelText: 'Variant group'),
-            items: [
-              DropdownMenuItem(value: null, child: Text('Standalone product')),
-              for (final g in _groups)
-                DropdownMenuItem(
-                  value: g['id'] as String,
-                  child: Text(g['name'].toString()),
+          _section('Basic Information', Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _field('name', label: 'Product name *'),
+              _field('brand', label: 'Brand (optional)'),
+              _field('category', label: 'Category (optional)'),
+              _section('More product details', Column(children: [
+                _field('barcode', label: 'Barcode (optional)'),
+                _field('sku', label: 'Part number (optional)'),
+                _field('description', label: 'Description (optional)', maxLines: 3),
+                _field('image_url', label: 'Image URL (optional)'),
+                TrexvenDropdown<String>(
+                  initialValue: _fields['unit']!.text,
+                  decoration: TrexvenInputDecoration(labelText: 'Unit'),
+                  items: [
+                    for (final unit in {
+                      'piece', 'kg', 'g', 'litre', 'ml', 'metre', 'cm',
+                      _fields['unit']!.text,
+                    })
+                      DropdownMenuItem(value: unit, child: Text(unit)),
+                  ],
+                  onChanged: _busy || _intent != null
+                      ? null
+                      : (v) => setState(() => _fields['unit']!.text = v ?? 'piece'),
                 ),
+              ]), initiallyExpanded: false),
             ],
-            onChanged: _busy || _intent != null
-                ? null
-                : (v) => setState(() => _group = v),
-          ),
-          for (final e in _attributes.entries)
-            TrexvenTextField(
-              controller: e.value,
-              enabled: !_busy && _intent == null,
-              decoration: TrexvenInputDecoration(labelText: e.key),
-            ),
-          TextButton(
-            onPressed: _busy || _intent != null ? null : _addAttribute,
-            child: Text('Add variation attribute'),
-          ),
-          if (permission.canOverridePrice)
-            TrexvenTextField(
-              controller: _fields['selling_price'],
-              enabled: !_busy && _intent == null,
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
-              decoration: TrexvenInputDecoration(
-                labelText: 'Selling price (blank means pending)',
+          )),
+          _section('Variants', Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TrexvenDropdown<String>(
+                initialValue: _groups.any((g) => g['id'] == _group) ? _group : null,
+                decoration: TrexvenInputDecoration(labelText: 'Variant group'),
+                items: [
+                  const DropdownMenuItem<String>(value: null, child: Text('Standalone product')),
+                  for (final g in _groups)
+                    DropdownMenuItem<String>(
+                      value: g['id'] as String,
+                      child: Text(g['name'].toString()),
+                    ),
+                ],
+                onChanged: _busy || _intent != null
+                    ? null : (v) => setState(() => _group = v),
               ),
-            ),
-          SwitchListTile(
-            title: Text('Active'),
-            value: _active,
-            onChanged: _busy || _intent != null
-                ? null
-                : (v) => setState(() => _active = v),
-          ),
-          FilledButton(
-            onPressed: _busy || !permission.canManageInventory ? null : _save,
-            child: Text(
-              _intent == null ? 'Save product' : 'Retry saved product',
-            ),
-          ),
-          Text(
-            'Recorded stock: ${widget.product.stock} ${widget.product.unit}',
-          ),
-          TextButton(
-            onPressed: _busy ? null : _movements,
-            child: Text('View stock movements'),
-          ),
-          if (permission.hasPermission('adjust_stock')) ...[
-            const SizedBox(height: 16),
-            Text('Stock adjustment', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 12),
-            TrexvenTextField(
-              controller: _fields['delta'],
-              enabled: !_busy && _stockIntent == null,
-              keyboardType: TextInputType.numberWithOptions(
-                decimal: true,
-                signed: true,
+              const SizedBox(height: 10),
+              for (final e in _attributes.entries)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: TrexvenTextField(
+                    controller: e.value,
+                    enabled: !_busy && _intent == null,
+                    decoration: TrexvenInputDecoration(labelText: e.key),
+                  ),
+                ),
+              TextButton.icon(
+                onPressed: _busy || _intent != null ? null : _addAttribute,
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('Add variation attribute'),
               ),
-              decoration: TrexvenInputDecoration(labelText: 'Stock change'),
+            ],
+          ), initiallyExpanded: _group != null ||
+              _attributes.values.any((c) => c.text.trim().isNotEmpty)),
+          _section('Pricing & Availability', Column(children: [
+            if (permission.canOverridePrice)
+              _field('selling_price', label: 'Selling price (blank means pending)'),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Product active'),
+              value: _active,
+              onChanged: _busy || _intent != null
+                  ? null : (v) => setState(() => _active = v),
             ),
-            TrexvenTextField(
-              controller: _fields['reason'],
-              enabled: !_busy && _stockIntent == null,
-              decoration: TrexvenInputDecoration(labelText: 'Reason'),
+          ])),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _busy || !permission.canManageInventory ? null : _save,
+              icon: const Icon(Icons.save_outlined),
+              label: Text(_intent == null ? 'Save Changes' : 'Retry saved product'),
             ),
-            OutlinedButton(
-              onPressed: _busy ? null : _adjust,
-              child: Text(
-                _stockIntent == null
-                    ? 'Apply stock change'
-                    : 'Retry saved stock change',
+          ),
+          const SizedBox(height: 16),
+          _section('Stock Management', Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Catalog stock: ${widget.product.stock} ${widget.product.unit}'),
+              TextButton.icon(
+                onPressed: _busy ? null : _movements,
+                icon: const Icon(Icons.history_rounded),
+                label: const Text('View stock movements'),
               ),
-            ),
-          ],
+              if (permission.hasPermission('adjust_stock')) ...[
+                const Divider(),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: TrexvenTextField(
+                    controller: _fields['delta'],
+                    enabled: !_busy && _stockIntent == null,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true, signed: true),
+                    decoration: TrexvenInputDecoration(labelText: 'Stock change'),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: TrexvenTextField(
+                    controller: _fields['reason'],
+                    enabled: !_busy && _stockIntent == null,
+                    decoration: TrexvenInputDecoration(labelText: 'Reason'),
+                  ),
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: _busy ? null : _adjust,
+                    child: Text(_stockIntent == null
+                        ? 'Apply stock change' : 'Retry saved stock change'),
+                  ),
+                ),
+              ],
+            ],
+          ), initiallyExpanded: false),
         ],
       ),
     );
   }
+
 }
