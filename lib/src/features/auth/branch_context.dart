@@ -3,6 +3,8 @@ import 'package:trexven_design_system/trexven_design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../pos/cart_provider.dart';
+import '../pos/pending_sale_provider.dart';
+import 'permission_service.dart';
 import 'auth_provider.dart';
 
 class AuthorizedBranch {
@@ -24,7 +26,15 @@ class BranchContext extends StateNotifier<AuthorizedBranch?> {
     AuthorizedBranch branch,
     List<AuthorizedBranch> available, {
     required bool hasCart,
+    required bool hasPendingSale,
+    required bool canSwitch,
   }) {
+    if (state != null && state!.id != branch.id && !canSwitch) {
+      throw StateError('Only managers and owners can switch branches.');
+    }
+    if (hasPendingSale) {
+      throw StateError('Recover the retained sale before switching branches.');
+    }
     if (hasCart)
       throw StateError(
         'Finish or clear the current cart before switching branches.',
@@ -38,7 +48,9 @@ class BranchContext extends StateNotifier<AuthorizedBranch?> {
     state = branch;
   }
 
-  void clear({required bool hasCart}) {
+  void clear({required bool hasCart, required bool hasPendingSale, required bool canSwitch}) {
+    if (!canSwitch) throw StateError('Only managers and owners can switch branches.');
+    if (hasPendingSale) throw StateError('Recover the retained sale before switching branches.');
     if (hasCart)
       throw StateError(
         'Finish or clear the current cart before switching branches.',
@@ -84,6 +96,23 @@ final authorizedBranchesProvider = FutureProvider<List<AuthorizedBranch>>((
       .toList();
 });
 
+bool canSwitchPosBranch(PermissionService access) =>
+    access.isActive && (access.isOwner || access.isManager);
+
+Future<void> selectPosBranch(
+  WidgetRef ref,
+  AuthorizedBranch branch,
+  List<AuthorizedBranch> available,
+) async {
+  final pending = await (await ref.read(pendingSaleStoreProvider.future)).read();
+  ref.read(branchContextProvider.notifier).select(
+    branch, available,
+    hasCart: ref.read(cartProvider).isNotEmpty,
+    hasPendingSale: pending != null,
+    canSwitch: canSwitchPosBranch(ref.read(permissionServiceProvider)),
+  );
+}
+
 class BranchGate extends ConsumerWidget {
   final Widget child;
   const BranchGate({super.key, required this.child});
@@ -109,12 +138,11 @@ class BranchGate extends ConsumerWidget {
                 const SizedBox(height: 12),
                 PosSurface(padding: EdgeInsets.zero, child: Column(children: [
                   for (final branch in available) ...[
-                    PosActionRow(icon: Icons.storefront_outlined, title: branch.name, subtitle: 'Operate in this branch', onTap: () {
+                    PosActionRow(icon: Icons.storefront_outlined, title: branch.name, subtitle: 'Operate in this branch', onTap: () async {
                       try {
-                        ref.read(branchContextProvider.notifier).select(branch, available,
-                          hasCart: ref.read(cartProvider).isNotEmpty);
-                      } on StateError catch (error) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+                        await selectPosBranch(ref, branch, available);
+                      } catch (error) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error is StateError ? error.message : 'Unable to verify branch selection. Please retry.')));
                       }
                     }),
                     const Divider(indent: 64),
