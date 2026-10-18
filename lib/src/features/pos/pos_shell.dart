@@ -57,18 +57,88 @@ class _PosShellState extends ConsumerState<PosShell> {
             )
             .toList(),
       ),
-      bottomNavigationBar: NavigationBar(
-        animationDuration: PosMotion.duration(context, PosMotion.component),
-        selectedIndex: index,
-        onDestinationSelected: (i) => setState(() {
-          selected = tabs[i].label;
-          visited.add(selected);
-        }),
-        destinations: tabs
-            .map(
-              (t) => NavigationDestination(icon: Icon(t.icon), label: t.label),
-            )
-            .toList(),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.only(bottom: 10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF182A43)
+                  : const Color(0xFF14253F),
+              borderRadius: BorderRadius.circular(40),
+              border: Border.all(color: const Color(0xFF385273)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.18),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(7),
+              child: Row(
+                children: [
+                  for (final tab in tabs)
+                    Expanded(
+                      child: Semantics(
+                        button: true,
+                        selected: selected == tab.label,
+                        label: tab.label,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(32),
+                          onTap: () => setState(() {
+                            selected = tab.label;
+                            visited.add(selected);
+                          }),
+                          child: AnimatedContainer(
+                            duration: PosMotion.duration(context, PosMotion.component),
+                            curve: Curves.easeOutCubic,
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 3),
+                            decoration: BoxDecoration(
+                              color: selected == tab.label
+                                  ? const Color(0xFF326BF3)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(32),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  tab.icon,
+                                  size: 21,
+                                  color: selected == tab.label
+                                      ? Colors.white
+                                      : const Color(0xFFA9BDD8),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  tab.label,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: selected == tab.label
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                    color: selected == tab.label
+                                        ? Colors.white
+                                        : const Color(0xFFA9BDD8),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
