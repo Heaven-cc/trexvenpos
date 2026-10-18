@@ -418,8 +418,24 @@ context: context,
               if (permission.hasPermission('adjust_stock')) ...[
                 const Divider(),
                 const SizedBox(height: 8),
-                _field('delta', label: 'Stock change'),
-                _field('reason', label: 'Reason'),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: TrexvenTextField(
+                    controller: _fields['delta'],
+                    enabled: !_busy && _stockIntent == null,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true, signed: true),
+                    decoration: TrexvenInputDecoration(labelText: 'Stock change'),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: TrexvenTextField(
+                    controller: _fields['reason'],
+                    enabled: !_busy && _stockIntent == null,
+                    decoration: TrexvenInputDecoration(labelText: 'Reason'),
+                  ),
+                ),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
