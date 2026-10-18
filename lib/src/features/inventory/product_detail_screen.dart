@@ -85,9 +85,10 @@ class ProductDetailScreen extends ConsumerWidget {
         children: [
           _buildProductHeader(context),
 
-          SizedBox(height: PosSpace.xl),
-
-          _buildProductInformation(context),
+          if (_hasOptionalDetails) ...[
+            SizedBox(height: PosSpace.xl),
+            _buildProductInformation(context),
+          ],
 
           SizedBox(height: PosSpace.xl),
 
@@ -96,6 +97,13 @@ class ProductDetailScreen extends ConsumerWidget {
       ),
     );
   }
+
+  bool get _hasOptionalDetails =>
+      product.barcode?.trim().isNotEmpty == true ||
+      product.partNumber?.trim().isNotEmpty == true ||
+      product.brand?.trim().isNotEmpty == true ||
+      product.category?.trim().isNotEmpty == true ||
+      product.description?.trim().isNotEmpty == true;
 
   Widget _buildProductHeader(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -119,6 +127,9 @@ class ProductDetailScreen extends ConsumerWidget {
             fontWeight: FontWeight.w700, height: 1.25)),
           const SizedBox(height: 12),
           _buildStatusBadge(context),
+          const SizedBox(height: 8),
+          Text('Catalog stock: ${product.stock} ${product.unit}',
+            style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
         ])),
       ]),
     );
@@ -220,70 +231,40 @@ class ProductDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildProductInformation(BuildContext context) {
+    final details = <({IconData icon, String label, String value})>[
+      if (product.barcode?.trim().isNotEmpty == true)
+        (icon: Icons.qr_code_2_outlined, label: 'Barcode', value: product.barcode!.trim()),
+      if (product.partNumber?.trim().isNotEmpty == true)
+        (icon: Icons.tag_outlined, label: 'Part Number', value: product.partNumber!.trim()),
+      if (product.brand?.trim().isNotEmpty == true)
+        (icon: Icons.workspace_premium_outlined, label: 'Brand', value: product.brand!.trim()),
+      if (product.category?.trim().isNotEmpty == true)
+        (icon: Icons.category_outlined, label: 'Category', value: product.category!.trim()),
+      if (product.description?.trim().isNotEmpty == true)
+        (icon: Icons.notes_outlined, label: 'Description', value: product.description!.trim()),
+    ];
+    if (details.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Product Information',
-          style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurface,
-            fontSize: TrexvenFontSize.section,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.2,
-          ),
-        ),
-
-        SizedBox(height: 12),
-
+        Text('Product Information', style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface,
+          fontSize: TrexvenFontSize.section,
+          fontWeight: FontWeight.w700,
+        )),
+        const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(TrexvenRadii.card),
           ),
-          child: Column(
-            children: [
-              if (product.barcode != null)
-                _buildInfoRow(
-                  context,
-                  icon: Icons.qr_code_2_outlined,
-                  label: 'Barcode',
-                  value: product.barcode!,
-                ),
-
-              _buildDivider(context),
-
-              _buildInfoRow(
-                context,
-                icon: Icons.tag_outlined,
-                label: 'Part Number',
-                value: product.partNumber?.trim().isNotEmpty == true
-                    ? product.partNumber!
-                    : 'Not specified',
-              ),
-
-              _buildDivider(context),
-
-              _buildInfoRow(
-                context,
-                icon: Icons.workspace_premium_outlined,
-                label: 'Brand',
-                value: product.brand?.trim().isNotEmpty == true
-                    ? product.brand!
-                    : 'Not specified',
-              ),
-
-              if (product.category != null &&
-                  product.category!.trim().isNotEmpty) ...[
-                _buildDivider(context),
-                _buildInfoRow(
-                  context,
-                  icon: Icons.category_outlined,
-                  label: 'Category',
-                  value: product.category!,
-                ),
-              ],
+          child: Column(children: [
+            for (var i = 0; i < details.length; i++) ...[
+              if (i > 0) _buildDivider(context),
+              _buildInfoRow(context, icon: details[i].icon,
+                label: details[i].label, value: details[i].value),
             ],
-          ),
+          ]),
         ),
       ],
     );
@@ -365,9 +346,7 @@ class ProductDetailScreen extends ConsumerWidget {
     PriceLevels? levels,
   ) {
     if (!ref.watch(permissionServiceProvider).canCompleteSales) {
-      return Text(
-        'Product information only. You do not have permission to create sales.',
-      );
+      return const SizedBox.shrink();
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -479,7 +458,7 @@ class ProductDetailScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(TrexvenRadii.card),
         child: InkWell(
           borderRadius: BorderRadius.circular(TrexvenRadii.card),
-          onTap: () => _addToCart(context, ref, label, price),
+          onTap: product.isActive ? () => _addToCart(context, ref, label, price) : null,
           child: Padding(
             padding: TrexvenSpacing.cardPadding,
             child: Column(
@@ -566,7 +545,8 @@ class ProductDetailScreen extends ConsumerWidget {
     double price,
   ) {
     final auth = ref.read(authStateProvider);
-    if (!ref.read(permissionServiceProvider).canCompleteSales ||
+    if (!product.isActive ||
+        !ref.read(permissionServiceProvider).canCompleteSales ||
         product.businessId != auth.activeBusiness?.id ||
         auth.employee?.businessId != auth.activeBusiness?.id) {
       ScaffoldMessenger.of(context).showSnackBar(
