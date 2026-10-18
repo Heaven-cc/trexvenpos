@@ -17,6 +17,8 @@ part 'financial_operations_details.dart';
 class FinancialOperationsScreen extends StatefulWidget {
   final OperationsClient api;
   final bool owner;
+  /// Opt-in POS presentation; Owner screens keep their original layout.
+  final bool posWorkspace;
   final bool manager;
   final Set<String> permissions;
   final String? branchId;
@@ -27,6 +29,7 @@ class FinancialOperationsScreen extends StatefulWidget {
     super.key,
     required this.api,
     required this.owner,
+    this.posWorkspace = false,
     this.manager = false,
     this.permissions = const {},
     this.branchId,
@@ -981,14 +984,21 @@ context: context,
     if (_accounts.error != null) return [_error('Customer credit unavailable')];
     final customers = _customers(_accounts.rows);
     final search = _search.text.trim().toLowerCase();
-    final visible = customers
-        .where(
-          (c) =>
-              '${c.name} ${c.contact}'.toLowerCase().contains(search) &&
-              (_filter == 0 ||
-                  (_filter == 1 ? c.outstanding > 0 : c.outstanding == 0)),
-        )
-        .toList();
+    final businessDate = _day?['local_date']?.toString();
+    // Use the backend's business-local day. Never compare against the device date.
+    final visible = customers.where((c) {
+      if (!('${c.name} ${c.contact}'.toLowerCase().contains(search))) return false;
+      if (_filter == 0) return true;
+      if (_filter == 1) return c.outstanding > 0;
+      if (widget.posWorkspace && _filter == 2) {
+        if (businessDate == null || _dayError != null) return false;
+        return c.accounts.any((account) =>
+          _cents(account['outstanding']) > 0 &&
+          account['due_date'] != null &&
+          account['due_date'].toString().compareTo(businessDate) < 0);
+      }
+      return c.outstanding == 0;
+    }).toList();
     return [
       _heading('Customer credit', count: '${customers.length} customers'),
       TrexvenTextField(
@@ -999,12 +1009,16 @@ context: context,
         ),
         onChanged: (_) => _notify(),
       ),
-      _tabs(const ['All', 'Owing', 'Settled'], _filter, (i) {
+      _tabs(widget.posWorkspace
+          ? const ['All', 'Owing', 'Overdue', 'Settled']
+          : const ['All', 'Owing', 'Settled'], _filter, (i) {
         _filter = i;
         _notify();
       }),
+      if (widget.posWorkspace && _filter == 2 && (_day == null || _dayError != null))
+        _error('Business day unavailable; overdue status cannot be verified'),
       SizedBox(height: TrexvenPresentation.spacing(context, 14)),
-      if (visible.isEmpty)
+      if (visible.isEmpty && !(widget.posWorkspace && _filter == 2 && (_day == null || _dayError != null)))
         _empty(
           customers.isEmpty
               ? 'No customer credit yet'
@@ -1349,6 +1363,90 @@ context: context,
     ),
   );
 
+  Widget _posShortcut(String title, String subtitle, IconData icon, int index) {
+    final scheme = Theme.of(context).colorScheme;
+    final active = _tab == index;
+    return Material(
+      color: active ? scheme.primary : scheme.surface,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () { _tab = index; _notify(); },
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 116),
+          padding: const EdgeInsets.all(14),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Icon(icon, color: active ? scheme.onPrimary : scheme.primary),
+            const SizedBox(height: 12),
+            Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: active ? scheme.onPrimary : scheme.onSurface)),
+            Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: active ? scheme.onPrimary : scheme.onSurfaceVariant)),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _posSecondary() => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _heading('Operations'),
+      _CreditCard(child: Column(children: [
+        if (_can('complete_sales') || _can('approve_credit', sensitive: true))
+          ExpansionTile(
+            leading: const Icon(Icons.verified_user_outlined),
+            title: const Text('Credit approvals'),
+            subtitle: const Text('Review pending credit requests'),
+            children: [
+              if (_approvals.error != null) _error('Approvals unavailable')
+              else if (_approvals.rows.isEmpty)
+                const ListTile(title: Text('No credit requests'))
+              else for (final row in _approvals.rows.reversed) _approvalTile(row),
+            ],
+          ),
+        if (widget.owner || _can('review_cash_shifts', sensitive: true) ||
+            _can('offline_cash'))
+          ExpansionTile(
+            leading: const Icon(Icons.fact_check_outlined),
+            title: const Text('Offline reconciliation'),
+            subtitle: const Text('Review authorized cash discrepancies'),
+            children: [
+              if (_offline.error != null) _error('Reconciliation unavailable')
+              else if (_offline.rows.isEmpty)
+                const ListTile(title: Text('No offline cash discrepancies'))
+              else for (final row in _offline.rows)
+                ListTile(
+                  title: Text(row['reviewed_by'] == null ? 'Requires review' : 'Reviewed'),
+                  subtitle: Text(CustomerPresentation.date(row['occurred_at'], includeTime: true)),
+                  onTap: row['reviewed_by'] == null &&
+                      _can('review_cash_shifts', sensitive: true) && !_busy
+                      ? () => unawaited(_review(row)) : null,
+                ),
+            ],
+          ),
+        ExpansionTile(
+          leading: const Icon(Icons.history_rounded),
+          title: const Text('Recovery & history'),
+          subtitle: const Text('Resume interrupted operations safely'),
+          children: [
+            const ListTile(title: Text(
+              'Recover the original request before collecting another payment.')),
+            Wrap(spacing: 8, children: [
+              _button('Recover operation', () => unawaited(_run(() async {
+                final receipt = await widget.api.recoverPending();
+                _message = receipt == null ? 'No pending operation was found.'
+                    : 'Original operation recovered. No second payment required.';
+              }))),
+              _button('Discard unsaved', () => unawaited(_discard())),
+            ]),
+          ],
+        ),
+      ])),
+    ],
+  );
+
   Widget _metricPair(Widget first, Widget second) => LayoutBuilder(
     builder: (context, constraints) =>
         constraints.maxWidth < 350 ||
@@ -1367,7 +1465,9 @@ context: context,
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text('Credit & Returns'),
+      title: widget.posWorkspace
+          ? const Text('Credit & Return')
+          : const Text('Credit & Returns'),
       actions: [
         IconButton(
           tooltip: 'Refresh',
@@ -1420,6 +1520,12 @@ context: context,
                     ),
                   ),
                 const SizedBox(height: 16),
+                if (widget.posWorkspace)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text('Customer transactions & refunds',
+                      style: Theme.of(context).textTheme.bodySmall),
+                  ),
                 _notice(),
                 if (widget.owner)
                   _metricPair(
@@ -1467,12 +1573,26 @@ context: context,
                     ),
                   ),
                 const SizedBox(height: 20),
-                _tabs(const ['Credit', 'Returns'], _tab, (i) {
-                  _tab = i;
-                  _notify();
-                }),
+                if (widget.posWorkspace)
+                  Row(children: [
+                    Expanded(child: _posShortcut(
+                      'Credit', 'Balances & repayments',
+                      Icons.account_balance_wallet_outlined, 0)),
+                    const SizedBox(width: 12),
+                    Expanded(child: _posShortcut(
+                      'Returns', 'Requests & refunds',
+                      Icons.assignment_return_outlined, 1)),
+                  ])
+                else
+                  _tabs(const ['Credit', 'Returns'], _tab, (i) {
+                    _tab = i;
+                    _notify();
+                  }),
                 ...(_tab == 0 ? _creditContent() : _returnContent()),
-                _secondary(),
+                if (widget.posWorkspace)
+                  _posSecondary()
+                else
+                  _secondary(),
                 if (_freshAt != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 20),
