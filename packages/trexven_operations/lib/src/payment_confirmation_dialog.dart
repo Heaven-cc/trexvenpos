@@ -62,6 +62,7 @@ Future<PaymentDraft?> confirmPayment(
 
   var credit = method == 'credit' && allowCredit && !offline;
   if (pos && recovery) credit = false;
+  if (pos && credit) selectedMethod = 'credit';
   var confirmed = false;
   String? error;
 
@@ -374,7 +375,12 @@ Future<PaymentDraft?> confirmPayment(
           error = null;
           if (key == 'credit') {
             credit = true;
-            // Existing cash/transfer/card allocations remain intact for partial payment.
+            // Clear only the untouched default full-cash allocation so full credit is possible.
+            if (amounts['cash']!.text == total.toStringAsFixed(2) &&
+                amounts['bank_transfer']!.text == '0' && amounts['card']!.text == '0') {
+              amounts['cash']!.text = '0';
+            }
+            // Other existing allocations remain intact for partial credit.
           } else {
             credit = false;
           }
