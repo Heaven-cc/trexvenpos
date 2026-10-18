@@ -32,59 +32,214 @@ Widget build(BuildContext context, WidgetRef ref) {
   final cart = ref.watch(cartProvider);
   final notifier = ref.read(cartProvider.notifier);
   void open(Widget page) => Navigator.push<void>(context, MaterialPageRoute(builder: (_) => page));
+  final scheme = Theme.of(context).colorScheme;
+  final scan = ScannerScreen(onProductMatched: (product, scanEventId) =>
+      _addRecognizedProduct(context, ref, product, scanEventId));
   return Scaffold(
-    appBar: AppBar(title: Text(business?.name ?? 'TREXVEN POS'),
+    appBar: AppBar(
+      title: const Text('TREXVEN POS'),
       actions: [
         if (business?.branchesEnabled == true)
-          IconButton(tooltip: 'Change branch', icon: const Icon(Icons.store_outlined), onPressed: () {
-            try {
-              ref.read(branchContextProvider.notifier).clear(hasCart: cart.isNotEmpty);
-              ref.invalidate(authorizedBranchesProvider);
-            } on StateError catch (error) { _showScanError(context, CustomerPresentation.error(error)); }
-          }),
-        IconButton(tooltip: 'Sign out', icon: const Icon(Icons.logout_rounded),
-          onPressed: () => _showLogoutDialog(context, ref)),
-      ]),
-    body: SafeArea(top: false, child: ListView(padding: PosSpace.page, children: [
-      Text('Hello, ${employee?.name ?? 'Employee'}', style: Theme.of(context).textTheme.headlineSmall),
-      const SizedBox(height: 4),
-      Text(business?.branchesEnabled == true
-          ? ref.watch(branchContextProvider)?.name ?? 'Select branch'
-          : 'Ready for your next sale', style: Theme.of(context).textTheme.bodySmall),
-      const SizedBox(height: 16),
-      FilledButton.icon(icon: const Icon(Icons.qr_code_scanner_rounded), label: const Text('Scan Product'),
-        onPressed: () => open(ScannerScreen(onProductMatched: (product, scanEventId) =>
-          _addRecognizedProduct(context, ref, product, scanEventId)))),
-      const SizedBox(height: 20),
-      Text('Quick actions', style: Theme.of(context).textTheme.titleMedium),
-      const SizedBox(height: 8),
-      PosSurface(padding: EdgeInsets.zero, child: Column(children: [
-        PosActionRow(icon: Icons.search_rounded, title: 'Search products', subtitle: 'Catalog, barcode or part number',
-          onTap: () => open(const ProductSearchScreen())),
-        const Divider(indent: 64),
-        PosActionRow(icon: Icons.history_rounded, title: 'Sales History', subtitle: 'Transactions and receipts',
-          onTap: () => open(const RecentSalesScreen())),
-        const Divider(indent: 64),
-        PosActionRow(icon: Icons.account_balance_wallet_outlined, title: 'Expenses',
-          subtitle: 'Expense recording requires backend support',
-          onTap: () => open(const PosExpenseSupportScreen())),
-        const Divider(indent: 64),
-        PosActionRow(icon: Icons.sync_alt_rounded, title: 'Credit & Returns', subtitle: 'Customer credit, repayments and returns',
-          onTap: () => open(const PosCreditReturnsScreen())),
-        if (access.canQuickAddProduct) ...[
-          const Divider(indent: 64),
-          PosActionRow(icon: Icons.add_box_outlined, title: 'Quick Add Product', subtitle: 'Submit a product for review',
-            onTap: () => open(const QuickAddScreen())),
+          IconButton(
+            tooltip: 'Change branch',
+            icon: const Icon(Icons.store_outlined),
+            onPressed: () {
+              try {
+                ref.read(branchContextProvider.notifier).clear(hasCart: cart.isNotEmpty);
+                ref.invalidate(authorizedBranchesProvider);
+              } on StateError catch (error) {
+                _showScanError(context, CustomerPresentation.error(error));
+              }
+            },
+          ),
+        IconButton(
+          tooltip: 'Sign out',
+          icon: const Icon(Icons.logout_rounded),
+          onPressed: () => _showLogoutDialog(context, ref),
+        ),
+      ],
+    ),
+    body: SafeArea(
+      top: false,
+      child: ListView(
+        padding: PosSpace.page,
+        children: [
+          Text('Hello, ${employee?.name ?? 'Employee'}',
+              style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 4),
+          Text(
+            business?.branchesEnabled == true
+                ? ref.watch(branchContextProvider)?.name ?? 'Select branch'
+                : 'Ready for your next sale',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 20),
+          Material(
+            color: scheme.primary,
+            borderRadius: BorderRadius.circular(16),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () => open(scan),
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Scan Product',
+                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                      color: scheme.onPrimary)),
+                              const SizedBox(height: 4),
+                              Text('Scan products with Angel AI',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: scheme.onPrimary.withValues(alpha: .85))),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.qr_code_scanner_rounded,
+                            size: 36, color: scheme.onPrimary),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text('Angel Scan',
+                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                color: scheme.onPrimary)),
+                        const SizedBox(width: 8),
+                        Icon(Icons.arrow_forward_rounded, color: scheme.onPrimary),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text('Quick Actions', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _HomeActionTile(
+                icon: Icons.search_rounded, title: 'Search',
+                subtitle: 'Find products',
+                onTap: () => open(const ProductSearchScreen()),
+              )),
+              const SizedBox(width: 12),
+              Expanded(child: _HomeActionTile(
+                icon: Icons.history_rounded, title: 'Sales History',
+                subtitle: 'Transactions',
+                onTap: () => open(const RecentSalesScreen()),
+              )),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _HomeActionTile(
+                icon: Icons.account_balance_wallet_outlined, title: 'Expenses',
+                subtitle: 'Expense options',
+                onTap: () => open(const PosExpenseSupportScreen()),
+              )),
+              const SizedBox(width: 12),
+              Expanded(child: _HomeActionTile(
+                icon: Icons.sync_alt_rounded, title: 'Credit & Return',
+                subtitle: 'Credit and refunds',
+                onTap: () => open(const PosCreditReturnsScreen()),
+              )),
+            ],
+          ),
+          if (access.canQuickAddProduct) ...[
+            const SizedBox(height: 12),
+            PosSurface(
+              padding: EdgeInsets.zero,
+              child: ListTile(
+                leading: Icon(Icons.add_box_outlined, color: scheme.primary),
+                title: const Text('Add Product'),
+                subtitle: const Text('Submit a product for review'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => open(const QuickAddScreen()),
+              ),
+            ),
+          ],
         ],
-      ])),
-    ])),
-    bottomNavigationBar: cart.isEmpty || !access.canCompleteSales ? null : SafeArea(top: false,
-      child: Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-        child: FilledButton(onPressed: () => open(const CheckoutScreen()),
-          child: Wrap(alignment: WrapAlignment.spaceBetween, spacing: 16, runSpacing: 4,
-            children: [Text('View cart · ${notifier.itemCount} items'),
-              Text(CustomerPresentation.money(notifier.total, currency: business?.currency))])))),
+      ),
+    ),
+    bottomNavigationBar: cart.isEmpty || !access.canCompleteSales
+        ? null
+        : SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: FilledButton(
+                onPressed: () => open(const CheckoutScreen()),
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  spacing: 16,
+                  runSpacing: 4,
+                  children: [
+                    Text('View cart · ${notifier.itemCount} items'),
+                    Text(CustomerPresentation.money(notifier.total,
+                        currency: business?.currency)),
+                  ],
+                ),
+              ),
+            ),
+          ),
   );
+}
+
+class _HomeActionTile extends StatelessWidget {
+  const _HomeActionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surface,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 116),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            border: Border.all(color: scheme.outlineVariant),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: scheme.primary, size: 24),
+              const SizedBox(height: 12),
+              Text(title, maxLines: 2, overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 4),
+              Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Integrates a *verified inventory product* with the existing cart. A scan
