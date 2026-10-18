@@ -116,9 +116,10 @@ context: context,
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final posLayout = TrexvenPresentation.isPos(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Stocktake'),
+        title: Text(posLayout ? 'Stocktaking session' : 'Stocktake'),
         actions: [
           IconButton(tooltip: 'Refresh saved counts',
             onPressed: _working ? null : _refresh,
@@ -177,6 +178,17 @@ context: context,
                       ops._notice(_notice!), const SizedBox(height: 12),
                     ],
                     ops._surface(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      if (posLayout) ...[
+                        Row(children: [
+                          Icon(Icons.fact_check_outlined,
+                            color: scheme.primary, size: 18),
+                          const SizedBox(width: 8),
+                          Text('COUNT PROGRESS', style: TextStyle(
+                            color: scheme.primary, fontSize: 11,
+                            fontWeight: FontWeight.w700, letterSpacing: .8)),
+                        ]),
+                        const SizedBox(height: 10),
+                      ],
                       Text('${session['name']}',
                         style: TextStyle(fontSize: TrexvenPresentation.fontSize(context, 20), fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
