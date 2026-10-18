@@ -378,7 +378,8 @@ context: context,
   }
 
   String _formatPrice(double price) {
-    return '₦${price.toStringAsFixed(2)}';
+    return CustomerPresentation.money(price,
+      currency: ref.read(authStateProvider).activeBusiness?.currency);
   }
 
   @override
@@ -426,7 +427,7 @@ context: context,
               ),
               SizedBox(height: 2),
               Text(
-                'Review and complete sale',
+                'Review your order',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: TrexvenFontSize.caption,
@@ -506,8 +507,8 @@ context: context,
       child: Row(
         children: [
           Container(
-            width: 46,
-            height: 46,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.onPrimary,
               borderRadius: BorderRadius.circular(TrexvenRadii.card),
@@ -525,7 +526,7 @@ context: context,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Order Summary',
+                  'Current Order',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                     fontSize: TrexvenFontSize.input,
@@ -551,8 +552,8 @@ context: context,
   Widget _buildCartItem(CartItem item) {
     final theme = Theme.of(context);
     return Container(
-      margin: const EdgeInsets.only(bottom: PosSpace.md),
-      padding: TrexvenSpacing.cardPadding,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(TrexvenRadii.card),
@@ -709,75 +710,6 @@ context: context,
     }
   }
 
-  Future<void> _editTerms(CartItem item) async {
-    final access = ref.read(permissionServiceProvider);
-    if (widget.offlineCash ||
-        (!access.canOverridePrice && !access.canApplyDiscount))
-      return;
-    final price = TextEditingController(
-      text: item.selectedPrice.toStringAsFixed(2),
-    );
-    final discount = TextEditingController(
-      text: item.discount.toStringAsFixed(2),
-    );
-    final applied = await showDialog<bool>(
-      animationStyle: AnimationStyle(duration: PosMotion.duration(context, PosMotion.component)),
-context: context,
-      builder: (ctx) => AlertDialog(
-        scrollable: true,
-        title: Text('Authorized sale terms'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TrexvenTextField(
-              controller: price,
-              enabled: access.canOverridePrice,
-              decoration: TrexvenInputDecoration(
-                labelText: 'Selling-price override',
-              ),
-            ),
-            TrexvenTextField(
-              controller: discount,
-              enabled: access.canApplyDiscount,
-              decoration: TrexvenInputDecoration(
-                labelText: 'Total line discount',
-              ),
-            ),
-            Text(
-              'Backend permissions and price/discount limits are checked again at checkout.',
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Apply'),
-          ),
-        ],
-      ),
-    );
-    if (applied == true && mounted) {
-      try {
-        ref
-            .read(cartProvider.notifier)
-            .updateTerms(
-              item.product.id,
-              item.priceLevel,
-              double.parse(price.text),
-              double.parse(discount.text),
-            );
-      } catch (e) {
-        _showError(e.toString());
-      }
-    }
-    price.dispose();
-    discount.dispose();
-  }
-
   Widget _buildQuantityControls(CartItem item) {
     return Container(
       constraints: const BoxConstraints(minHeight: 48),
@@ -789,15 +721,6 @@ context: context,
         crossAxisAlignment: WrapCrossAlignment.center,
         runSpacing: 8,
         children: [
-          if (!widget.offlineCash &&
-              (ref.watch(permissionServiceProvider).canApplyDiscount ||
-                  ref.watch(permissionServiceProvider).canOverridePrice))
-            _quantityButton(
-              icon: Icons.percent,
-              onPressed: _isProcessing || _hasUnconfirmedSale
-                  ? null
-                  : () => _editTerms(item),
-            ),
           _quantityButton(
             icon: Icons.remove_rounded,
             onPressed: _isProcessing || _hasUnconfirmedSale
@@ -814,8 +737,8 @@ context: context,
                 ? null
                 : () => _editQuantity(item),
             child: SizedBox(
-              width: 52,
-              height: 48,
+              width: 46,
+              height: 44,
               child: Center(
                 child: Text(
                   '${item.quantity}',
@@ -848,11 +771,11 @@ context: context,
     required VoidCallback? onPressed,
   }) {
     return SizedBox(
-      width: 48,
-      height: 48,
+      width: 44,
+      height: 44,
       child: IconButton(
         tooltip: icon == Icons.add_rounded ? 'Increase quantity'
-            : icon == Icons.remove_rounded ? 'Decrease quantity' : 'Edit price or discount',
+            : icon == Icons.remove_rounded ? 'Decrease quantity' : 'Decrease quantity',
         padding: EdgeInsets.zero,
         onPressed: onPressed,
         icon: Icon(
@@ -882,7 +805,7 @@ context: context,
 
   Widget _buildCheckoutBottom(double total) {
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 20, 16, 20),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         boxShadow: [
@@ -906,7 +829,7 @@ context: context,
             runSpacing: 8,
             children: [
               Text(
-                'Total',
+                'Total to pay',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: TrexvenFontSize.input,
