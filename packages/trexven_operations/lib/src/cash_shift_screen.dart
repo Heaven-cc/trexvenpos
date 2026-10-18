@@ -443,12 +443,18 @@ context: context,
                     Text('Shared cash register', style: TextStyle(color: TrexvenPresentation.color(context, _muted, 'muted'), fontSize: TrexvenPresentation.fontSize(context, 11))),
                   ])),
                 ]),
-                const SizedBox(height: 10),
-                SizedBox(width: double.infinity, child: FilledButton.icon(
-                  onPressed: busy ? null : () => open(r),
-                  icon: const Icon(Icons.lock_open_rounded, size: 17),
-                  label: const Text('Open drawer'),
-                )),
+                if (TrexvenPresentation.isPos(context)) ...[
+                  const SizedBox(height: 10),
+                  SizedBox(width: double.infinity, child: FilledButton.icon(
+                    onPressed: busy ? null : () => open(r),
+                    icon: const Icon(Icons.lock_open_rounded, size: 17),
+                    label: const Text('Open drawer'),
+                  )),
+                ] else
+                  Align(alignment: Alignment.centerRight, child: TextButton(
+                    onPressed: busy ? null : () => open(r),
+                    child: const Text('Open'),
+                  )),
               ])),
               SizedBox(height: TrexvenPresentation.spacing(context, 9)),
             ],
