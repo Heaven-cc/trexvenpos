@@ -130,7 +130,7 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
                 title: 'Products',
                 subtitle: 'Browse catalog',
                 emphasized: true,
-                onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
+                onTap: () { _clearSearch(); setState(() => _stockFilter = 'all'); },
               )),
               const SizedBox(width: 12),
               Expanded(child: _InventoryShortcut(
