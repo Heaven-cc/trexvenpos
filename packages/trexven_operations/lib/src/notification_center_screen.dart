@@ -23,6 +23,7 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
   late String? user;
   bool busy = false;
   String? error;
+  String _posFilter = 'all';
   StreamSubscription<AuthState>? accountChanges;
   @override
   void initState() {
@@ -95,6 +96,133 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
     }
   }
 
+  bool _isPriority(Map<String, dynamic> row) {
+    final priority = (row['priority'] ?? row['severity'])?.toString().toLowerCase();
+    return priority == 'high' || priority == 'critical' ||
+        priority == 'urgent' || priority == 'priority';
+  }
+
+  Widget _posNotifications(List<Map<String, dynamic>> notifications) {
+    final scheme = Theme.of(context).colorScheme;
+    final unread = notifications.where((row) => row['read_at'] == null).length;
+    final visible = notifications.where((row) {
+      if (_posFilter == 'unread') return row['read_at'] == null;
+      if (_posFilter == 'priority') return _isPriority(row);
+      return true;
+    }).toList();
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: scheme.primaryContainer,
+            borderRadius: BorderRadius.circular(18)),
+          child: Row(children: [
+            Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Needs your attention', style: TextStyle(
+                  color: scheme.onPrimaryContainer, fontSize: 13)),
+                const SizedBox(height: 6),
+                Text('$unread unread', style: TextStyle(
+                  color: scheme.onPrimaryContainer, fontSize: 24,
+                  fontWeight: FontWeight.w700)),
+                const SizedBox(height: 6),
+                Text('Operational updates for your business',
+                  style: TextStyle(color: scheme.onPrimaryContainer,
+                    fontSize: 12)),
+              ],
+            )),
+            Icon(Icons.notifications_active_outlined, size: 30,
+              color: scheme.onPrimaryContainer),
+          ]),
+        ),
+        const SizedBox(height: 16),
+        Row(children: [
+          for (final option in const [
+            ('all', 'All'), ('unread', 'Unread'), ('priority', 'Priority')
+          ]) ...[
+            Expanded(child: Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: ChoiceChip(
+                label: Text(option.$2),
+                selected: _posFilter == option.$1,
+                onSelected: (_) => setState(() => _posFilter = option.$1),
+              ),
+            )),
+          ],
+        ]),
+        const SizedBox(height: 12),
+        Row(children: [
+          const Expanded(child: Text('Recent updates',
+            style: TextStyle(fontWeight: FontWeight.w700))),
+          Text('${visible.length} notifications',
+            style: TextStyle(fontSize: 12,
+              color: scheme.onSurfaceVariant)),
+        ]),
+        if (error != null) Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Text(error!, style: TextStyle(color: scheme.error))),
+        if (busy) const LinearProgressIndicator(),
+        if (visible.isEmpty) Padding(
+          padding: const EdgeInsets.symmetric(vertical: 32),
+          child: Column(children: [
+            Icon(Icons.notifications_none_rounded, size: 34,
+              color: scheme.primary),
+            const SizedBox(height: 12),
+            Text(_posFilter == 'unread' ? 'No unread notifications'
+              : _posFilter == 'priority' ? 'No priority notifications'
+              : 'No notifications'),
+            const SizedBox(height: 4),
+            Text('Updates will appear here when available.',
+              style: TextStyle(color: scheme.onSurfaceVariant)),
+          ]),
+        ),
+        for (final row in visible) Padding(
+          padding: const EdgeInsets.only(top: 9),
+          child: Card(
+            margin: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: scheme.primaryContainer,
+                  child: Icon(_isPriority(row)
+                    ? Icons.priority_high_rounded
+                    : Icons.notifications_outlined,
+                    color: scheme.onPrimaryContainer)),
+                title: Row(children: [
+                  Expanded(child: Text(row['title']?.toString() ?? 'Update',
+                    style: const TextStyle(fontWeight: FontWeight.w600))),
+                  if (row['read_at'] == null)
+                    Icon(Icons.circle, size: 8, color: scheme.primary),
+                ]),
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(top: 5),
+                  child: Text(row['message']?.toString() ?? ''),
+                ),
+                onTap: busy ? null : () {
+                  if (widget.api.client.auth.currentUser?.id == user) {
+                    widget.open(context, row['route']?.toString() ?? '',
+                      row['reference_id']?.toString());
+                  }
+                },
+                trailing: IconButton(
+                  tooltip: row['read_at'] == null ? 'Mark read' : 'Mark unread',
+                  onPressed: busy ? null : () => mark(row),
+                  icon: Icon(row['read_at'] == null
+                    ? Icons.mark_email_read_outlined
+                    : Icons.mark_email_unread_outlined),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.api.client.auth.currentUser?.id != user) {
@@ -131,6 +259,9 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
               ),
             );
           if (!state.hasData) return Center(child: TrexvenLoading());
+          if (TrexvenPresentation.isPos(context)) {
+            return _posNotifications(state.data!);
+          }
           return ListView(
             children: [
               Padding(
