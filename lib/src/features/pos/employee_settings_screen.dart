@@ -43,201 +43,205 @@ class PosTheme extends StateNotifier<ThemeMode> {
 
 class EmployeeSettingsScreen extends ConsumerWidget {
   const EmployeeSettingsScreen({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authStateProvider);
     final employee = auth.employee;
+    final scheme = Theme.of(context).colorScheme;
+    final mode = ref.watch(posThemeProvider);
+    final role = employee?.role.name ?? 'Unavailable';
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
-        title: Column(
+        title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'My settings',
-              style: TextStyle(
-                fontSize: TrexvenFontSize.section,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            Text(
-              'Account, security & application preferences',
-              style: TextStyle(
-                fontSize: TrexvenFontSize.caption,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
+            Text('My Profile', style: TextStyle(
+              fontWeight: FontWeight.w700, fontSize: 19)),
+            Text('TREXVEN POS - Employee account',
+              style: TextStyle(fontSize: 12)),
           ],
         ),
       ),
-      body: ListView(
-        padding: TrexvenSpacing.cardPadding,
-        children: [
-          _SectionTitle(title: 'PROFILE INFORMATION'),
-          const SizedBox(height: 8),
-          _CardContainer(
-            children: [
-              _SettingRow(
-                icon: Icons.person_outline,
-                title: 'My Profile',
-                subtitle: employee?.name ?? 'Signed out',
+      body: DefaultTabController(
+        length: 2,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: scheme.outlineVariant),
               ),
-              _SettingRow(
-                icon: Icons.badge_outlined,
-                title: 'Employee ID',
-                subtitle: employee?.employeeCode ?? 'Unavailable',
+              child: Column(children: [
+                Row(children: [
+                  Container(
+                    width: 58, height: 58,
+                    decoration: BoxDecoration(
+                      color: scheme.primary.withValues(alpha: .16),
+                      borderRadius: BorderRadius.circular(16)),
+                    child: Icon(Icons.person_outline, size: 29,
+                      color: scheme.primary),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(employee?.name ?? 'Signed out',
+                        style: const TextStyle(fontSize: 18,
+                          fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 3),
+                      Text('Employee ID: ${employee?.employeeCode ?? 'Unavailable'}',
+                        style: TextStyle(fontSize: 12,
+                          color: scheme.onSurfaceVariant)),
+                      const SizedBox(height: 5),
+                      Row(children: [
+                        Icon(Icons.verified_user_outlined,
+                          color: scheme.primary, size: 15),
+                        const SizedBox(width: 5),
+                        Flexible(child: Text(role,
+                          style: TextStyle(color: scheme.primary,
+                            fontSize: 12, fontWeight: FontWeight.w600))),
+                      ]),
+                    ],
+                  )),
+                ]),
+                const SizedBox(height: 12),
+                Divider(height: 1, color: scheme.outlineVariant),
+                const SizedBox(height: 12),
+                Row(children: [
+                  Icon(Icons.store_outlined, color: scheme.primary),
+                  const SizedBox(width: 10),
+                  Expanded(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('ACTIVE BUSINESS', style: TextStyle(
+                        fontSize: 10, letterSpacing: .7,
+                        color: scheme.onSurfaceVariant)),
+                      const SizedBox(height: 3),
+                      Text(auth.activeBusiness?.name ?? 'Unavailable',
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                    ],
+                  )),
+                  Icon(Icons.check_circle_outline,
+                    color: scheme.primary, size: 20),
+                ]),
+              ]),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(14),
               ),
-              _SettingRow(
-                icon: Icons.store_outlined,
-                title: 'Business',
-                subtitle: auth.activeBusiness?.name ?? 'Unavailable',
+              child: const TabBar(
+                dividerHeight: 0,
+                indicatorSize: TabBarIndicatorSize.tab,
+                tabs: [
+                  Tab(text: 'Profile'),
+                  Tab(text: 'Preferences'),
+                ],
               ),
-              _SettingRow(
-                icon: Icons.admin_panel_settings_outlined,
-                title: 'Role',
-                subtitle: employee?.role.name ?? 'Unavailable',
-              ),
-              _SettingRow(
-                icon: Icons.contact_mail_outlined,
-                title: 'Contact',
-                subtitle: employee?.email ??
-                    employee?.phone ??
-                    'Contact the owner to update your employee details.',
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-
-          _SectionTitle(title: 'PREFERENCES & SECURITY'),
-          const SizedBox(height: 8),
-          _CardContainer(
-            children: [
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                leading: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.lock_outline,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 20,
-                  ),
-                ),
-                title: Text(
-                  'Change password',
-                  style: TextStyle(
-                    fontSize: TrexvenFontSize.input,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                subtitle: const Text('Update your terminal account password'),
-                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                onTap: auth.offlineCashOnly || employee == null
-                    ? null
-                    : () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const _ChangePassword(),
-                        ),
-                      ),
-              ),
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                leading: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.palette_outlined,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 20,
-                  ),
-                ),
-                title: Text(
-                  'Appearance',
-                  style: TextStyle(
-                    fontSize: TrexvenFontSize.input,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                subtitle: const Text('System, Light or Dark mode'),
-                trailing: PopupMenuButton<ThemeMode>(
-                  tooltip: 'Appearance: ${ref.watch(posThemeProvider).name}',
-                  icon: const Icon(Icons.palette_outlined),
-                  initialValue: ref.watch(posThemeProvider),
-                  borderRadius: BorderRadius.circular(TrexvenRadii.card),
-                  itemBuilder: (_) => [
-                    for (final mode in ThemeMode.values)
-                      PopupMenuItem<ThemeMode>(
-                        value: mode,
-                        child: Text(
-                          mode.name[0].toUpperCase() + mode.name.substring(1),
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                  ],
-                  onSelected: (mode) async {
-                    try {
-                      await ref.read(posThemeProvider.notifier).select(mode);
-                    } catch (_) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Appearance could not be saved.'),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 188,
+              child: TabBarView(children: [
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const _SectionTitle(title: 'ACCOUNT DETAILS'),
+                  const SizedBox(height: 8),
+                  _CardContainer(children: [
+                    _SettingRow(icon: Icons.badge_outlined,
+                      title: 'Employee ID',
+                      subtitle: employee?.employeeCode ?? 'Unavailable'),
+                    _SettingRow(icon: Icons.contact_mail_outlined,
+                      title: 'Contact',
+                      subtitle: employee?.email ?? employee?.phone ??
+                        'Contact the owner to update your details.'),
+                  ]),
+                ]),
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const _SectionTitle(title: 'APPEARANCE'),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: scheme.outlineVariant)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Theme preference',
+                          style: TextStyle(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 10),
+                        SizedBox(width: double.infinity,
+                          child: SegmentedButton<ThemeMode>(
+                            showSelectedIcon: false,
+                            segments: const [
+                              ButtonSegment(value: ThemeMode.system,
+                                label: Text('System')),
+                              ButtonSegment(value: ThemeMode.light,
+                                label: Text('Light')),
+                              ButtonSegment(value: ThemeMode.dark,
+                                label: Text('Dark')),
+                            ],
+                            selected: {mode},
+                            onSelectionChanged: (selected) async {
+                              try {
+                                await ref.read(posThemeProvider.notifier)
+                                  .select(selected.first);
+                              } catch (_) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content:
+                                      Text('Appearance could not be saved.')));
+                                }
+                              }
+                            },
                           ),
-                        );
-                      }
-                    }
-                  },
-                ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ]),
+              ]),
+            ),
+            const SizedBox(height: 18),
+            const _SectionTitle(title: 'SECURITY & DEVICE'),
+            const SizedBox(height: 8),
+            _CardContainer(children: [
+              ListTile(
+                leading: Icon(Icons.lock_outline, color: scheme.primary),
+                title: const Text('Change Password'),
+                subtitle: const Text('Protect your employee account'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: auth.offlineCashOnly || employee == null ? null :
+                  () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const _ChangePassword())),
               ),
               ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                leading: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.notifications_outlined,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 20,
-                  ),
-                ),
-                title: Text(
-                  'Notifications & recovery',
-                  style: TextStyle(
-                    fontSize: TrexvenFontSize.input,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                subtitle: const Text(
-                  'Device sales requiring synchronization or confirmation',
-                ),
-                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                onTap: employee == null
-                    ? null
-                    : () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const _DeviceAlerts(),
-                        ),
-                      ),
+                leading: Icon(Icons.notifications_outlined,
+                  color: scheme.primary),
+                title: const Text('Notifications & Recovery'),
+                subtitle: const Text('Device sales, sync and recovery'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: employee == null ? null :
+                  () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const _DeviceAlerts())),
               ),
-            ],
-          ),
-        ],
+            ]),
+            const SizedBox(height: 12),
+            Text('Employee details and permissions are managed by the business owner.',
+              style: TextStyle(fontSize: 12,
+                color: scheme.onSurfaceVariant)),
+          ],
+        ),
       ),
     );
   }
