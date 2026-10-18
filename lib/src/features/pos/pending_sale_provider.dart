@@ -247,16 +247,72 @@ context: context,
       icon: Icons.lock_outline, action: FilledButton(
         onPressed: () => ref.invalidate(pendingSaleProvider), child: const Text('Retry storage check')))),
     data: (pending) => pending == null ? widget.child : Scaffold(
-      appBar: AppBar(title: const Text('Recover pending sale')),
-      body: PosStateView(title: 'Verify the interrupted sale',
-        message: error ?? 'Recover the original receipt before another checkout. Do not collect payment twice.',
-        icon: Icons.receipt_long_outlined, action: Column(mainAxisSize: MainAxisSize.min, children: [
-          FilledButton(onPressed: busy ? null : () => recover(pending),
-            child: Text(busy ? 'Checking original request…' : 'Check and recover receipt')),
-          const SizedBox(height: 8),
-          TextButton(onPressed: busy ? null : () => ref.read(authStateProvider.notifier).logout(), child: const Text('Sign out')),
-          const SizedBox(height: 8),
-          OutlinedButton(onPressed: busy ? null : () => cancelWithoutPayment(pending),
-            child: const Text('Cancel only if no payment moved')),
-        ]))));
+      appBar: AppBar(title: const Text('Sale Recovery')),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Icon(Icons.shield_outlined,
+                      color: Theme.of(context).colorScheme.primary),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text('Interrupted sale detected',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700))),
+                  ]),
+                  const SizedBox(height: 12),
+                  const Text('The original transaction is retained. Verify its status before starting another checkout.'),
+                  const SizedBox(height: 12),
+                  const Divider(),
+                  Row(children: [
+                    const Expanded(child: Text('Status')),
+                    Text(busy ? 'Checking original request…' : 'Needs verification',
+                      style: TextStyle(color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w600)),
+                  ]),
+                  if (error != null) ...[
+                    const SizedBox(height: 12),
+                    Text(error!, style: TextStyle(
+                      color: Theme.of(context).colorScheme.error)),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            FilledButton.icon(
+              onPressed: busy ? null : () => recover(pending),
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(busy ? 'Checking original request…' : 'Check & Recover Sale'),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton(
+              onPressed: busy ? null : () => cancelWithoutPayment(pending),
+              child: const Text('No payment received? Review cancellation'),
+            ),
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: busy ? null : () =>
+                ref.read(authStateProvider.notifier).logout(),
+              child: const Text('Sign out'),
+            ),
+            const SizedBox(height: 12),
+            Text('Never collect payment again until the original transaction is verified.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall),
+          ],
+        ),
+      ),
+    ),
+  );
 }
