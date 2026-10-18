@@ -418,44 +418,147 @@ context: context,
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(backgroundColor: Colors.black,
-    body: Stack(fit: StackFit.expand, children: [
-      MobileScanner(controller: _scannerController, onDetect: _onDetect),
-      _ScannerOverlay(animation: _scanAnimation),
-      SafeArea(child: LayoutBuilder(builder: (context, box) => SingleChildScrollView(
-        padding: const EdgeInsets.all(16), child: Column(children: [
-          Row(children: [
-            _GlassButton(icon: Icons.close_rounded, onPressed: () => Navigator.pop(context)),
-            const Expanded(child: Text('Angel Scan', textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700))),
-            const SizedBox(width: 48),
-          ]),
-          SizedBox(height: (box.maxHeight * .42).clamp(100, 300).toDouble()),
-          const Text('Place the barcode inside the frame', textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          const Text('Scan a product barcode to find it in your business catalog.',
-            textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 14)),
-          if (_scanFeedback != null) ...[
-            const SizedBox(height: 12),
-            Text(_scanFeedback!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white)),
-            if (_lastAddedBarcode != null)
-              TextButton.icon(onPressed: _allowRepeatScan, icon: const Icon(Icons.add_circle_outline, color: Colors.white),
-                label: const Text('Scan same item again', style: TextStyle(color: Colors.white))),
-          ],
-          const SizedBox(height: 20),
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            _GlassButton(icon: _torchEnabled ? Icons.flash_on_rounded : Icons.flash_off_rounded, onPressed: _toggleTorch),
-            const SizedBox(width: 16),
-            _GlassButton(icon: Icons.flip_camera_ios_rounded, onPressed: _switchCamera),
-          ]),
-          if (_isProcessing) const Padding(padding: EdgeInsets.all(16),
-            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
-              SizedBox(width: 12), Flexible(child: Text('Checking inventory…', style: TextStyle(color: Colors.white))),
-            ])),
-        ])))),
-    ]));
+  Widget build(BuildContext context) {
+    final success = _scanFeedback == 'Added to checkout';
+    final feedback = _scanFeedback;
+    return Scaffold(
+      backgroundColor: const Color(0xFF0A1222),
+      body: Stack(fit: StackFit.expand, children: [
+        MobileScanner(controller: _scannerController, onDetect: _onDetect),
+        _ScannerOverlay(animation: _scanAnimation),
+        SafeArea(child: LayoutBuilder(builder: (context, constraints) =>
+          SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight - 36),
+              child: Column(children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xDD0A1222),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Row(children: [
+                    _GlassButton(icon: Icons.arrow_back_rounded,
+                      onPressed: () => Navigator.pop(context)),
+                    const SizedBox(width: 10),
+                    const Expanded(child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Angel Scan', style: TextStyle(color: Colors.white,
+                          fontSize: 19, fontWeight: FontWeight.w700)),
+                        Text('Smart product scanner', style: TextStyle(
+                          color: Color(0xFFA0B5D8), fontSize: 12)),
+                      ],
+                    )),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1B2E4C),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.circle, size: 8,
+                          color: _isProcessing ? Colors.amberAccent : const Color(0xFF68D5A2)),
+                        const SizedBox(width: 6),
+                        Text(_isProcessing ? 'Checking' : 'Ready',
+                          style: const TextStyle(color: Colors.white, fontSize: 12)),
+                      ]),
+                    ),
+                  ]),
+                ),
+                SizedBox(height: (constraints.maxHeight * .37).clamp(115.0, 310.0)),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xE60A1222),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: const Color(0xFF2A456A)),
+                  ),
+                  child: Column(children: [
+                    const Row(children: [
+                      Icon(Icons.qr_code_scanner_rounded, size: 18,
+                        color: Color(0xFF91B5FF)),
+                      SizedBox(width: 8),
+                      Text('LIVE CAMERA', style: TextStyle(
+                        color: Color(0xFFBBD0F4), fontSize: 11,
+                        fontWeight: FontWeight.w600)),
+                    ]),
+                    const SizedBox(height: 10),
+                    const Text('Align a product barcode inside the frame',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white, fontSize: 14,
+                        fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 12),
+                    if (_isProcessing)
+                      const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        SizedBox(width: 17, height: 17,
+                          child: CircularProgressIndicator(strokeWidth: 2,
+                            color: Color(0xFF91B5FF))),
+                        SizedBox(width: 10),
+                        Text('Checking inventory…',
+                          style: TextStyle(color: Colors.white70)),
+                      ])
+                    else Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: success ? const Color(0xFF15382F)
+                          : const Color(0xFF172944),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(children: [
+                        Icon(feedback == null ? Icons.scan_barcode_rounded
+                          : success ? Icons.check_circle_outline
+                          : Icons.info_outline,
+                          color: success ? const Color(0xFF70E0A9)
+                            : const Color(0xFF8BB7FF)),
+                        const SizedBox(width: 10),
+                        Expanded(child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(feedback == null ? 'Ready to scan'
+                              : success ? 'Product added to cart' : 'Scan update',
+                              style: const TextStyle(color: Colors.white,
+                                fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 3),
+                            Text(feedback ?? 'Point your camera at a product barcode.',
+                              style: const TextStyle(color: Color(0xFFC3D4EF),
+                                fontSize: 12)),
+                          ],
+                        )),
+                      ]),
+                    ),
+                    if (_lastAddedBarcode != null) ...[
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: _allowRepeatScan,
+                        icon: const Icon(Icons.add_circle_outline,
+                          color: Colors.white),
+                        label: const Text('Scan same item again',
+                          style: TextStyle(color: Colors.white)),
+                      ),
+                    ],
+                  ]),
+                ),
+                const SizedBox(height: 18),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  _GlassButton(
+                    icon: _torchEnabled ? Icons.flash_on_rounded
+                      : Icons.flash_off_rounded,
+                    onPressed: _toggleTorch),
+                  const SizedBox(width: 18),
+                  _GlassButton(icon: Icons.flip_camera_ios_rounded,
+                    onPressed: _switchCamera),
+                ]),
+              ]),
+            ),
+          ),
+        )),
+      ]),
+    );
+  }
 }
 
 class _GlassButton extends StatelessWidget {
@@ -466,7 +569,7 @@ class _GlassButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = icon == Icons.close_rounded ? 'Close scanner'
+    final label = (icon == Icons.close_rounded || icon == Icons.arrow_back_rounded) ? 'Close scanner'
         : icon == Icons.flip_camera_ios_rounded ? 'Switch camera' : 'Toggle flashlight';
     return Semantics(button: true, label: label, child: Tooltip(message: label, child: Material(
       color: Colors.black.withValues(alpha: 0.45),
