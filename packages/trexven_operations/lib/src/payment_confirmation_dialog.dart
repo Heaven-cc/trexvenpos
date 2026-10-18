@@ -358,8 +358,29 @@ Future<PaymentDraft?> confirmPayment(
         inputFormatters: numeric ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))] : null,
         onChanged: (_) => update(() { error = null; if ((fullCents - (paidCentsSafe() ?? 0)) <= 0) credit = false; }));
     Widget stat(String label, String value) => Column(crossAxisAlignment: CrossAxisAlignment.start,
-      children: [Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-        const SizedBox(height: 4), Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700))]);
+      children: [Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+        const SizedBox(height: 3), Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13))]);
+    Widget methodChip(String key, String label, IconData icon) {
+      final selected = selectedMethod == key;
+      return ChoiceChip(
+        avatar: Icon(icon, size: 16, color: selected ? c.onPrimary : c.primary),
+        label: Text(label),
+        selected: selected,
+        showCheckmark: false,
+        selectedColor: c.primary,
+        labelStyle: TextStyle(color: selected ? c.onPrimary : c.onSurface, fontWeight: FontWeight.w600),
+        onSelected: (_) => update(() {
+          selectedMethod = key;
+          error = null;
+          if (key == 'credit') {
+            credit = true;
+            // Existing cash/transfer/card allocations remain intact for partial payment.
+          } else {
+            credit = false;
+          }
+        }),
+      );
+    }
     return Dialog(insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: ConstrainedBox(constraints: BoxConstraints(maxWidth: 480,
         maxHeight: MediaQuery.sizeOf(dialogContext).height * .9),
@@ -375,13 +396,13 @@ Future<PaymentDraft?> confirmPayment(
                 gradient: TrexvenPresentation.premiumGradientOf(context) ?? LinearGradient(colors: [c.primary, c.surface]),
                 border: Border.all(color: c.secondary.withValues(alpha: .3))),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text('TREXVEN', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 12),
+                  const Text('TREXVEN · PAYMENT', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11)),
+                  const SizedBox(height: 7),
                   const Text('Sale total', style: TextStyle(color: Colors.white70, fontSize: 12)),
                   const SizedBox(height: 4),
                   Text(money(fullCents), style: theme.textTheme.headlineLarge?.copyWith(color: Colors.white)),
-                  const SizedBox(height: 16),
-                  Wrap(spacing: 24, runSpacing: 12, children: [
+                  const SizedBox(height: 10),
+                  Wrap(spacing: 20, runSpacing: 8, children: [
                     stat('Collected allocation', paid == null ? 'Invalid amount' : money(paid)),
                     stat('Unpaid balance', remaining == null ? '—' : money(remaining.clamp(0, fullCents).toInt())),
                     if (change != null && change > 0) stat('Cash change', money(change)),
@@ -392,15 +413,24 @@ Future<PaymentDraft?> confirmPayment(
               if (offline) const Text('Cash only · receipt remains pending synchronization.'),
               Text('Payment methods', style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
-              Wrap(spacing: 8, runSpacing: 8, children: [
-                for (final entry in const {'cash': 'Cash', 'bank_transfer': 'Bank Transfer', 'card': 'POS Terminal'}.entries)
-                  if (!offline || entry.key == 'cash')
-                    ChoiceChip(label: Text(entry.value), selected: selectedMethod == entry.key,
-                      onSelected: (_) => update(() { selectedMethod = entry.key; error = null; })),
+              Wrap(spacing: 7, runSpacing: 7, children: [
+                methodChip('cash', 'Cash', Icons.payments_outlined),
+                if (!offline) methodChip('bank_transfer', 'Transfer', Icons.swap_horiz_rounded),
+                if (!offline) methodChip('card', 'POS', Icons.credit_card_outlined),
+                if (!offline && allowCredit && !recovery)
+                  methodChip('credit', 'Credit', Icons.event_note_outlined),
               ]),
               const SizedBox(height: 12),
-              input(amounts[selectedMethod]!, selectedMethod == 'cash' ? 'Cash tendered' : 'Amount received',
-                numeric: true, enabled: selectedMethod != 'cash' || cashAllowed),
+              if (selectedMethod != 'credit')
+                input(amounts[selectedMethod]!, selectedMethod == 'cash' ? 'Cash tendered' : 'Amount received',
+                  numeric: true, enabled: selectedMethod != 'cash' || cashAllowed),
+              if (selectedMethod == 'credit') ...[
+                Text('Full or partial credit · any initial payment is allocated through Cash, Transfer or POS.',
+                  style: theme.textTheme.bodySmall),
+                const SizedBox(height: 8),
+                Text('Initial payment: ${paid == null ? 'Invalid amount' : money(paid)}', style: theme.textTheme.bodyMedium),
+                const SizedBox(height: 8),
+              ],
               if (selectedMethod == 'cash') ...[
                 if (!cashAllowed) Text('Join an assigned cash drawer before accepting cash.', style: TextStyle(color: c.error)),
                 Wrap(spacing: 8, runSpacing: 4, children: [
@@ -412,7 +442,7 @@ Future<PaymentDraft?> confirmPayment(
                 ]),
                 if (tender != null && change != null) Padding(padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text('Cash applied: ${money(tender - change)} · Change: ${money(change)}')),
-              ] else
+              ] else if (selectedMethod != 'credit')
                 input(evidence[selectedMethod]!, 'Bank or terminal reference'),
               if (paid != null) ...[
                 const Divider(),
@@ -425,12 +455,9 @@ Future<PaymentDraft?> confirmPayment(
                       trailing: IconButton(tooltip: 'Edit ${CustomerPresentation.label(key)}',
                         onPressed: () => update(() => selectedMethod = key), icon: const Icon(Icons.edit_outlined))),
               ],
-              if (!offline && allowCredit && !recovery)
-                CheckboxListTile(contentPadding: EdgeInsets.zero, controlAffinity: ListTileControlAffinity.leading,
-                  title: const Text('Request credit for unpaid balance'), value: credit,
-                  subtitle: const Text('Requires approval for this exact saved sale. Credit is not collected money.'),
-                  onChanged: remaining == null || remaining <= 0 ? null : (v) => update(() { credit = v ?? false; error = null; })),
-              if (credit) ...[
+              if (credit && !offline && allowCredit && !recovery) ...[
+                if (remaining != null && remaining <= 0)
+                  Text('Allocate less than the total to request credit.', style: TextStyle(color: c.error)),
                 input(name, 'Customer name'), input(contact, 'Customer contact'),
                 input(due, 'Repayment due date (YYYY-MM-DD)'),
                 Text('Requested credit: ${remaining == null ? '—' : money(remaining.clamp(0, fullCents).toInt())}'),
