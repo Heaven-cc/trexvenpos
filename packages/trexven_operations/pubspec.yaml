@@ -1,0 +1,18 @@
+name: trexven_operations
+description: Independent POS-owned operational workflows for TREXVEN POS.
+publish_to: none
+version: 1.0.0
+environment:
+  sdk: '>=3.8.0 <4.0.0'
+dependencies:
+  trexven_design_system:
+    path: ../trexven_design_system
+  flutter:
+    sdk: flutter
+  supabase_flutter: ^2.8.1
+  uuid: ^4.5.1
+  intl: ^0.19.0
+  cryptography: 2.9.0
+  flutter_secure_storage: 10.3.4
+  path_provider: 2.1.6
+

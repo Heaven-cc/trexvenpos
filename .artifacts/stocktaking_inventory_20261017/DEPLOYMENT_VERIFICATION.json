@@ -1,0 +1,718 @@
+{
+  "project_id": "ufehcfrlygqvminfjumf",
+  "migration": {
+    "name": "branch_inventory_operations",
+    "version": "20261017052445",
+    "success": true,
+    "exact_approved_sql_sha256": "C26787F533F0D3F9F2FD8D887B6F59349FC3789B40728A98CA721840DC429128"
+  },
+  "approved_patch_sha256": "46BEAE3CEE0FE5E4DFED737E95E710049D1F6D1676D79624B5A3130D50A15096",
+  "verification_sql_sha256": "F4DE688E178E660D43A0DA86EC57FFA57B7993B53F048230B4F73A06D92DBEE0",
+  "before": {
+    "captured_at": "2026-10-17 05:24:00.721484+00",
+    "database_name": "postgres",
+    "records": [
+      {
+        "rows": 5,
+        "digest": "f47410fc213978d9ade22ca7a840c39c",
+        "relation": "audit_logs"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "branches"
+      },
+      {
+        "rows": 1,
+        "digest": "acc3a5fe166e9b856e17929c85264525",
+        "relation": "businesses"
+      },
+      {
+        "rows": 1,
+        "digest": "6fa67f871df5a16dcfec5d214e98e6d8",
+        "relation": "credit_accounts"
+      },
+      {
+        "rows": 1,
+        "digest": "2a6b6d89749ed58c2c7c3623c87b230e",
+        "relation": "credit_entries"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "inventory"
+      },
+      {
+        "rows": 2,
+        "digest": "b5c4ba64c6929a59a217875d24b2b850",
+        "relation": "inventory_movements"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "inventory_reconciliation_reviews"
+      },
+      {
+        "rows": 1,
+        "digest": "bdd9f62c0d695e96dbb2d7098724f5fe",
+        "relation": "products"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "return_items"
+      },
+      {
+        "rows": 1,
+        "digest": "6792db542107cbc461d4e2dcae1b0f76",
+        "relation": "sale_items"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "sale_payments"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "sale_returns"
+      },
+      {
+        "rows": 1,
+        "digest": "bab7660bfba373bd775fe87cc2aabf9e",
+        "relation": "sales"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "stock_condition_entries"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "stocktake_counts"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "stocktake_sessions"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "supplier_stock_returns"
+      }
+    ],
+    "unrelated_functions": "8336022fae8d13b2ac7e4e9732853da9",
+    "table_security": "41b75fca0acf0dc989b16d9452e041e1",
+    "integrity": {
+      "negative_credit": 0,
+      "credit_ledger_mismatch": 0,
+      "invalid_branch_inventory": 0,
+      "overlapping_active_scopes": 0,
+      "duplicate_branch_movements": 0,
+      "invalid_closed_count_delta": 0,
+      "negative_condition_balance": 0,
+      "return_allocation_mismatch": 0,
+      "invalid_branch_movement_delta": 0
+    }
+  },
+  "after": {
+    "captured_at": "2026-10-17 05:24:51.4845+00",
+    "database_name": "postgres",
+    "records": [
+      {
+        "rows": 5,
+        "digest": "f47410fc213978d9ade22ca7a840c39c",
+        "relation": "audit_logs"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "branches"
+      },
+      {
+        "rows": 1,
+        "digest": "acc3a5fe166e9b856e17929c85264525",
+        "relation": "businesses"
+      },
+      {
+        "rows": 1,
+        "digest": "6fa67f871df5a16dcfec5d214e98e6d8",
+        "relation": "credit_accounts"
+      },
+      {
+        "rows": 1,
+        "digest": "2a6b6d89749ed58c2c7c3623c87b230e",
+        "relation": "credit_entries"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "inventory"
+      },
+      {
+        "rows": 2,
+        "digest": "b5c4ba64c6929a59a217875d24b2b850",
+        "relation": "inventory_movements"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "inventory_reconciliation_reviews"
+      },
+      {
+        "rows": 1,
+        "digest": "bdd9f62c0d695e96dbb2d7098724f5fe",
+        "relation": "products"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "return_items"
+      },
+      {
+        "rows": 1,
+        "digest": "6792db542107cbc461d4e2dcae1b0f76",
+        "relation": "sale_items"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "sale_payments"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "sale_returns"
+      },
+      {
+        "rows": 1,
+        "digest": "bab7660bfba373bd775fe87cc2aabf9e",
+        "relation": "sales"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "stock_condition_entries"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "stocktake_counts"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "stocktake_sessions"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "supplier_stock_returns"
+      }
+    ],
+    "unrelated_functions": "8336022fae8d13b2ac7e4e9732853da9",
+    "table_security": "41b75fca0acf0dc989b16d9452e041e1",
+    "integrity": {
+      "negative_credit": 0,
+      "credit_ledger_mismatch": 0,
+      "invalid_branch_inventory": 0,
+      "overlapping_active_scopes": 0,
+      "duplicate_branch_movements": 0,
+      "invalid_closed_count_delta": 0,
+      "negative_condition_balance": 0,
+      "return_allocation_mismatch": 0,
+      "invalid_branch_movement_delta": 0
+    }
+  },
+  "security_and_schema_before": {
+    "roles": "a8440a68f9c4e3c1f59410ed08e81873",
+    "role_memberships": "5185538f13d1f5256bd9dea2d4b0d536",
+    "default_acls": "53af26788e1369bd0ef3bcb646403699",
+    "schema_acls": "e77b4b25e5cbbdeb742a119d79d9188a",
+    "existing_columns": "7bbd1364e785ed82a520a153722e1736",
+    "existing_constraints": "f0123f5f2973b3ef9d93c65f48414b83",
+    "existing_indexes": "ab98dcb37b901dab83ef535aa24f7611",
+    "unrelated_policies": "3c2b55340b151a76627de912c4495218",
+    "triggers": "d1b06802174392546fcb39aaee4f509d",
+    "branch_enabled_businesses": 0,
+    "financial_summary": [
+      {
+        "hash": "4981ee3e635213170fbaf6301606d5c8",
+        "signature": "get_trexven_financial_summary(uuid,timestamp with time zone,timestamp with time zone)"
+      }
+    ]
+  },
+  "security_and_schema_after": {
+    "roles": "a8440a68f9c4e3c1f59410ed08e81873",
+    "role_memberships": "5185538f13d1f5256bd9dea2d4b0d536",
+    "default_acls": "53af26788e1369bd0ef3bcb646403699",
+    "schema_acls": "e77b4b25e5cbbdeb742a119d79d9188a",
+    "existing_columns": "7bbd1364e785ed82a520a153722e1736",
+    "existing_constraints": "f0123f5f2973b3ef9d93c65f48414b83",
+    "existing_indexes": "ab98dcb37b901dab83ef535aa24f7611",
+    "unrelated_policies": "3c2b55340b151a76627de912c4495218",
+    "triggers": "58b5c73dace90ad6ed0212e3b745bae8",
+    "branch_enabled_businesses": 0,
+    "financial_summary": [
+      {
+        "hash": "4981ee3e635213170fbaf6301606d5c8",
+        "signature": "get_trexven_financial_summary(uuid,timestamp with time zone,timestamp with time zone)"
+      }
+    ]
+  },
+  "trigger_fingerprint_note": "All original triggers are unchanged. The complete trigger fingerprint changes only because PostgreSQL adds internal triggers for the five approved foreign keys; excluding those new constraints reproduces the exact before fingerprint.",
+  "deployed_schema": {
+    "existing_triggers": "d1b06802174392546fcb39aaee4f509d",
+    "added_constraints": [
+      {
+        "name": "branch_ops_condition_branch",
+        "table": "stock_condition_entries",
+        "validated": true,
+        "definition": "FOREIGN KEY (branch_id, business_id) REFERENCES branches(id, business_id)"
+      },
+      {
+        "name": "branch_ops_condition_product",
+        "table": "stock_condition_entries",
+        "validated": true,
+        "definition": "FOREIGN KEY (product_id, business_id) REFERENCES products(id, business_id)"
+      },
+      {
+        "name": "branch_ops_session_branch",
+        "table": "stocktake_sessions",
+        "validated": true,
+        "definition": "FOREIGN KEY (branch_id, business_id) REFERENCES branches(id, business_id)"
+      },
+      {
+        "name": "branch_ops_supplier_branch",
+        "table": "supplier_stock_returns",
+        "validated": true,
+        "definition": "FOREIGN KEY (branch_id, business_id) REFERENCES branches(id, business_id)"
+      },
+      {
+        "name": "branch_ops_supplier_product",
+        "table": "supplier_stock_returns",
+        "validated": true,
+        "definition": "FOREIGN KEY (product_id, business_id) REFERENCES products(id, business_id)"
+      }
+    ],
+    "added_columns": [
+      {
+        "acl": null,
+        "name": "branch_id",
+        "type": "uuid",
+        "table": "stock_condition_entries",
+        "default": null,
+        "not_null": false
+      },
+      {
+        "acl": null,
+        "name": "branch_id",
+        "type": "uuid",
+        "table": "supplier_stock_returns",
+        "default": null,
+        "not_null": false
+      }
+    ],
+    "added_indexes": [
+      {
+        "name": "branch_ops_active_session",
+        "ready": true,
+        "valid": true,
+        "definition": "CREATE UNIQUE INDEX branch_ops_active_session ON public.stocktake_sessions USING btree (business_id, branch_id) WHERE ((branch_id IS NOT NULL) AND (status = ANY (ARRAY['open'::text, 'review'::text])))"
+      },
+      {
+        "name": "branch_ops_condition_balance",
+        "ready": true,
+        "valid": true,
+        "definition": "CREATE INDEX branch_ops_condition_balance ON public.stock_condition_entries USING btree (business_id, branch_id, product_id, condition)"
+      },
+      {
+        "name": "branch_ops_supplier_scope",
+        "ready": true,
+        "valid": true,
+        "definition": "CREATE INDEX branch_ops_supplier_scope ON public.supplier_stock_returns USING btree (business_id, branch_id, status)"
+      },
+      {
+        "name": "inventory_ops_active_global_session",
+        "ready": true,
+        "valid": true,
+        "definition": "CREATE UNIQUE INDEX inventory_ops_active_global_session ON public.stocktake_sessions USING btree (business_id) WHERE ((branch_id IS NULL) AND (status = ANY (ARRAY['open'::text, 'review'::text])))"
+      }
+    ],
+    "target_policies": [
+      {
+        "cmd": "SELECT",
+        "qual": "(EXISTS ( SELECT 1\n   FROM stocktake_sessions s\n  WHERE ((s.id = inventory_reconciliation_reviews.session_id) AND (s.business_id = inventory_reconciliation_reviews.business_id) AND private.branch_record_access(s.business_id, s.branch_id))))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "inventory_reconciliation_reviews",
+        "permissive": "RESTRICTIVE",
+        "policyname": "Branch inventory review scope",
+        "schemaname": "public",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "private.branch_record_access(business_id, branch_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "stock_condition_entries",
+        "permissive": "RESTRICTIVE",
+        "policyname": "Branch inventory condition scope",
+        "schemaname": "public",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "private.branch_record_access(business_id, branch_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "stocktake_sessions",
+        "permissive": "RESTRICTIVE",
+        "policyname": "Branch inventory session scope",
+        "schemaname": "public",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(private.has_business_permission(business_id, 'view_inventory'::text) AND (user_owns_business(business_id) OR (branch_id IS NULL) OR private.has_branch_access(business_id, branch_id)))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "stocktake_sessions",
+        "permissive": "PERMISSIVE",
+        "policyname": "Stocktake read",
+        "schemaname": "public",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "private.branch_record_access(business_id, branch_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "supplier_stock_returns",
+        "permissive": "RESTRICTIVE",
+        "policyname": "Branch inventory supplier scope",
+        "schemaname": "public",
+        "with_check": null
+      }
+    ],
+    "target_public_execute_grants": 0
+  },
+  "deployed_functions": [
+    {
+      "name": "private.apply_branch_inventory_delta",
+      "signature": "private.apply_branch_inventory_delta(uuid,uuid,uuid,numeric,uuid,text,text,text,uuid)",
+      "arguments": "p_business uuid, p_branch uuid, p_product uuid, p_delta numeric, p_request uuid, p_reason text, p_source text, p_kind text, p_reference uuid",
+      "result": "numeric",
+      "hash": "a571df63d6980e589aefe3adfaaf0f7b",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_execute": false,
+      "body_matches_approved_sql": true,
+      "existing_contract_and_acl_preserved": false
+    },
+    {
+      "name": "private.branch_inventory_context",
+      "signature": "private.branch_inventory_context(uuid,text,uuid,boolean)",
+      "arguments": "p_business uuid, p_permission text, p_branch uuid, p_sensitive boolean DEFAULT false",
+      "result": "void",
+      "hash": "36eec8268243c9c03b8ef692fe2d3cdb",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "security_definer": false,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_execute": false,
+      "body_matches_approved_sql": true,
+      "existing_contract_and_acl_preserved": false
+    },
+    {
+      "name": "private.capture_return_condition_stock",
+      "signature": "private.capture_return_condition_stock()",
+      "arguments": "",
+      "result": "trigger",
+      "hash": "920b1c4a40cb0a65c08ee842f6b56fed",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_execute": false,
+      "body_matches_approved_sql": true,
+      "existing_contract_and_acl_preserved": true
+    },
+    {
+      "name": "private.process_trexven_sale",
+      "signature": "private.process_trexven_sale(uuid,uuid,numeric,text,jsonb,boolean,uuid)",
+      "arguments": "p_business_id uuid, p_employee_id uuid, p_total numeric, p_payment_method text, p_items jsonb, p_quick boolean, p_branch_id uuid DEFAULT NULL::uuid",
+      "result": "uuid",
+      "hash": "7ca90d782e68a95e0aed9f2492c7f7a7",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "service_execute": false,
+      "body_matches_approved_sql": true,
+      "existing_contract_and_acl_preserved": true
+    },
+    {
+      "name": "public.acknowledge_trexven_supplier_return",
+      "signature": "acknowledge_trexven_supplier_return(uuid,uuid,numeric,numeric,text)",
+      "arguments": "p_return_id uuid, p_request_id uuid, p_accepted numeric, p_returned numeric, p_reason text",
+      "result": "jsonb",
+      "hash": "03eebc6fa7373ce58b8bb2a45932c78c",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "service_execute": true,
+      "body_matches_approved_sql": true,
+      "existing_contract_and_acl_preserved": true
+    },
+    {
+      "name": "public.approve_trexven_stocktake",
+      "signature": "approve_trexven_stocktake(uuid,uuid,text)",
+      "arguments": "p_session_id uuid, p_request_id uuid, p_reason text",
+      "result": "jsonb",
+      "hash": "f48d8fc19e941ec731eaeea1b9fc4389",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "service_execute": true,
+      "body_matches_approved_sql": true,
+      "existing_contract_and_acl_preserved": true
+    },
+    {
+      "name": "public.classify_trexven_branch_stock",
+      "signature": "classify_trexven_branch_stock(uuid,uuid,uuid,uuid,numeric,text,text)",
+      "arguments": "p_business_id uuid, p_branch_id uuid, p_product_id uuid, p_request_id uuid, p_quantity numeric, p_condition text, p_reason text",
+      "result": "jsonb",
+      "hash": "abc3a901964767037c606a4a315de287",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "service_execute": true,
+      "body_matches_approved_sql": true,
+      "existing_contract_and_acl_preserved": false
+    },
+    {
+      "name": "public.count_trexven_stock",
+      "signature": "count_trexven_stock(uuid,uuid,jsonb)",
+      "arguments": "p_session_id uuid, p_request_id uuid, p_counts jsonb",
+      "result": "jsonb",
+      "hash": "739907e0a679143b935e0d4032d6709f",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "service_execute": true,
+      "body_matches_approved_sql": true,
+      "existing_contract_and_acl_preserved": true
+    },
+    {
+      "name": "public.dispatch_trexven_branch_supplier_return",
+      "signature": "dispatch_trexven_branch_supplier_return(uuid,uuid,uuid,uuid,numeric,text,text,text)",
+      "arguments": "p_business_id uuid, p_branch_id uuid, p_request_id uuid, p_product_id uuid, p_quantity numeric, p_condition text, p_supplier_name text, p_reason text",
+      "result": "jsonb",
+      "hash": "38ec5e2f7a767c2d898bb2e4e8f4e5d6",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "service_execute": true,
+      "body_matches_approved_sql": true,
+      "existing_contract_and_acl_preserved": false
+    },
+    {
+      "name": "public.get_trexven_inventory_capabilities",
+      "signature": "get_trexven_inventory_capabilities(uuid)",
+      "arguments": "p_business_id uuid",
+      "result": "jsonb",
+      "hash": "a0b409c94ad3940f5c902426d439d1ad",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "service_execute": true,
+      "body_matches_approved_sql": true,
+      "existing_contract_and_acl_preserved": false
+    },
+    {
+      "name": "public.manage_trexven_stocktake",
+      "signature": "manage_trexven_stocktake(uuid,uuid,text,uuid,uuid,text)",
+      "arguments": "p_session_id uuid, p_request_id uuid, p_action text, p_product_id uuid DEFAULT NULL::uuid, p_counter_id uuid DEFAULT NULL::uuid, p_reason text DEFAULT NULL::text",
+      "result": "jsonb",
+      "hash": "573ff19fe3df8653799f3b1b27d418be",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "service_execute": true,
+      "body_matches_approved_sql": true,
+      "existing_contract_and_acl_preserved": true
+    },
+    {
+      "name": "public.resolve_trexven_branch_condition_stock",
+      "signature": "resolve_trexven_branch_condition_stock(uuid,uuid,uuid,uuid,numeric,text,text,text)",
+      "arguments": "p_business_id uuid, p_branch_id uuid, p_product_id uuid, p_request_id uuid, p_quantity numeric, p_condition text, p_action text, p_reason text",
+      "result": "jsonb",
+      "hash": "acb661e032209dcc2cea207442a9cca0",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "service_execute": true,
+      "body_matches_approved_sql": true,
+      "existing_contract_and_acl_preserved": false
+    },
+    {
+      "name": "public.review_trexven_inventory_discrepancy",
+      "signature": "review_trexven_inventory_discrepancy(uuid,uuid,text)",
+      "arguments": "p_review_id uuid, p_request_id uuid, p_reason text",
+      "result": "jsonb",
+      "hash": "3b882233060fd80908e2b5474dd980bc",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "service_execute": true,
+      "body_matches_approved_sql": true,
+      "existing_contract_and_acl_preserved": true
+    },
+    {
+      "name": "public.start_trexven_branch_stocktake",
+      "signature": "start_trexven_branch_stocktake(uuid,uuid,uuid,text)",
+      "arguments": "p_business_id uuid, p_branch_id uuid, p_request_id uuid, p_name text",
+      "result": "jsonb",
+      "hash": "0f20b2cc525bb51217a277e3f5cb85b3",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "service_execute": true,
+      "body_matches_approved_sql": true,
+      "existing_contract_and_acl_preserved": false
+    },
+    {
+      "name": "public.start_trexven_stocktake",
+      "signature": "start_trexven_stocktake(uuid,uuid,text)",
+      "arguments": "p_business_id uuid, p_request_id uuid, p_name text",
+      "result": "jsonb",
+      "hash": "8d2f2812b371956262517ad15102cde8",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "security_definer": true,
+      "config": [
+        "search_path=\"\""
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "service_execute": true,
+      "body_matches_approved_sql": true,
+      "existing_contract_and_acl_preserved": true
+    }
+  ],
+  "shared_sources": [
+    {
+      "path": "C:/Users/USER/AndroidStudioProjects/Trexven/packages/trexven_operations/lib/src/inventory_operations_screen.dart",
+      "before": "0B8E6B086EBC28937E4D9C3BE661890596EE5AD7E0B70FED8FDA45D330F307AC",
+      "installed": "F153477F099B706F50E97FA9AF785019F86C2E92796149711834D043C5E579F3"
+    },
+    {
+      "path": "C:/Users/USER/AndroidStudioProjects/Trexven/packages/trexven_operations/lib/src/inventory_operations_views.dart",
+      "before": "16F14E7715A4FE02791F7D277795D52780B92AF1CDDC7DF45D173C9F45837BC8",
+      "installed": "5A962BDCB5771CE92799ABA5CEC917BD033168E68D146479234505A9BCFB102B"
+    }
+  ],
+  "checks": {
+    "all_18_record_counts_and_digests_unchanged": true,
+    "all_nine_integrity_counters_zero": true,
+    "all_15_function_bodies_match_approved_sql": true,
+    "eight_existing_function_contracts_and_acls_preserved": true,
+    "unrelated_functions_unchanged": true,
+    "existing_table_and_column_grants_unchanged": true,
+    "roles_memberships_defaults_and_schema_grants_unchanged": true,
+    "unrelated_policies_and_original_triggers_unchanged": true,
+    "new_constraints_validated": true,
+    "new_indexes_valid_and_ready": true,
+    "no_anon_or_public_execute_on_target_functions": true,
+    "no_client_execute_on_new_private_helpers": true,
+    "both_apps_reference_activated_shared_package": true,
+    "atomic_source_replacement_hashes_verified": true,
+    "no_temporary_sources_remaining": true
+  },
+  "limits": {
+    "no_application_builds_or_tests_run": true,
+    "no_analyzer_or_formatter_run": true,
+    "no_production_stock_or_financial_test_transactions": true,
+    "no_business_or_branch_activation": true,
+    "no_stock_allocation_or_seeding": true,
+    "branch_enabled_businesses": 0,
+    "live_branch_workflows_still_require_manual_validation": true
+  }
+}

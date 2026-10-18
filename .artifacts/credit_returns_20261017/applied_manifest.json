@@ -1,0 +1,30 @@
+[
+    {
+        "File":  "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_operations\\lib\\src\\financial_operations_screen.dart",
+        "SHA256":  "1F9374BD96A1C4F26CEBE8E9706487EE6C63464F102E0C498CB519A75403ACBA"
+    },
+    {
+        "File":  "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_operations\\lib\\src\\financial_operations_support.dart",
+        "SHA256":  "509AF37F1D8A31D75855DAE8DA5F8E10B1225EC0110C1C0B394A90794C964D50"
+    },
+    {
+        "File":  "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_operations\\lib\\src\\financial_operations_details.dart",
+        "SHA256":  "09E2AEB4960531528F9E63F537FF4C61CFCF3D8D2026BD795FCE5E4B3DE189D2"
+    },
+    {
+        "File":  "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\lib\\screens\\finance\\finance_tab.dart",
+        "SHA256":  "F13CDD5770C0FEB1008B2B2B603AA63893481DDF62B8B158F7E5F454FF152FB0"
+    },
+    {
+        "File":  "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\pos\\operations_screen.dart",
+        "SHA256":  "0B74E261B3C2D5E7FF046B5033C70DE7F57B42E82D9F135559206BAB95913483"
+    },
+    {
+        "File":  "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\pos\\dashboard_screen.dart",
+        "SHA256":  "B30575DB13B020C90C4E7C4195C2B2BBD5816238075345E5AA5EEAE4F81A090B"
+    },
+    {
+        "File":  "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\pos\\credit_returns_screen.dart",
+        "SHA256":  "0A53B5E583BF8C5B5F50C0754E67C9FE766CB6B8DFA23A5EA35F5598AC664726"
+    }
+]

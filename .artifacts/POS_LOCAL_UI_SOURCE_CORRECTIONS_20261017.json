@@ -1,0 +1,66 @@
+[
+  {
+    "path": "packages/trexven_operations/lib/src/cash_shift_screen.dart",
+    "removedInvalidConstAtLines": [
+      520,
+      547,
+      567,
+      572,
+      599,
+      612,
+      619
+    ]
+  },
+  {
+    "path": "packages/trexven_operations/lib/src/employee_access_screen.dart",
+    "removedInvalidConstAtLines": [
+      198,
+      257,
+      297,
+      748,
+      780,
+      850,
+      1142
+    ]
+  },
+  {
+    "path": "packages/trexven_operations/lib/src/financial_operations_details.dart",
+    "removedInvalidConstAtLines": [
+      278
+    ]
+  },
+  {
+    "path": "packages/trexven_operations/lib/src/financial_operations_screen.dart",
+    "removedInvalidConstAtLines": [
+      824,
+      900,
+      1053
+    ]
+  },
+  {
+    "path": "packages/trexven_operations/lib/src/financial_operations_support.dart",
+    "removedInvalidConstAtLines": [
+      92
+    ]
+  },
+  {
+    "path": "packages/trexven_operations/lib/src/inventory_operations_screen.dart",
+    "removedInvalidConstAtLines": [
+      789,
+      808,
+      821,
+      833,
+      835,
+      843,
+      971,
+      1057,
+      1098
+    ]
+  },
+  {
+    "path": "packages/trexven_operations/lib/src/inventory_operations_views.dart",
+    "removedInvalidConstAtLines": [
+      296
+    ]
+  }
+]

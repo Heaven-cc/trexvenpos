@@ -1,0 +1,457 @@
+{
+  "date": "2026-10-17T15:09:27.914Z",
+  "scope": "Static source/dependency inspection; no Flutter commands or runtime tests.",
+  "mainInspectedFileCount": 756,
+  "mainChanges": [],
+  "posChanges": [
+    {
+      "path": "lib/src/ui/theme/pos_theme.dart",
+      "before": "3f494070372313b05a303a15629792b7dca0feae04fdee91347acc04bb41df0d",
+      "after": "da402dfc8bfea65b10f88a65b93b77117ac478d7b47178e7374201b8045fae34"
+    },
+    {
+      "path": "packages/trexven_design_system/README.md",
+      "before": null,
+      "after": "8369346007fdc1cb483bf86e7acebef49444cc87daca0709e8a119775da2f1a7"
+    },
+    {
+      "path": "packages/trexven_design_system/lib/src/components/actions.dart",
+      "before": null,
+      "after": "f0b025ddf09dfa421a994fb1df875c88e593df006fe83455249b6eee711ca28b"
+    },
+    {
+      "path": "packages/trexven_design_system/lib/src/components/forms.dart",
+      "before": null,
+      "after": "01867b2dc52ae027dc8f8624a67c3a3cd70363bf88b835a08b6331cec0c88cab"
+    },
+    {
+      "path": "packages/trexven_design_system/lib/src/components/surfaces.dart",
+      "before": null,
+      "after": "d6734275f087537b178ae625bac51ec0e18917562e94c3870f47d69d62d0e78c"
+    },
+    {
+      "path": "packages/trexven_design_system/lib/src/theme/presentation.dart",
+      "before": null,
+      "after": "d51d038a328059e7ccd10b7637969f106b9b4eac91bef22c13e3a7f13f0f9847"
+    },
+    {
+      "path": "packages/trexven_design_system/lib/src/theme/tokens.dart",
+      "before": null,
+      "after": "0d3e1c8c02fc9749d96d0908b320dfa92654819b2030cdbc61c6473f930755c1"
+    },
+    {
+      "path": "packages/trexven_design_system/lib/src/theme/trexven_theme.dart",
+      "before": null,
+      "after": "5075e5041fab5e355ac65033d23f2503d60b67a308b0ee6b85e56c9c61b3762e"
+    },
+    {
+      "path": "packages/trexven_design_system/lib/trexven_design_system.dart",
+      "before": null,
+      "after": "3e7140a0a5c9d9cad9d61337241fecb1dae7df3687c4b9ec48b2443fccc97a9c"
+    },
+    {
+      "path": "packages/trexven_design_system/pubspec.yaml",
+      "before": null,
+      "after": "cb5df29c519769bb59656ff9040bb6046e7fb388bdbef627092fe8c0925f57f4"
+    },
+    {
+      "path": "packages/trexven_operations/README.md",
+      "before": null,
+      "after": "d9566f77a7df9902bc7756e122a6d0acbaef699f2b7533c0ee3a3e57cdfdc67c"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/cash_shift_screen.dart",
+      "before": null,
+      "after": "e627761570dc88bf0fbe896fc1b6e1f40e0e4ed389bb788059bc254b61c8ab9a"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/customer_presentation.dart",
+      "before": null,
+      "after": "a79adc3ab5f08c5410f1b37db9c29b3f11de8e24d223e58f3cc0deaf2eff91de"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/durable_state.dart",
+      "before": null,
+      "after": "36bdfe79a2febdbc6f56aaffc5bade4a2a2086c05010963ad332a5fa8df8f7eb"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/employee_access_screen.dart",
+      "before": null,
+      "after": "9827b72d239421d45d4ecb9e129e2a299ebe91377285996fc699a838faf6081a"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/encrypted_state.dart",
+      "before": null,
+      "after": "0feda2fc62dc7cacf2f39148dcc9c6b644415f7ce63ac24e3505466b868eb037"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/encrypted_state_native.dart",
+      "before": null,
+      "after": "83ab0a56350e9fb0459e5971e7b548baa2976c20119846d2d87f6efbaf1d1e12"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/encrypted_state_unsupported.dart",
+      "before": null,
+      "after": "a9fe8de21d5f55ea902ec1c73421c1817c996e5d315dfc7ae0991ce1a72a3874"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/financial_operations_details.dart",
+      "before": null,
+      "after": "36e91451db3495aa24b93a283fd85b2b3f9a8bf03026275906d2cb147b9e9013"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/financial_operations_screen.dart",
+      "before": null,
+      "after": "db31b1535c63115630a24d10aff0e9e17963946c66c7c4be989d85f568015d5f"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/financial_operations_support.dart",
+      "before": null,
+      "after": "a37f2178eb7d9d1fd10037cc7595cae20dfc8e4cadcdf3b5c9ca84a5d367c657"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/inventory_operations_screen.dart",
+      "before": null,
+      "after": "05486a52599b38af198e0d05eeefe464b421c1ec6735396500066488ea000fb5"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/inventory_operations_views.dart",
+      "before": null,
+      "after": "7fc2f9a28ec5137974d9f6f4c79410f28905dd14579ca1fb324bf4da3b6a0521"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/notification_center_screen.dart",
+      "before": null,
+      "after": "84357f19141afb1665a0e3779ab6d1af8d1e63dcabfe2b01a10301c136ccb0c7"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/operation_journal.dart",
+      "before": null,
+      "after": "8869ac3fcc837b7f69d31d4054c00c441817f8bccc842a786e98003a23d43377"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/operations_client.dart",
+      "before": null,
+      "after": "8a08f5359d1270a7ceac1342fe75db094c0bc8019b72955fbf0ce55c1ec3815b"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/payment_confirmation_dialog.dart",
+      "before": null,
+      "after": "dea8539e378121ccd622549eee36d553ef4932ff0ea1db171a7232d22c618b15"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/stock_count_batch.dart",
+      "before": null,
+      "after": "49b355b4738ac9c0e4ce8bf216d488664628aff27426f0d5b376b7e29b20b03d"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/text_controller_scope.dart",
+      "before": null,
+      "after": "7925e61e0e82526898a31560f8315b3893e07a7577c43496a39ee21292ddadb7"
+    },
+    {
+      "path": "packages/trexven_operations/lib/trexven_operations.dart",
+      "before": null,
+      "after": "bace0bcc72154880ff010b6ba5e7fcc5d1f1d8a4cb9970f48bbe0f2df95d302f"
+    },
+    {
+      "path": "packages/trexven_operations/pubspec.yaml",
+      "before": null,
+      "after": "231bb6c6312ee5bed43f72fe0dce54f4756b7930e4cc74af187b5e82fdd5dd34"
+    },
+    {
+      "path": "pubspec.lock",
+      "before": "edb16e85846ba3a9c3741b1ee20ce8dadc6761ddaa41dda0cc24b584007bc7b0",
+      "after": "42c96d85fca0f86e0b0141f53ad27f73ebd0762ff465c3b0e170af40c4e0fc1c"
+    },
+    {
+      "path": "pubspec.yaml",
+      "before": "c1616ecdf233476506bfdd5faf1192f8c839c5f762385339ed18e0a6aed27198",
+      "after": "fb1f2de7cc07747a50afc3068f4804d377abad0ba38eb9557aac59fdbeafcfec"
+    },
+    {
+      "path": "test/pending_sale_live_restart_test.dart",
+      "before": "7fc0626800590724133bc8b212c0b1d874d77e5b582022522212704a212bffbb",
+      "after": "262d1302ec5164b6cad575056ef21a6aec83d074553d383e7647d1697ffdb26a"
+    }
+  ],
+  "mainDependencies": [],
+  "localPaths": [
+    {
+      "package": "trexvenpos",
+      "path": "packages/trexven_design_system",
+      "resolved": "C:/Users/USER/AndroidStudioProjects/trexvenpos/packages/trexven_design_system",
+      "insidePos": true
+    },
+    {
+      "package": "trexvenpos",
+      "path": "packages/trexven_operations",
+      "resolved": "C:/Users/USER/AndroidStudioProjects/trexvenpos/packages/trexven_operations",
+      "insidePos": true
+    },
+    {
+      "package": "trexven_operations",
+      "path": "../trexven_design_system",
+      "resolved": "C:/Users/USER/AndroidStudioProjects/trexvenpos/packages/trexven_design_system",
+      "insidePos": true
+    }
+  ],
+  "missingImports": [],
+  "mainReferences": [],
+  "invalidConst": [],
+  "copied": [
+    {
+      "path": "packages/trexven_design_system/README.md",
+      "sha256": "8369346007fdc1cb483bf86e7acebef49444cc87daca0709e8a119775da2f1a7",
+      "sourceSha256": "94d989d3df6194bf49f2f7279d7092621988d4d562f51aab17c1df077f5e0a13"
+    },
+    {
+      "path": "packages/trexven_design_system/lib/src/components/actions.dart",
+      "sha256": "f0b025ddf09dfa421a994fb1df875c88e593df006fe83455249b6eee711ca28b",
+      "sourceSha256": "f0b025ddf09dfa421a994fb1df875c88e593df006fe83455249b6eee711ca28b"
+    },
+    {
+      "path": "packages/trexven_design_system/lib/src/components/forms.dart",
+      "sha256": "01867b2dc52ae027dc8f8624a67c3a3cd70363bf88b835a08b6331cec0c88cab",
+      "sourceSha256": "01867b2dc52ae027dc8f8624a67c3a3cd70363bf88b835a08b6331cec0c88cab"
+    },
+    {
+      "path": "packages/trexven_design_system/lib/src/components/surfaces.dart",
+      "sha256": "d6734275f087537b178ae625bac51ec0e18917562e94c3870f47d69d62d0e78c",
+      "sourceSha256": "d6734275f087537b178ae625bac51ec0e18917562e94c3870f47d69d62d0e78c"
+    },
+    {
+      "path": "packages/trexven_design_system/lib/src/theme/presentation.dart",
+      "sha256": "d51d038a328059e7ccd10b7637969f106b9b4eac91bef22c13e3a7f13f0f9847",
+      "sourceSha256": "d51d038a328059e7ccd10b7637969f106b9b4eac91bef22c13e3a7f13f0f9847"
+    },
+    {
+      "path": "packages/trexven_design_system/lib/src/theme/tokens.dart",
+      "sha256": "0d3e1c8c02fc9749d96d0908b320dfa92654819b2030cdbc61c6473f930755c1",
+      "sourceSha256": "0d3e1c8c02fc9749d96d0908b320dfa92654819b2030cdbc61c6473f930755c1"
+    },
+    {
+      "path": "packages/trexven_design_system/lib/src/theme/trexven_theme.dart",
+      "sha256": "5075e5041fab5e355ac65033d23f2503d60b67a308b0ee6b85e56c9c61b3762e",
+      "sourceSha256": "5075e5041fab5e355ac65033d23f2503d60b67a308b0ee6b85e56c9c61b3762e"
+    },
+    {
+      "path": "packages/trexven_design_system/lib/trexven_design_system.dart",
+      "sha256": "3e7140a0a5c9d9cad9d61337241fecb1dae7df3687c4b9ec48b2443fccc97a9c",
+      "sourceSha256": "3e7140a0a5c9d9cad9d61337241fecb1dae7df3687c4b9ec48b2443fccc97a9c"
+    },
+    {
+      "path": "packages/trexven_design_system/pubspec.yaml",
+      "sha256": "cb5df29c519769bb59656ff9040bb6046e7fb388bdbef627092fe8c0925f57f4",
+      "sourceSha256": "ef6f02b627c8c6b819b4306c47b08fe0225a806659d5d61bd9a9c1dc308c6f5a"
+    },
+    {
+      "path": "packages/trexven_operations/README.md",
+      "sha256": "d9566f77a7df9902bc7756e122a6d0acbaef699f2b7533c0ee3a3e57cdfdc67c",
+      "sourceSha256": null
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/cash_shift_screen.dart",
+      "sha256": "e627761570dc88bf0fbe896fc1b6e1f40e0e4ed389bb788059bc254b61c8ab9a",
+      "sourceSha256": "79bf3531a24554d7f1c3450f6c751cc6a95274631bcdde82ba1ed66d08b10519"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/customer_presentation.dart",
+      "sha256": "a79adc3ab5f08c5410f1b37db9c29b3f11de8e24d223e58f3cc0deaf2eff91de",
+      "sourceSha256": "a79adc3ab5f08c5410f1b37db9c29b3f11de8e24d223e58f3cc0deaf2eff91de"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/durable_state.dart",
+      "sha256": "36bdfe79a2febdbc6f56aaffc5bade4a2a2086c05010963ad332a5fa8df8f7eb",
+      "sourceSha256": "36bdfe79a2febdbc6f56aaffc5bade4a2a2086c05010963ad332a5fa8df8f7eb"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/employee_access_screen.dart",
+      "sha256": "9827b72d239421d45d4ecb9e129e2a299ebe91377285996fc699a838faf6081a",
+      "sourceSha256": "56e248398efd402debdd7868a6de094d6e871f44992b064cbb35bc49f6e28537"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/encrypted_state.dart",
+      "sha256": "0feda2fc62dc7cacf2f39148dcc9c6b644415f7ce63ac24e3505466b868eb037",
+      "sourceSha256": "0feda2fc62dc7cacf2f39148dcc9c6b644415f7ce63ac24e3505466b868eb037"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/encrypted_state_native.dart",
+      "sha256": "83ab0a56350e9fb0459e5971e7b548baa2976c20119846d2d87f6efbaf1d1e12",
+      "sourceSha256": "83ab0a56350e9fb0459e5971e7b548baa2976c20119846d2d87f6efbaf1d1e12"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/encrypted_state_unsupported.dart",
+      "sha256": "a9fe8de21d5f55ea902ec1c73421c1817c996e5d315dfc7ae0991ce1a72a3874",
+      "sourceSha256": "a9fe8de21d5f55ea902ec1c73421c1817c996e5d315dfc7ae0991ce1a72a3874"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/financial_operations_details.dart",
+      "sha256": "36e91451db3495aa24b93a283fd85b2b3f9a8bf03026275906d2cb147b9e9013",
+      "sourceSha256": "14e6ca6ab67fa2d1c6081bcedef9af8c003698fdf29ebbfbafdde25654caab0a"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/financial_operations_screen.dart",
+      "sha256": "db31b1535c63115630a24d10aff0e9e17963946c66c7c4be989d85f568015d5f",
+      "sourceSha256": "0d750a03b759418e8f7ee9441c5cb839f56f1a849e98a32bed1c2b34239ed47e"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/financial_operations_support.dart",
+      "sha256": "a37f2178eb7d9d1fd10037cc7595cae20dfc8e4cadcdf3b5c9ca84a5d367c657",
+      "sourceSha256": "7758941740f070a2014f553a279e876ef82ef8fb6317321abf66f15806576f54"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/inventory_operations_screen.dart",
+      "sha256": "05486a52599b38af198e0d05eeefe464b421c1ec6735396500066488ea000fb5",
+      "sourceSha256": "8b9f24167d7fa592c9231b21c35c45bafd91b3788b7747661fd077f1f385d5ee"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/inventory_operations_views.dart",
+      "sha256": "7fc2f9a28ec5137974d9f6f4c79410f28905dd14579ca1fb324bf4da3b6a0521",
+      "sourceSha256": "84eab330d2c4cfdf30ee5e0753aa9ca023c70c7d982c3ea007e845479ecf5d55"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/notification_center_screen.dart",
+      "sha256": "84357f19141afb1665a0e3779ab6d1af8d1e63dcabfe2b01a10301c136ccb0c7",
+      "sourceSha256": "84357f19141afb1665a0e3779ab6d1af8d1e63dcabfe2b01a10301c136ccb0c7"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/operation_journal.dart",
+      "sha256": "8869ac3fcc837b7f69d31d4054c00c441817f8bccc842a786e98003a23d43377",
+      "sourceSha256": "8869ac3fcc837b7f69d31d4054c00c441817f8bccc842a786e98003a23d43377"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/operations_client.dart",
+      "sha256": "8a08f5359d1270a7ceac1342fe75db094c0bc8019b72955fbf0ce55c1ec3815b",
+      "sourceSha256": "8a08f5359d1270a7ceac1342fe75db094c0bc8019b72955fbf0ce55c1ec3815b"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/payment_confirmation_dialog.dart",
+      "sha256": "dea8539e378121ccd622549eee36d553ef4932ff0ea1db171a7232d22c618b15",
+      "sourceSha256": "dea8539e378121ccd622549eee36d553ef4932ff0ea1db171a7232d22c618b15"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/stock_count_batch.dart",
+      "sha256": "49b355b4738ac9c0e4ce8bf216d488664628aff27426f0d5b376b7e29b20b03d",
+      "sourceSha256": "49b355b4738ac9c0e4ce8bf216d488664628aff27426f0d5b376b7e29b20b03d"
+    },
+    {
+      "path": "packages/trexven_operations/lib/src/text_controller_scope.dart",
+      "sha256": "7925e61e0e82526898a31560f8315b3893e07a7577c43496a39ee21292ddadb7",
+      "sourceSha256": "7925e61e0e82526898a31560f8315b3893e07a7577c43496a39ee21292ddadb7"
+    },
+    {
+      "path": "packages/trexven_operations/lib/trexven_operations.dart",
+      "sha256": "bace0bcc72154880ff010b6ba5e7fcc5d1f1d8a4cb9970f48bbe0f2df95d302f",
+      "sourceSha256": "7f3cdaef27f58e74f1ff284819e5505c49d4ea770002980233416cbf556cf341"
+    },
+    {
+      "path": "packages/trexven_operations/pubspec.yaml",
+      "sha256": "231bb6c6312ee5bed43f72fe0dce54f4756b7930e4cc74af187b5e82fdd5dd34",
+      "sourceSha256": "bed9922398302c73bf287f14e33147296a35352b508a955c8ad3c4118b6ea124"
+    }
+  ],
+  "omittedOwnerOnlyFiles": [
+    "account_operations_screen.dart",
+    "operational_permissions_screen.dart",
+    "entitlements.dart",
+    "metric_content.dart"
+  ],
+  "generatedConfiguration": [
+    {
+      "path": ".dart_tool/package_config.json",
+      "sha256": "954e888335ca7084c8cc09c3179857a12e8b1263114d55243474926192f8fcbf"
+    },
+    {
+      "path": ".idea/libraries/Dart_Packages.xml",
+      "sha256": "06f160e8251856e32ec540c5f44076892cf6af1efa66092dd0c70925c09d8a3b"
+    }
+  ],
+  "invalidatedGeneratedMetadata": [
+    ".dart_tool/flutter_build/1c4fe3f67683e1b54f98adbcedff32ab/kernel_snapshot_program.stamp",
+    ".dart_tool/flutter_build/1c4fe3f67683e1b54f98adbcedff32ab/kernel_snapshot_program.d",
+    ".dart_tool/flutter_build/1c4fe3f67683e1b54f98adbcedff32ab/.filecache"
+  ],
+  "unexpectedOperationalChanges": [],
+  "physicalOwnership": [
+    {
+      "package": "trexven_design_system",
+      "realRoot": "C:/Users/USER/AndroidStudioProjects/trexvenpos/packages/trexven_design_system",
+      "insidePos": true,
+      "linkedFiles": []
+    },
+    {
+      "package": "trexven_operations",
+      "realRoot": "C:/Users/USER/AndroidStudioProjects/trexvenpos/packages/trexven_operations",
+      "insidePos": true,
+      "linkedFiles": []
+    }
+  ],
+  "preservedApplicationFiles": [
+    "lib/main.dart",
+    "lib/src/core/constants.dart",
+    "lib/src/features/auth/auth_provider.dart",
+    "lib/src/features/auth/branch_context.dart",
+    "lib/src/features/auth/login_screen.dart",
+    "lib/src/features/auth/permission_service.dart",
+    "lib/src/features/inventory/catalog_edit_screen.dart",
+    "lib/src/features/inventory/inventory_operations_screen.dart",
+    "lib/src/features/inventory/product_detail_screen.dart",
+    "lib/src/features/inventory/product_provider.dart",
+    "lib/src/features/inventory/product_repository.dart",
+    "lib/src/features/inventory/product_search_screen.dart",
+    "lib/src/features/inventory/quick_add_screen.dart",
+    "lib/src/features/inventory/scanner_screen.dart",
+    "lib/src/features/pos/cart_provider.dart",
+    "lib/src/features/pos/checkout_screen.dart",
+    "lib/src/features/pos/credit_returns_screen.dart",
+    "lib/src/features/pos/dashboard_screen.dart",
+    "lib/src/features/pos/employee_settings_screen.dart",
+    "lib/src/features/pos/expense_support_screen.dart",
+    "lib/src/features/pos/offline_cash_screen.dart",
+    "lib/src/features/pos/operations_screen.dart",
+    "lib/src/features/pos/payment_confirmation_dialog.dart",
+    "lib/src/features/pos/pending_sale_provider.dart",
+    "lib/src/features/pos/pos_shell.dart",
+    "lib/src/features/pos/recent_sales_screen.dart",
+    "lib/src/features/pos/sale_completion_dialog.dart",
+    "lib/src/features/pos/sales_provider.dart",
+    "lib/src/features/pos/sales_repository.dart",
+    "lib/src/models/business.dart",
+    "lib/src/models/employee.dart",
+    "lib/src/models/price_levels.dart",
+    "lib/src/models/product.dart",
+    "lib/src/models/sale.dart",
+    "lib/src/services/network_failure.dart",
+    "lib/src/services/network_failure_native.dart",
+    "lib/src/services/offline_cash_file.dart",
+    "lib/src/services/offline_cash_queue.dart",
+    "lib/src/services/offline_cash_unsupported.dart",
+    "lib/src/services/offline_session.dart",
+    "lib/src/services/pending_sale.dart",
+    "lib/src/services/pending_sale_file.dart",
+    "lib/src/services/pending_sale_unsupported.dart",
+    "lib/src/services/sale_errors.dart",
+    "lib/src/ui/components/pos_components.dart",
+    "lib/src/ui/trexven_ui.dart"
+  ],
+  "declarationOnlyChanges": [
+    {
+      "path": "pubspec.yaml",
+      "onlyTwoPathsChanged": true
+    },
+    {
+      "path": "pubspec.lock",
+      "onlyTwoPathsChanged": true
+    }
+  ],
+  "resolvedPackageCount": 131,
+  "validationLimits": [
+    "No build",
+    "No analyzer",
+    "No formatter",
+    "No automated tests",
+    "No app/emulator launch",
+    "No backend calls or mutations"
+  ]
+}

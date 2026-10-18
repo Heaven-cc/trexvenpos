@@ -1,0 +1,135 @@
+*** Begin Patch
+*** Update File: C:/Users/USER/AndroidStudioProjects/Trexven/packages/trexven_operations/lib/src/inventory_operations_screen.dart
+@@
+-    'review_trexven_inventory_discrepancy',
+-  };
++    'review_trexven_inventory_discrepancy',
++    'start_trexven_branch_stocktake', 'classify_trexven_branch_stock',
++    'resolve_trexven_branch_condition_stock', 'dispatch_trexven_branch_supplier_return',
++  };
+@@
+-  bool _branchesEnabled = true;
++  bool _branchesEnabled = true;
++  bool _branchBackendReady = false;
++  bool _branchAllowed = false;
++  String? _selectedBranchId;
++  String? get _branchId => widget.branchId ?? _selectedBranchId;
+@@
+-  bool get _writesSupported => !_branchesEnabled && widget.branchId == null;
++  bool get _writesSupported => _branchesEnabled
++      ? _branchBackendReady && _branchAllowed && _branchId != null
++      : _branchId == null;
++  bool _sessionWritesSupported(Map<String, dynamic> session) =>
++      _writesSupported && session['branch_id'] == _branchId;
+@@
+-    _branchesEnabled = business['branches_enabled'] == true;
++    _branchesEnabled = business['branches_enabled'] == true;
++    _branchBackendReady = false;
++    if (_branchesEnabled) {
++      try {
++        final capabilities = await widget.api.call('get_trexven_inventory_capabilities',
++            {'p_business_id': widget.api.businessId})
++            .timeout(const Duration(seconds: 20));
++        _branchBackendReady = capabilities is Map &&
++            capabilities['branch_inventory_version'] == 1;
++      } catch (_) {
++        // Old deployments and unavailable capability reads remain view-only.
++        _branchBackendReady = false;
++      }
++    }
++    if (!_current) throw StateError('Business access changed. Reopen inventory.');
+@@
+-    if (widget.branchId != null) {
+-      rows[1] = rows[1].where((r) => r['branch_id'] == widget.branchId).toList();
+-      rows[5] = rows[5].where((r) => r['branch_id'] == widget.branchId).toList();
+-    }
++    final authorized = rows[6].where((row) => row['is_active'] == true)
++        .map((row) => row['id']).toSet();
++    if (_selectedBranchId != null && !authorized.contains(_selectedBranchId)) {
++      _selectedBranchId = null;
++    }
++    _branchAllowed = _branchId != null && authorized.contains(_branchId);
++    if (_branchId != null) {
++      final sessionIds = rows[1].where((row) => row['branch_id'] == _branchId)
++          .map((row) => row['id']).toSet();
++      rows[1] = rows[1].where((row) => row['branch_id'] == _branchId).toList();
++      rows[2] = rows[2].where((row) => row['branch_id'] == _branchId).toList();
++      rows[3] = rows[3].where((row) => sessionIds.contains(row['session_id'])).toList();
++      rows[4] = rows[4].where((row) => row['branch_id'] == _branchId).toList();
++      rows[5] = rows[5].where((row) => row['branch_id'] == _branchId).toList();
++      final stock = {for (final row in rows[5]) row['product_id']: row['quantity']};
++      rows[0] = [
++        for (final product in rows[0])
++          if (stock.containsKey(product['id']))
++            {...product, 'quantity': stock[product['id']]},
++      ];
++    }
+@@
+-      await widget.api.call(rpc, {
+-        'p_request_id': widget.api.requestId(),
+-        ...args,
+-      });
++      final branchRpc = !_branchesEnabled || _branchId == null ? rpc : switch (rpc) {
++        'start_trexven_stocktake' => 'start_trexven_branch_stocktake',
++        'classify_trexven_stock' => 'classify_trexven_branch_stock',
++        'resolve_trexven_condition_stock' => 'resolve_trexven_branch_condition_stock',
++        'dispatch_trexven_supplier_return' => 'dispatch_trexven_branch_supplier_return',
++        _ => rpc,
++      };
++      await widget.api.call(branchRpc, {
++        'p_request_id': widget.api.requestId(),
++        ...args,
++        if (branchRpc != rpc) 'p_branch_id': _branchId,
++      });
+@@
+-                  _summary(rows),
+-                  const SizedBox(height: 14),
++                  _summary(rows),
++                  if (_branchesEnabled && _owner && widget.branchId == null) ...[
++                    const SizedBox(height: 14),
++                    DropdownButtonFormField<String>(
++                      key: ValueKey(_selectedBranchId),
++                      initialValue: _selectedBranchId,
++                      isExpanded: true,
++                      decoration: const TrexvenInputDecoration(labelText: 'Inventory branch'),
++                      items: [
++                        const DropdownMenuItem<String>(value: null,
++                          child: Text('All branches (view only)')),
++                        for (final branch in rows[6].where((row) => row['is_active'] == true))
++                          DropdownMenuItem<String>(value: branch['id'] as String,
++                            child: Text('${branch['name']}')),
++                      ],
++                      onChanged: busy || _pendingRpc != null ? null : (value) {
++                        setState(() { _selectedBranchId = value; load(); });
++                      },
++                    ),
++                  ],
++                  const SizedBox(height: 14),
+@@
+-                    _notice('Branch inventory is available to view. Counting and stock-management changes for branch-enabled businesses are not supported by the current backend.',
+-                      icon: Icons.store_outlined),
++                    _notice(_branchBackendReady && _branchId == null
++                        ? 'Select a branch to start counting or manage its stock.'
++                        : 'Branch inventory is available to view. Stock changes are currently unavailable for this branch.',
++                      icon: Icons.store_outlined),
+*** Update File: C:/Users/USER/AndroidStudioProjects/Trexven/packages/trexven_operations/lib/src/inventory_operations_views.dart
+@@
+-    if (ops.widget.branchId != null && session['branch_id'] != ops.widget.branchId) {
++    if (ops._branchId != null && session['branch_id'] != ops._branchId) {
+@@
+-            final canCount = session['status'] == 'open' && ops._writesSupported &&
+-                session['branch_id'] == null && ops._can('stocktake');
+-            final canReview = ops._writesSupported && session['branch_id'] == null &&
+-                ops._can('approve_stocktake', sensitive: true);
++            final canCount = session['status'] == 'open' &&
++                ops._sessionWritesSupported(session) && ops._can('stocktake');
++            final canReview = ops._sessionWritesSupported(session) &&
++                ops._can('approve_stocktake', sensitive: true);
+@@
+-                    ops._notice(session['branch_id'] != null || !ops._writesSupported
+-                        ? 'This branch session is available to view. Branch counting and reconciliation require backend activation.'
+-                        : 'Counts save progress without changing stock. Authorized approval applies the physical difference and retains later movements.'),
++                    ops._notice(!ops._sessionWritesSupported(session)
++                        ? 'This session is available to view. Select its active branch from Inventory to count or review it.'
++                        : 'Counts save progress without changing stock. Authorized approval applies the physical difference and retains later movements.'),
+*** End Patch

@@ -1,0 +1,428 @@
+{
+  "project_id": "ufehcfrlygqvminfjumf",
+  "authorization": "User attachment c3929720-a83e-4bde-97e1-27b6a43fad4d explicitly approves these two migrations and minimal frontend activation.",
+  "scope": "Two existing public RPC definitions only; no application transaction executed.",
+  "migrations": [
+    {
+      "version": "20261017035929",
+      "name": "credit_returns_branch_sellable_return",
+      "status": "applied_successfully",
+      "file": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\.artifacts\\credit_returns_20261017\\PROPOSED_branch_sellable_return.sql",
+      "sql_file_sha256": "469A433F69DB417018F3B76FCDC9D775FFC5E00FF284B9B888BC66E7E0BFAB63"
+    },
+    {
+      "version": "20261017035937",
+      "name": "credit_returns_owner_branch_financial_summary",
+      "status": "applied_successfully",
+      "file": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\.artifacts\\credit_returns_20261017\\PROPOSED_owner_branch_financial_summary.sql",
+      "sql_file_sha256": "BD4D56A7B1A7FD2DE0C7661DAF983A8994A0E96C7B975D63B36358D6622081C3"
+    }
+  ],
+  "predeployment_source_comparison": {
+    "branchIdentical": true,
+    "summaryIdentical": true
+  },
+  "before": {
+    "data": [
+      {
+        "rows": 5,
+        "digest": "f47410fc213978d9ade22ca7a840c39c",
+        "relation": "audit_logs"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "branches"
+      },
+      {
+        "rows": 2,
+        "digest": "3738d3ce42d109e531a65fc88ef6aac1",
+        "relation": "business_members"
+      },
+      {
+        "rows": 1,
+        "digest": "acc3a5fe166e9b856e17929c85264525",
+        "relation": "businesses"
+      },
+      {
+        "rows": 1,
+        "digest": "6fa67f871df5a16dcfec5d214e98e6d8",
+        "relation": "credit_accounts"
+      },
+      {
+        "rows": 1,
+        "digest": "7c2e69a91408e161630bc536bc01008a",
+        "relation": "credit_approvals"
+      },
+      {
+        "rows": 1,
+        "digest": "2a6b6d89749ed58c2c7c3623c87b230e",
+        "relation": "credit_entries"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "employee_permissions"
+      },
+      {
+        "rows": 1,
+        "digest": "687128d82c6de65cac753756007ac484",
+        "relation": "employees"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "inventory"
+      },
+      {
+        "rows": 2,
+        "digest": "b5c4ba64c6929a59a217875d24b2b850",
+        "relation": "inventory_movements"
+      },
+      {
+        "rows": 1,
+        "digest": "bdd9f62c0d695e96dbb2d7098724f5fe",
+        "relation": "products"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "return_items"
+      },
+      {
+        "rows": 1,
+        "digest": "6792db542107cbc461d4e2dcae1b0f76",
+        "relation": "sale_items"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "sale_payments"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "sale_returns"
+      },
+      {
+        "rows": 1,
+        "digest": "bab7660bfba373bd775fe87cc2aabf9e",
+        "relation": "sales"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "stock_condition_entries"
+      }
+    ],
+    "targets": [
+      {
+        "acl": [
+          "postgres=X/postgres",
+          "authenticated=X/postgres",
+          "service_role=X/postgres"
+        ],
+        "oid": "26700",
+        "hash": "0cb313369c223034a260e8f110fafa7f",
+        "name": "approve_trexven_return",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "result": "jsonb",
+        "language": "plpgsql",
+        "signature": "p_return_id uuid, p_request_id uuid, p_method text, p_confirmed boolean, p_evidence text DEFAULT NULL::text, p_shift_id uuid DEFAULT NULL::uuid",
+        "anon_execute": false,
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": [
+          "postgres=X/postgres",
+          "authenticated=X/postgres",
+          "service_role=X/postgres"
+        ],
+        "oid": "26702",
+        "hash": "bedf583408f7fa5a146e1eae7b740cd8",
+        "name": "get_trexven_financial_summary",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "result": "jsonb",
+        "language": "plpgsql",
+        "signature": "p_business_id uuid, p_start timestamp with time zone, p_end timestamp with time zone",
+        "anon_execute": false,
+        "security_definer": true,
+        "authenticated_execute": true
+      }
+    ],
+    "integrity": {
+      "negative_credit": 0,
+      "credit_ledger_mismatch": 0,
+      "overreturned_sale_items": 0,
+      "duplicate_branch_inventory": 0,
+      "duplicate_return_movements": 0,
+      "return_allocation_mismatch": 0,
+      "invalid_return_movement_delta": 0
+    },
+    "aggregates": {
+      "sales_total": 8000,
+      "credit_ledger": 8000,
+      "sale_payments": 0,
+      "approved_refunds": 0,
+      "product_quantity": 84,
+      "credit_outstanding": 8000,
+      "inventory_quantity": 0,
+      "inventory_reserved": 0,
+      "approved_return_value": 0,
+      "approved_debt_reduction": 0
+    },
+    "captured_at": "2026-10-17T03:58:55.532063+00:00",
+    "roles_fingerprint": "4a7f977592061890beb32bb5dce0a95e",
+    "views_fingerprint": null,
+    "columns_fingerprint": "29181e107a93cc5cd55a5e4473eb3856",
+    "indexes_fingerprint": "be83b62606974a1aa94b09c8ca095758",
+    "function_fingerprint": "d5325d1e7db101f7dded1a38facbef8d",
+    "policies_fingerprint": "fea40a1272285662256b5b26a01ed531",
+    "relation_fingerprint": "134a6432359a89b1c595c2bfd8dc81df",
+    "triggers_fingerprint": "6a67d002aec67750fecb515c15592612",
+    "schema_acl_fingerprint": "b8db57082c10e0283563c5e1b23c4d5b",
+    "constraints_fingerprint": "c7359cac08a55372004163a9318852d4",
+    "default_acl_fingerprint": "2d8dafad7b7a9f385580692b03909aed",
+    "memberships_fingerprint": "c618f33307995cb40820150af913ae47"
+  },
+  "after": {
+    "data": [
+      {
+        "rows": 5,
+        "digest": "f47410fc213978d9ade22ca7a840c39c",
+        "relation": "audit_logs"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "branches"
+      },
+      {
+        "rows": 2,
+        "digest": "3738d3ce42d109e531a65fc88ef6aac1",
+        "relation": "business_members"
+      },
+      {
+        "rows": 1,
+        "digest": "acc3a5fe166e9b856e17929c85264525",
+        "relation": "businesses"
+      },
+      {
+        "rows": 1,
+        "digest": "6fa67f871df5a16dcfec5d214e98e6d8",
+        "relation": "credit_accounts"
+      },
+      {
+        "rows": 1,
+        "digest": "7c2e69a91408e161630bc536bc01008a",
+        "relation": "credit_approvals"
+      },
+      {
+        "rows": 1,
+        "digest": "2a6b6d89749ed58c2c7c3623c87b230e",
+        "relation": "credit_entries"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "employee_permissions"
+      },
+      {
+        "rows": 1,
+        "digest": "687128d82c6de65cac753756007ac484",
+        "relation": "employees"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "inventory"
+      },
+      {
+        "rows": 2,
+        "digest": "b5c4ba64c6929a59a217875d24b2b850",
+        "relation": "inventory_movements"
+      },
+      {
+        "rows": 1,
+        "digest": "bdd9f62c0d695e96dbb2d7098724f5fe",
+        "relation": "products"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "return_items"
+      },
+      {
+        "rows": 1,
+        "digest": "6792db542107cbc461d4e2dcae1b0f76",
+        "relation": "sale_items"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "sale_payments"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "sale_returns"
+      },
+      {
+        "rows": 1,
+        "digest": "bab7660bfba373bd775fe87cc2aabf9e",
+        "relation": "sales"
+      },
+      {
+        "rows": 0,
+        "digest": "d41d8cd98f00b204e9800998ecf8427e",
+        "relation": "stock_condition_entries"
+      }
+    ],
+    "targets": [
+      {
+        "acl": [
+          "postgres=X/postgres",
+          "authenticated=X/postgres",
+          "service_role=X/postgres"
+        ],
+        "oid": "26700",
+        "hash": "bf89f7e2b1ffd95161b4a35d251101e2",
+        "name": "approve_trexven_return",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "result": "jsonb",
+        "language": "plpgsql",
+        "signature": "p_return_id uuid, p_request_id uuid, p_method text, p_confirmed boolean, p_evidence text DEFAULT NULL::text, p_shift_id uuid DEFAULT NULL::uuid",
+        "anon_execute": false,
+        "security_definer": true,
+        "authenticated_execute": true
+      },
+      {
+        "acl": [
+          "postgres=X/postgres",
+          "authenticated=X/postgres",
+          "service_role=X/postgres"
+        ],
+        "oid": "26702",
+        "hash": "4981ee3e635213170fbaf6301606d5c8",
+        "name": "get_trexven_financial_summary",
+        "owner": "postgres",
+        "config": [
+          "search_path=\"\""
+        ],
+        "result": "jsonb",
+        "language": "plpgsql",
+        "signature": "p_business_id uuid, p_start timestamp with time zone, p_end timestamp with time zone",
+        "anon_execute": false,
+        "security_definer": true,
+        "authenticated_execute": true
+      }
+    ],
+    "integrity": {
+      "negative_credit": 0,
+      "credit_ledger_mismatch": 0,
+      "overreturned_sale_items": 0,
+      "duplicate_branch_inventory": 0,
+      "duplicate_return_movements": 0,
+      "return_allocation_mismatch": 0,
+      "invalid_return_movement_delta": 0
+    },
+    "aggregates": {
+      "sales_total": 8000,
+      "credit_ledger": 8000,
+      "sale_payments": 0,
+      "approved_refunds": 0,
+      "product_quantity": 84,
+      "credit_outstanding": 8000,
+      "inventory_quantity": 0,
+      "inventory_reserved": 0,
+      "approved_return_value": 0,
+      "approved_debt_reduction": 0
+    },
+    "captured_at": "2026-10-17T03:59:44.742308+00:00",
+    "roles_fingerprint": "4a7f977592061890beb32bb5dce0a95e",
+    "views_fingerprint": null,
+    "columns_fingerprint": "29181e107a93cc5cd55a5e4473eb3856",
+    "indexes_fingerprint": "be83b62606974a1aa94b09c8ca095758",
+    "function_fingerprint": "d5325d1e7db101f7dded1a38facbef8d",
+    "policies_fingerprint": "fea40a1272285662256b5b26a01ed531",
+    "relation_fingerprint": "134a6432359a89b1c595c2bfd8dc81df",
+    "triggers_fingerprint": "6a67d002aec67750fecb515c15592612",
+    "schema_acl_fingerprint": "b8db57082c10e0283563c5e1b23c4d5b",
+    "constraints_fingerprint": "c7359cac08a55372004163a9318852d4",
+    "default_acl_fingerprint": "2d8dafad7b7a9f385580692b03909aed",
+    "memberships_fingerprint": "c618f33307995cb40820150af913ae47"
+  },
+  "verification": {
+    "fingerprints": {
+      "roles_fingerprint": true,
+      "views_fingerprint": true,
+      "columns_fingerprint": true,
+      "indexes_fingerprint": true,
+      "function_fingerprint": true,
+      "policies_fingerprint": true,
+      "relation_fingerprint": true,
+      "triggers_fingerprint": true,
+      "schema_acl_fingerprint": true,
+      "constraints_fingerprint": true,
+      "default_acl_fingerprint": true,
+      "memberships_fingerprint": true
+    },
+    "dataUnchanged": true,
+    "aggregatesUnchanged": true,
+    "integrityUnchanged": true,
+    "functions": [
+      {
+        "name": "approve_trexven_return",
+        "hash": "bf89f7e2b1ffd95161b4a35d251101e2",
+        "sourceMatchesApproved": true,
+        "contractAndSecurityUnchanged": true
+      },
+      {
+        "name": "get_trexven_financial_summary",
+        "hash": "4981ee3e635213170fbaf6301606d5c8",
+        "sourceMatchesApproved": true,
+        "contractAndSecurityUnchanged": true
+      }
+    ]
+  },
+  "dependencies": {
+    "original_branch_inventory_unique_index": "batch_2_inventory_branch_product",
+    "inventory_movement_return_type_allowed": true,
+    "inventory_row_required": true,
+    "condition_stock_trigger_preserved": "batch_5_return_conditions",
+    "authorization_helpers_inspected": true
+  },
+  "frontend": {
+    "File": "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_operations\\lib\\src\\financial_operations_screen.dart",
+    "Before": "14CB706B4661F78880D6F2BB313E2EC05FFBCD03E94A8170B0747B9B1252D16D",
+    "After": "1F9374BD96A1C4F26CEBE8E9706487EE6C63464F102E0C498CB519A75403ACBA",
+    "RemovedRestrictionLines": 13,
+    "RemovedObsoleteSentence": true
+  },
+  "restrictions": {
+    "builds_run": false,
+    "apps_launched": false,
+    "automated_application_tests_run": false,
+    "analyzers_or_formatters_run": false,
+    "dependencies_installed": false,
+    "emulators_run": false,
+    "local_database_created": false,
+    "production_test_transactions_created": false,
+    "caches_deleted": false
+  },
+  "limitations": [
+    "Metadata, exact deployed source, security and existing-data integrity verified read-only; financial RPCs were not executed as test transactions.",
+    "Existing production snapshot has zero branch, branch-inventory and return rows; runtime restocking/refund behavior awaits manual application testing.",
+    "Flutter source activation completed for both apps through their existing shared package; compilation and device/UI verification intentionally not performed."
+  ]
+}

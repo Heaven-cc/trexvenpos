@@ -1,0 +1,458 @@
+{
+  "date": "2026-10-17",
+  "timezone": "Africa/Lagos",
+  "status": "Source implementation complete; compilation and runtime verification not run",
+  "scope": "Existing POS app plus explicitly opt-in shared presentation extensions. No Owner application files or shared default theme/token files edited.",
+  "changed_sources": [
+    {
+      "file": "POS/lib/main.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\main.dart",
+      "before_sha256": "5FE94449B9DAB3CA9A5F0C68295AE55CB9F1554A72F319970C5B47286DFA6A48",
+      "installed_sha256": "58012193E98E3357FFC3E277FFC1FBE5193F5A6CA8652B8E8A6AD246C1FB3DDE",
+      "bytes": 2251,
+      "new_file": false
+    },
+    {
+      "file": "POS/lib/src/features/auth/branch_context.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\auth\\branch_context.dart",
+      "before_sha256": "778FB06B62F398817B7EF7C2BE61AE25BA581E9F7CEB97143BD54AB1C530463C",
+      "installed_sha256": "A6C93A77361A12DB65E3C449863CCF26E665129AC8A8EF87FD082890539B2FF8",
+      "bytes": 4911,
+      "new_file": false
+    },
+    {
+      "file": "POS/lib/src/features/auth/login_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\auth\\login_screen.dart",
+      "before_sha256": "03F8E16A2C5917BE78CD5F7C7D055BA71B84BD8BEA9AE6AA5F4DD81AB56073D4",
+      "installed_sha256": "5A775370307BFF7D63084665D7F0B449EE548E7200FB85CE1E9802E84EE245F7",
+      "bytes": 15659,
+      "new_file": false
+    },
+    {
+      "file": "POS/lib/src/features/inventory/catalog_edit_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\inventory\\catalog_edit_screen.dart",
+      "before_sha256": "D8DCC444BAF609A3DC2277EA53B01034734869A30D68615623EB412881A86B83",
+      "installed_sha256": "72C5D7AA8EAED2BF0CAFCC100423ACB5EA02517B1811F148E11C86D1B8DFA2D4",
+      "bytes": 14362,
+      "new_file": false
+    },
+    {
+      "file": "POS/lib/src/features/inventory/inventory_operations_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\inventory\\inventory_operations_screen.dart",
+      "before_sha256": "870F7B53BBC3ACF91C782F35FEDBB9D55C873E6861FBFDBFD3EABC22D3F305C7",
+      "installed_sha256": "F865C8FB841BDF7C33AEFD0890E47B49A92BA891A974D8DBC0D10D5731789DFE",
+      "bytes": 3355,
+      "new_file": false
+    },
+    {
+      "file": "POS/lib/src/features/inventory/product_detail_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\inventory\\product_detail_screen.dart",
+      "before_sha256": "8037C0FF736413D8910EAB5D10C6CD29169D2C9FF6CFE339A430C014EA240195",
+      "installed_sha256": "798AACF3A932CD861E9926F77C18464B6956688A434C2E32D0D4DF80FA682304",
+      "bytes": 20048,
+      "new_file": false
+    },
+    {
+      "file": "POS/lib/src/features/inventory/product_search_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\inventory\\product_search_screen.dart",
+      "before_sha256": "2F62D3CCACC91BB2B45C978A86956883CBAC6B37FBEB3D7FDBD3427157C1DD50",
+      "installed_sha256": "7E6778182FA909045B7ECAF1F01E2E7075B0CF54C06E22B5134042206DEC8032",
+      "bytes": 11089,
+      "new_file": false
+    },
+    {
+      "file": "POS/lib/src/features/inventory/quick_add_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\inventory\\quick_add_screen.dart",
+      "before_sha256": "C104066936B29EBD2926D366C880E4BA4D44B801969598FD03139BD8EEAD2FA8",
+      "installed_sha256": "FE3B02D407F56F343C4BDD190AF1C73AFF535E649A755E34B9DC227F56F85D04",
+      "bytes": 21144,
+      "new_file": false
+    },
+    {
+      "file": "POS/lib/src/features/inventory/scanner_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\inventory\\scanner_screen.dart",
+      "before_sha256": "516212032DC850BAA3C7F9A4DD14E75B8DF43C308D4673ADA01B37E0B0676209",
+      "installed_sha256": "9BF168008E4438EAE8A459C34019D7DA5F6DAD5D8D5A5FE4969CBA7406E18DA2",
+      "bytes": 20702,
+      "new_file": false
+    },
+    {
+      "file": "POS/lib/src/features/pos/checkout_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\pos\\checkout_screen.dart",
+      "before_sha256": "F065CAD02CDF4263E678E94FD31838B9D4AAC8B7BCB15FF885170F2369366CDB",
+      "installed_sha256": "F4B34BF78E73081F18FFC6E0DC876774BBF4D15791500E00F805B482394E62AB",
+      "bytes": 32585,
+      "new_file": false
+    },
+    {
+      "file": "POS/lib/src/features/pos/credit_returns_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\pos\\credit_returns_screen.dart",
+      "before_sha256": "0A53B5E583BF8C5B5F50C0754E67C9FE766CB6B8DFA23A5EA35F5598AC664726",
+      "installed_sha256": "71CCB8A4AEC654989A8A4F2F83C657F5093EC2B73BA8A1B259C3374E0AE33349",
+      "bytes": 3404,
+      "new_file": false
+    },
+    {
+      "file": "POS/lib/src/features/pos/dashboard_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\pos\\dashboard_screen.dart",
+      "before_sha256": "B30575DB13B020C90C4E7C4195C2B2BBD5816238075345E5AA5EEAE4F81A090B",
+      "installed_sha256": "35C77087177781A10F1DA5F5BE7C749543430A9A2AE4F5854754070E41C1FD0C",
+      "bytes": 8193,
+      "new_file": false
+    },
+    {
+      "file": "POS/lib/src/features/pos/employee_settings_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\pos\\employee_settings_screen.dart",
+      "before_sha256": "D6D5EAD6FD6E36319136C47B97D6F9F2DADCB41D76309DD8F4C27F0C3FD8FBF0",
+      "installed_sha256": "9AE38CBC83C5095497C1DBBA9D63951D7A64F644E032F79CBA569EB259D4B03C",
+      "bytes": 29165,
+      "new_file": false
+    },
+    {
+      "file": "POS/lib/src/features/pos/expense_support_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\pos\\expense_support_screen.dart",
+      "before_sha256": null,
+      "installed_sha256": "E1B5631D8F49C65E08850B24DDF2957B6B9ECA7D2110AF8C0DCA18699DA93D15",
+      "bytes": 675,
+      "new_file": true
+    },
+    {
+      "file": "POS/lib/src/features/pos/offline_cash_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\pos\\offline_cash_screen.dart",
+      "before_sha256": "B92A1B3F2EF26BFDBE8C7FA01C30D2DD67C079D19F1DAD60A75B86B5D0256039",
+      "installed_sha256": "39DA25890D55295DC6919397052693B329602916C0345FBCD683AE2B442C626B",
+      "bytes": 12268,
+      "new_file": false
+    },
+    {
+      "file": "POS/lib/src/features/pos/operations_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\pos\\operations_screen.dart",
+      "before_sha256": "9B356F0EEE70D37C68D3421EAC37B978BE65D23090690F873D256BAA6B827F24",
+      "installed_sha256": "1CC03A708FE0373D97ED2AAA2A25A9498B4D76F97E764827C7D498632FE81656",
+      "bytes": 4404,
+      "new_file": false
+    },
+    {
+      "file": "POS/lib/src/features/pos/pending_sale_provider.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\pos\\pending_sale_provider.dart",
+      "before_sha256": "9E2570148958325DB8482810CE292D61CEEB32770CFAE73AB513EA4D5BA676C7",
+      "installed_sha256": "5BB79C70353273C18F0629ED469ED7CA4F5D15CF7FCB1170C6DF08DC885CB407",
+      "bytes": 10262,
+      "new_file": false
+    },
+    {
+      "file": "POS/lib/src/features/pos/pos_shell.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\pos\\pos_shell.dart",
+      "before_sha256": "90113F4C7E352C3F96D0EF79052151BA75B2CA05343634AB22772B6D2331C7DB",
+      "installed_sha256": "64CB44F6AD66A97C978BA1A40C26553062E380FC6F12AD8296340EFE91BA818D",
+      "bytes": 20062,
+      "new_file": false
+    },
+    {
+      "file": "POS/lib/src/features/pos/recent_sales_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\pos\\recent_sales_screen.dart",
+      "before_sha256": "D4F6A890FBD8F05D4543C0B27410D5B5AA7FCCD192BE1E186D23CF79123AF0F3",
+      "installed_sha256": "41E38E2C45D90A951FD5C2DCB9FA0403E640591C548B05C866A2D78ADE2717F1",
+      "bytes": 8200,
+      "new_file": false
+    },
+    {
+      "file": "POS/lib/src/features/pos/sale_completion_dialog.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\pos\\sale_completion_dialog.dart",
+      "before_sha256": null,
+      "installed_sha256": "C16B32719E229493005C65A4EE9245823892F16F3A2A8E71A54B0ABA9FB1E856",
+      "bytes": 3765,
+      "new_file": true
+    },
+    {
+      "file": "POS/lib/src/ui/trexven_ui.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\ui\\trexven_ui.dart",
+      "before_sha256": null,
+      "installed_sha256": "6F51B2ABA62E38A572A3A8733E18906C4DC3724419352B0330522B31AE313D48",
+      "bytes": 72,
+      "new_file": true
+    },
+    {
+      "file": "POS/lib/src/ui/components/pos_components.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\ui\\components\\pos_components.dart",
+      "before_sha256": null,
+      "installed_sha256": "1A71636F1A210B55D0731BFF8FB9802279D3068192520F8C8D89CE6BF879A2CC",
+      "bytes": 3463,
+      "new_file": true
+    },
+    {
+      "file": "POS/lib/src/ui/theme/pos_theme.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\ui\\theme\\pos_theme.dart",
+      "before_sha256": null,
+      "installed_sha256": "3F494070372313B05A303A15629792B7DCA0FEAE04FDEE91347ACC04BB41DF0D",
+      "bytes": 8205,
+      "new_file": true
+    },
+    {
+      "file": "DS/lib/trexven_design_system.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_design_system\\lib\\trexven_design_system.dart",
+      "before_sha256": "7E9BE19BE94B93932F51822C28761652495FDC8BA7E6B9F858E1ABC6AA03EDF7",
+      "installed_sha256": "3E7140A0A5C9D9CAD9D61337241FECB1DAE7DF3687C4B9EC48B2443FCCC97A9C",
+      "bytes": 233,
+      "new_file": false
+    },
+    {
+      "file": "DS/lib/src/components/actions.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_design_system\\lib\\src\\components\\actions.dart",
+      "before_sha256": "C1E56F761B561825908D522086E6F72D4578E6B57F73019B0BBC8D5AD9EF6F91",
+      "installed_sha256": "F0B025DDF09DFA421A994FB1DF875C88E593DF006FE83455249B6EEE711CA28B",
+      "bytes": 8928,
+      "new_file": false
+    },
+    {
+      "file": "DS/lib/src/components/forms.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_design_system\\lib\\src\\components\\forms.dart",
+      "before_sha256": "F2688A9AE9663D03928223A0F08A6EAEE77B0351987DE4A6AD18638CDEEC542F",
+      "installed_sha256": "01867B2DC52AE027DC8F8624A67C3A3CD70363BF88B835A08B6331CEC0C88CAB",
+      "bytes": 10657,
+      "new_file": false
+    },
+    {
+      "file": "DS/lib/src/theme/presentation.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_design_system\\lib\\src\\theme\\presentation.dart",
+      "before_sha256": null,
+      "installed_sha256": "D51D038A328059E7CCD10B7637969F106B9B4EAC91BEF22C13E3A7F13F0F9847",
+      "bytes": 2958,
+      "new_file": true
+    },
+    {
+      "file": "OPS/lib/src/cash_shift_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_operations\\lib\\src\\cash_shift_screen.dart",
+      "before_sha256": "F7533C3A82BDE86811E674C988BCB65F73768EF81814287C87D64A187C9FFC86",
+      "installed_sha256": "79BF3531A24554D7F1C3450F6C751CC6A95274631BCDDE82BA1ED66D08B10519",
+      "bytes": 28919,
+      "new_file": false
+    },
+    {
+      "file": "OPS/lib/src/employee_access_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_operations\\lib\\src\\employee_access_screen.dart",
+      "before_sha256": "5C8152045A966712B41FEBF910A3D8E610A0EBCD106C25AD5EC1E31AC924E783",
+      "installed_sha256": "56E248398EFD402DEBDD7868A6DE094D6E871F44992B064CBB35BC49F6E28537",
+      "bytes": 38326,
+      "new_file": false
+    },
+    {
+      "file": "OPS/lib/src/financial_operations_details.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_operations\\lib\\src\\financial_operations_details.dart",
+      "before_sha256": "09E2AEB4960531528F9E63F537FF4C61CFCF3D8D2026BD795FCE5E4B3DE189D2",
+      "installed_sha256": "14E6CA6AB67FA2D1C6081BCEDEF9AF8C003698FDF29EBBFBAFDDE25654CAAB0A",
+      "bytes": 29223,
+      "new_file": false
+    },
+    {
+      "file": "OPS/lib/src/financial_operations_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_operations\\lib\\src\\financial_operations_screen.dart",
+      "before_sha256": "1F9374BD96A1C4F26CEBE8E9706487EE6C63464F102E0C498CB519A75403ACBA",
+      "installed_sha256": "0D750A03B759418E8F7EE9441C5CB839F56F1A849E98A32BED1C2B34239ED47E",
+      "bytes": 52309,
+      "new_file": false
+    },
+    {
+      "file": "OPS/lib/src/financial_operations_support.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_operations\\lib\\src\\financial_operations_support.dart",
+      "before_sha256": "509AF37F1D8A31D75855DAE8DA5F8E10B1225EC0110C1C0B394A90794C964D50",
+      "installed_sha256": "7758941740F070A2014F553A279E876EF82EF8FB6317321ABF66F15806576F54",
+      "bytes": 10397,
+      "new_file": false
+    },
+    {
+      "file": "OPS/lib/src/inventory_operations_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_operations\\lib\\src\\inventory_operations_screen.dart",
+      "before_sha256": "F153477F099B706F50E97FA9AF785019F86C2E92796149711834D043C5E579F3",
+      "installed_sha256": "8B9F24167D7FA592C9231B21C35C45BAFD91B3788B7747661FD077F1F385D5EE",
+      "bytes": 50584,
+      "new_file": false
+    },
+    {
+      "file": "OPS/lib/src/inventory_operations_views.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_operations\\lib\\src\\inventory_operations_views.dart",
+      "before_sha256": "5A962BDCB5771CE92799ABA5CEC917BD033168E68D146479234505A9BCFB102B",
+      "installed_sha256": "84EAB330D2C4CFDF30EE5E0753AA9CA023C70C7D982C3EA007E845479ECF5D55",
+      "bytes": 20233,
+      "new_file": false
+    },
+    {
+      "file": "OPS/lib/src/notification_center_screen.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_operations\\lib\\src\\notification_center_screen.dart",
+      "before_sha256": "F9CC334B6AC72FB892E6140A7D30AF8E6887D8AB49EA9F20DDB9209F02DBBC9C",
+      "installed_sha256": "84357F19141AFB1665A0E3779AB6D1AF8D1E63DCABFE2B01A10301C136CCB0C7",
+      "bytes": 6433,
+      "new_file": false
+    },
+    {
+      "file": "OPS/lib/src/payment_confirmation_dialog.dart",
+      "path": "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_operations\\lib\\src\\payment_confirmation_dialog.dart",
+      "before_sha256": "DD86F06D039EB6BB8B3E865D82029C2AF66BF1F006B3FC855FD4CAACB39F14C5",
+      "installed_sha256": "DEA8539E378121CCD622549EEE36D553EF4932FF0EA1DB171A7232D22C618B15",
+      "bytes": 43430,
+      "new_file": false
+    }
+  ],
+  "unchanged_protected_sources": [
+    {
+      "file": "POS/lib/src/features/auth/auth_provider.dart",
+      "sha256": "D3DD2F28482DD049C7F3DA03E9322665628852B24175189C1B955378AEC58EBF"
+    },
+    {
+      "file": "POS/lib/src/features/auth/permission_service.dart",
+      "sha256": "DE31F961AD651059D097F477BF501815A44F4FCA3CA4C94DF7619DF2D128A51C"
+    },
+    {
+      "file": "POS/lib/src/features/inventory/product_repository.dart",
+      "sha256": "0952568A35B8D2C058AE8A22339A2B39A0F1B0AF3F379ECD1180BE50663FB6A7"
+    },
+    {
+      "file": "POS/lib/src/features/pos/cart_provider.dart",
+      "sha256": "BB3FFDC5A2FBF7FC881838BC69531C03ECB52C5A5350451AF6CFD652D2AEC6D5"
+    },
+    {
+      "file": "POS/lib/src/features/pos/sales_repository.dart",
+      "sha256": "17AAC5A2B7CDD6C6BFD3A9C974ECEE0F6AE983A00FDF61C361F528486F72626E"
+    },
+    {
+      "file": "POS/lib/src/models/business.dart",
+      "sha256": "B7092EF27970A5DC6B04F3BC59D13DB4AC3EC2737B6754D36911DB2B31EBF71E"
+    },
+    {
+      "file": "POS/lib/src/models/employee.dart",
+      "sha256": "A39BA5C26D4F0185C2CD7F9BA12E43FB2A408BB850B9304941A050D82DBEF5A0"
+    },
+    {
+      "file": "POS/lib/src/models/price_levels.dart",
+      "sha256": "D005C302BA23702C7296F14F6F3CA65B104A4B1217EA7ECCE3F7FC121A125B69"
+    },
+    {
+      "file": "POS/lib/src/models/product.dart",
+      "sha256": "4086C6D5D808388C8A5091808491001B16E7F27BFD1ED135BBFB7E376126CFAD"
+    },
+    {
+      "file": "POS/lib/src/models/sale.dart",
+      "sha256": "BB0C388C4FDC3EE058DDB024930B5B9900618B28B3587B6A0D035DADF8438CF2"
+    },
+    {
+      "file": "POS/lib/src/services/network_failure.dart",
+      "sha256": "3455533AE623A52BE132C3226DDAC948C77B369F61F61F254763E0A777BD9E61"
+    },
+    {
+      "file": "POS/lib/src/services/network_failure_native.dart",
+      "sha256": "A87EF70762AE96374FB550F3294D1C4DBCABB8E0B913E1458489275DA33D85E4"
+    },
+    {
+      "file": "POS/lib/src/services/offline_cash_file.dart",
+      "sha256": "A577F86E7F03D8546436F99B6D85CA7A219A89D96A16FC82F42AC1270025453F"
+    },
+    {
+      "file": "POS/lib/src/services/offline_cash_queue.dart",
+      "sha256": "CC9259BFDAFC24017DF61E25E0FCD256F64DA118D9B4CED5FAB8D56DA3845970"
+    },
+    {
+      "file": "POS/lib/src/services/offline_cash_unsupported.dart",
+      "sha256": "C1B986DCA3C1314C9223141879C15361B4174DCE38032AD327B1DEF2F1CEFB86"
+    },
+    {
+      "file": "POS/lib/src/services/offline_session.dart",
+      "sha256": "2D9CA53F84A4A724CECE953A91BA4585F840BB1F05B29DE43AC1FAAB77A6693F"
+    },
+    {
+      "file": "POS/lib/src/services/pending_sale.dart",
+      "sha256": "D6E681F2DB1ABF5529ABDEC1C41BE2704123FE2F03E2DB7BB6E0B8823B5FF015"
+    },
+    {
+      "file": "POS/lib/src/services/pending_sale_file.dart",
+      "sha256": "D70CB33ACEDCB92504500D97A2DC88EE3B9A58920083085DF73E4A3B17BC6528"
+    },
+    {
+      "file": "POS/lib/src/services/pending_sale_unsupported.dart",
+      "sha256": "72F595DB552597046D614EAE75E52540268D95462F66DBDD4CF31FBB96E845B1"
+    },
+    {
+      "file": "POS/lib/src/services/sale_errors.dart",
+      "sha256": "48B13012BB0E062F9D1A57E245297657FC336C6390CDEED9F5F1D85FF836E432"
+    },
+    {
+      "file": "OPS/lib/src/operations_client.dart",
+      "sha256": "8A08F5359D1270A7CEAC1342FE75DB094C0BC8019B72955FBF0CE55C1EC3815B"
+    },
+    {
+      "file": "OPS/lib/src/operation_journal.dart",
+      "sha256": "8869AC3FCC837B7F69D31D4054C00C441817F8BCCC842A786E98003A23D43377"
+    },
+    {
+      "file": "OPS/lib/src/stock_count_batch.dart",
+      "sha256": "49B355B4738AC9C0E4CE8BF216D488664628AFF27426F0D5B376B7E29B20B03D"
+    },
+    {
+      "file": "DS/lib/src/theme/tokens.dart",
+      "sha256": "0D3E1C8C02FC9749D96D0908B320DFA92654819B2030CDBC61C6473F930755C1"
+    },
+    {
+      "file": "DS/lib/src/theme/trexven_theme.dart",
+      "sha256": "5075E5041FAB5E355AC65033D23F2503D60B67A308B0EE6B85E56C9C61B3762E"
+    }
+  ],
+  "source_review": {
+    "relative_imports_exports_parts_missing": 0,
+    "delimiter_review_issues": 0,
+    "installed_sources_match_reviewed_content": true,
+    "rpc_call_site_review": {
+      "inspected": [
+        {
+          "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\pos\\offline_cash_screen.dart",
+          "calls": 2
+        },
+        {
+          "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\pos\\pending_sale_provider.dart",
+          "calls": 1
+        },
+        {
+          "path": "C:\\Users\\USER\\AndroidStudioProjects\\trexvenpos\\lib\\src\\features\\pos\\pos_shell.dart",
+          "calls": 1
+        },
+        {
+          "path": "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_operations\\lib\\src\\cash_shift_screen.dart",
+          "calls": 1
+        },
+        {
+          "path": "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_operations\\lib\\src\\employee_access_screen.dart",
+          "calls": 1
+        },
+        {
+          "path": "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_operations\\lib\\src\\financial_operations_screen.dart",
+          "calls": 11
+        },
+        {
+          "path": "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_operations\\lib\\src\\inventory_operations_screen.dart",
+          "calls": 2
+        },
+        {
+          "path": "C:\\Users\\USER\\AndroidStudioProjects\\Trexven\\packages\\trexven_operations\\lib\\src\\notification_center_screen.dart",
+          "calls": 2
+        }
+      ],
+      "issues": []
+    },
+    "theme_preference_logic_unchanged": true,
+    "branch_context_logic_unchanged": true,
+    "no_temporary_shared_sources_remaining": true
+  },
+  "not_run": [
+    "Flutter/Dart analyzer or formatter",
+    "automated tests",
+    "Flutter/Gradle builds",
+    "app launch or emulator",
+    "production business transactions"
+  ],
+  "backend": {
+    "writes": 0,
+    "migrations": 0,
+    "rls_changes": 0,
+    "edge_function_changes": 0,
+    "expense_contract_metadata_read_only": true,
+    "expense_blocker": "Production expenses has no branch_id, no expense RPC, view_finance plus legacy NULL-branch RLS, and no expense-specific actor/cash-ledger enforcement trigger. Recording/history integration is blocked pending an authorized backend contract."
+  }
+}
