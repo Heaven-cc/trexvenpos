@@ -12,9 +12,14 @@ import 'product_provider.dart';
 import 'inventory_operations_screen.dart';
 import '../auth/permission_service.dart';
 import '../auth/auth_provider.dart';
+import '../pos/cart_provider.dart';
+import '../pos/checkout_screen.dart';
 
 class ProductSearchScreen extends ConsumerStatefulWidget {
-  const ProductSearchScreen({super.key});
+  const ProductSearchScreen({super.key, this.onAddProduct});
+
+  /// Supplied by the POS selling entry point; inventory browsing stays unchanged.
+  final Future<bool> Function(Product product)? onAddProduct;
 
   @override
   ConsumerState<ProductSearchScreen> createState() =>
@@ -27,6 +32,7 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
   String _query = '';
   String _stockFilter = 'all';
   Timer? _debounce;
+  String? _addingProductId;
 
   @override
   void dispose() {
@@ -59,6 +65,18 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
     });
   }
 
+  Future<void> _addToCart(Product product) async {
+    if (_addingProductId != null || widget.onAddProduct == null) return;
+    setState(() => _addingProductId = product.id);
+    try {
+      final added = await widget.onAddProduct!(product);
+      if (mounted && added) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${product.name} added to cart')));
+    } finally {
+      if (mounted) setState(() => _addingProductId = null);
+    }
+  }
+
   Future<void> _refresh() async {
     if (_query.isEmpty) return;
 
@@ -76,8 +94,17 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
     final searchResult = ref.watch(productSearchProvider(_query));
     final scheme = Theme.of(context).colorScheme;
     final canView = ref.watch(permissionServiceProvider).hasPermission('view_inventory');
+    final sellingMode = widget.onAddProduct != null;
+    final cart = ref.watch(cartProvider);
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      bottomNavigationBar: sellingMode && cart.isNotEmpty ? SafeArea(
+        child: Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: FilledButton(
+            onPressed: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const CheckoutScreen())),
+            child: Text('View cart · ${cart.length} product lines · ${CustomerPresentation.money(ref.read(cartProvider.notifier).total, currency: ref.watch(authStateProvider).activeBusiness?.currency)}'),
+          ))) : null,
       body: SafeArea(child: Column(children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
@@ -91,14 +118,14 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
             Expanded(child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Inventory', style: TextStyle(
+                Text(sellingMode ? 'Find Products' : 'Inventory', style: TextStyle(
                   fontSize: 22, fontWeight: FontWeight.w700,
                   color: scheme.onSurface)),
-                Text('Products & stock management',
+                Text(sellingMode ? 'Search and add to checkout' : 'Products & stock management',
                   style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
               ],
             )),
-            if (canView)
+            if (canView && !sellingMode)
               IconButton(
                 tooltip: 'Stocktaking & stock management',
                 onPressed: _openOperations,
@@ -121,7 +148,7 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
             ),
           ),
         ),
-        if (canView)
+        if (canView && !sellingMode)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Row(children: [
@@ -142,11 +169,11 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
               )),
             ]),
           ),
-        if (ref.watch(authStateProvider).activeBusiness?.branchesEnabled == true)
+        if (!sellingMode && ref.watch(authStateProvider).activeBusiness?.branchesEnabled == true)
           Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: Text('Catalog quantities are shown here. Open stock operations for branch stock.',
               style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12))),
-        Padding(
+        if (!sellingMode) Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
           child: Align(
             alignment: Alignment.centerLeft,
@@ -154,7 +181,7 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
               style: Theme.of(context).textTheme.titleMedium),
           ),
         ),
-        Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        if (!sellingMode) Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Align(alignment: Alignment.centerLeft, child: Wrap(spacing: 8, children: [
               for (final filter in const [('all', 'All results'), ('low', 'Low stock'), ('out', 'Out of stock')])
                 ChoiceChip(label: Text(filter.$2), selected: _stockFilter == filter.$1,
@@ -278,7 +305,25 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
             Flexible(child: Text(product.sellingPrice == null ? 'Price pending' :
               CustomerPresentation.money(product.sellingPrice!, currency: ref.watch(authStateProvider).activeBusiness?.currency),
               textAlign: TextAlign.end, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600))),
-          Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant, size: 20),
+          if (widget.onAddProduct != null && ref.watch(permissionServiceProvider).canCompleteSales)
+            Builder(builder: (context) {
+              final inCart = ref.watch(cartProvider).where((i) => i.product.id == product.id && i.priceLevel == 'standard').toList();
+              if (inCart.isNotEmpty) {
+                final item = inCart.first;
+                return Row(mainAxisSize: MainAxisSize.min, children: [
+                  IconButton(tooltip: 'Decrease quantity', icon: const Icon(Icons.remove_circle_outline),
+                    onPressed: _addingProductId != null ? null : () => ref.read(cartProvider.notifier).decrement(product.id, 'standard')),
+                  Text('${item.quantity}'),
+                  IconButton(tooltip: 'Increase quantity', icon: const Icon(Icons.add_circle_outline),
+                    onPressed: _addingProductId != null ? null : () => _addToCart(product)),
+                ]);
+              }
+              return IconButton(tooltip: 'Add to cart', icon: _addingProductId == product.id
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.add_circle_outline),
+                onPressed: _addingProductId != null || !product.isActive || product.sellingPrice == null ? null : () => _addToCart(product));
+            })
+          else Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant, size: 20),
         ]),
       ),
     ));
