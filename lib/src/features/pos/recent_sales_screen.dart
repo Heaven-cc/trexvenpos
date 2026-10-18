@@ -16,7 +16,8 @@ class RecentSalesScreen extends ConsumerStatefulWidget {
 
 class _RecentSalesScreenState extends ConsumerState<RecentSalesScreen> {
   final search = TextEditingController();
-  String query = '', method = 'all';
+  String query = '', method = 'all', dateFilter = 'all';
+  DateTimeRange? customRange;
   @override
   void dispose() { search.dispose(); super.dispose(); }
   String money(num amount) => CustomerPresentation.money(amount.toDouble(),
@@ -26,6 +27,41 @@ class _RecentSalesScreenState extends ConsumerState<RecentSalesScreen> {
     return amount == null || !amount.isFinite ? 'Amount unavailable' : money(amount);
   }
   String date(DateTime time) => DateFormat('dd MMM yyyy · HH:mm').format(time.toLocal());
+  bool matchesDate(DateTime timestamp) {
+    final day = DateUtils.dateOnly(timestamp.toLocal());
+    final today = DateUtils.dateOnly(DateTime.now());
+    switch (dateFilter) {
+      case 'today': return day == today;
+      case 'yesterday': return day == today.subtract(const Duration(days: 1));
+      case 'week': return !day.isBefore(today.subtract(const Duration(days: 6))) && !day.isAfter(today);
+      case 'custom':
+        return customRange != null &&
+          !day.isBefore(DateUtils.dateOnly(customRange!.start)) &&
+          !day.isAfter(DateUtils.dateOnly(customRange!.end));
+      default: return true;
+    }
+  }
+
+  Future<void> chooseRange() async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(now.year + 1),
+      initialDateRange: customRange,
+    );
+    if (!mounted || picked == null) return;
+    setState(() { customRange = picked; dateFilter = 'custom'; });
+  }
+
+  Widget dateChip(String value, String label) => ChoiceChip(
+    label: Text(label),
+    selected: dateFilter == value,
+    onSelected: (_) => value == 'custom'
+        ? chooseRange()
+        : setState(() => dateFilter = value),
+  );
+
   Future<void> refresh(String employee) async {
     ref.invalidate(recentSalesProvider(employee));
     await ref.read(recentSalesProvider(employee).future);
@@ -33,7 +69,9 @@ class _RecentSalesScreenState extends ConsumerState<RecentSalesScreen> {
   @override
   Widget build(BuildContext context) {
     final employee = ref.watch(authStateProvider).employee?.membershipId;
-    return Scaffold(appBar: AppBar(title: const Text('Sales History')),
+    return Scaffold(appBar: AppBar(title: const Text('Sales History'),
+      actions: [IconButton(tooltip: 'Custom date range', icon: const Icon(Icons.calendar_month_outlined),
+        onPressed: chooseRange)]),
       body: employee == null || employee.isEmpty
         ? const PosStateView(title: 'Sign in to view transactions', icon: Icons.person_outline)
         : ref.watch(recentSalesProvider(employee)).when(
@@ -44,26 +82,58 @@ class _RecentSalesScreenState extends ConsumerState<RecentSalesScreen> {
           data: (sales) {
             final methods = sales.map((s) => s.paymentMethod).toSet().toList()..sort();
             final selected = method == 'all' || methods.contains(method) ? method : 'all';
-            final visible = sales.where((s) => (selected == 'all' || s.paymentMethod == selected) &&
+            final visible = sales.where((s) => matchesDate(s.timestamp) &&
+              (selected == 'all' || s.paymentMethod == selected) &&
               ('${s.id} ${CustomerPresentation.label(s.paymentMethod)} ${s.items.map((i) => i.productName).join(' ')}')
                 .toLowerCase().contains(query)).toList();
             return RefreshIndicator(onRefresh: () => refresh(employee), child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(), slivers: [
                 SliverPadding(padding: PosSpace.page, sliver: SliverToBoxAdapter(child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    Text('Transaction records & receipts',
+                      style: Theme.of(context).textTheme.bodySmall),
+                    const SizedBox(height: 12),
                     TrexvenTextField(controller: search, variant: TrexvenFieldVariant.search,
-                      decoration: const TrexvenInputDecoration(hintText: 'Product, receipt or payment method',
+                      decoration: const TrexvenInputDecoration(hintText: 'Search receipt, product or payment',
                         prefixIcon: Icon(Icons.search_rounded)),
                       onChanged: (v) => setState(() => query = v.trim().toLowerCase())),
-                    Wrap(spacing: 8, runSpacing: 4, children: [
-                      ChoiceChip(label: const Text('All'), selected: selected == 'all',
-                        onSelected: (_) => setState(() => method = 'all')),
-                      for (final item in methods)
-                        ChoiceChip(label: Text(CustomerPresentation.label(item)), selected: selected == item,
-                          onSelected: (_) => setState(() => method = item)),
+                    const SizedBox(height: 12),
+                    SingleChildScrollView(scrollDirection: Axis.horizontal,
+                      child: Row(children: [
+                        dateChip('all', 'All'),
+                        const SizedBox(width: 8),
+                        dateChip('today', 'Today'),
+                        const SizedBox(width: 8),
+                        dateChip('yesterday', 'Yesterday'),
+                        const SizedBox(width: 8),
+                        dateChip('week', '7 days'),
+                        const SizedBox(width: 8),
+                        dateChip('custom', customRange == null ? 'Custom' :
+                          '${DateFormat('dd MMM').format(customRange!.start)} – ${DateFormat('dd MMM').format(customRange!.end)}'),
+                      ])),
+                    const SizedBox(height: 18),
+                    Row(children: [
+                      Expanded(child: Text('Transactions',
+                        style: Theme.of(context).textTheme.titleMedium)),
+                      DropdownButton<String>(
+                        value: selected,
+                        underline: const SizedBox.shrink(),
+                        items: [
+                          const DropdownMenuItem(value: 'all', child: Text('Payment: All')),
+                          for (final item in methods)
+                            DropdownMenuItem(value: item,
+                              child: Text(CustomerPresentation.label(item))),
+                        ],
+                        onChanged: (v) => setState(() => method = v ?? 'all'),
+                      ),
+                    ]),
+                    const SizedBox(height: 6),
+                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      Text('${visible.length} authorized transactions',
+                        style: Theme.of(context).textTheme.bodySmall),
+                      Text('Newest first', style: Theme.of(context).textTheme.bodySmall),
                     ]),
                     const SizedBox(height: 12),
-                    Text('${visible.length} authorized transactions', style: Theme.of(context).textTheme.bodySmall),
                   ]))),
                 if (visible.isEmpty)
                   SliverFillRemaining(hasScrollBody: false, child: Center(child: TrexvenEmptyState(
@@ -73,22 +143,59 @@ class _RecentSalesScreenState extends ConsumerState<RecentSalesScreen> {
                 else SliverPadding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                   sliver: SliverList.builder(itemCount: visible.length, itemBuilder: (context, i) {
                     final sale = visible[i];
-                    return Column(children: [
-                      Material(color: Theme.of(context).colorScheme.surface,
-                        borderRadius: BorderRadius.circular(16), child: InkWell(
-                          borderRadius: BorderRadius.circular(16), onTap: () => details(sale),
-                          child: Padding(padding: const EdgeInsets.all(12), child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Wrap(spacing: 16, runSpacing: 4, alignment: WrapAlignment.spaceBetween,
-                                children: [Text(money(sale.total), style: Theme.of(context).textTheme.titleMedium),
-                                  PosStatus(CustomerPresentation.label(sale.paymentMethod))]),
-                              const SizedBox(height: 8),
-                              Text(date(sale.timestamp), style: Theme.of(context).textTheme.bodySmall),
-                              const SizedBox(height: 4),
-                              Text('${sale.itemCount} items · View receipt', style: Theme.of(context).textTheme.bodySmall),
-                            ])))),
-                      const SizedBox(height: 8),
-                    ]);
+                    final productNames = sale.items
+                        .map((item) => item.productName.trim())
+                        .where((name) => name.isNotEmpty)
+                        .toList();
+                    final products = productNames.isEmpty ? 'Items not listed' :
+                        productNames.take(2).join(', ') +
+                        (productNames.length > 2 ? ' +${productNames.length - 2} more' : '');
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Material(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () => details(sale),
+                          child: Padding(
+                            padding: const EdgeInsets.all(14),
+                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Row(children: [
+                                const Icon(Icons.receipt_long_outlined),
+                                const SizedBox(width: 10),
+                                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(sale.id.length > 12
+                                        ? 'Receipt …${sale.id.substring(sale.id.length - 8)}'
+                                        : 'Receipt ${sale.id}',
+                                      style: Theme.of(context).textTheme.titleSmall),
+                                    Text(date(sale.timestamp),
+                                      style: Theme.of(context).textTheme.bodySmall),
+                                  ])),
+                                PosStatus(CustomerPresentation.label(sale.paymentMethod)),
+                              ]),
+                              const Divider(height: 24),
+                              Text(products, maxLines: 2, overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall),
+                              const SizedBox(height: 12),
+                              Row(children: [
+                                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(money(sale.total),
+                                      style: Theme.of(context).textTheme.titleMedium),
+                                    Text('${sale.itemCount} items',
+                                      style: Theme.of(context).textTheme.bodySmall),
+                                  ])),
+                                const Icon(Icons.chevron_right_rounded),
+                                const SizedBox(width: 4),
+                                const Text('View receipt'),
+                              ]),
+                            ]),
+                          ),
+                        ),
+                      ),
+                    );
                   })),
               ]));
           }));
