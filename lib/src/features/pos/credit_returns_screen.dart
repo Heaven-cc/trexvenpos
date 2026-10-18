@@ -60,6 +60,7 @@ class PosCreditReturnsScreen extends ConsumerWidget {
       ),
       api: OperationsClient.pos(ref.watch(supabaseProvider), business.id),
       owner: access.hasFullAccess,
+      posWorkspace: true,
       manager: access.isManager,
       permissions: permissions,
       branchId: branchId,
