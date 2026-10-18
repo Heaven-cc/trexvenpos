@@ -409,21 +409,23 @@ context: context,
             if (message != null) ...[const SizedBox(height: 12), _card(child: Text(message!, style: TextStyle(color: TrexvenPresentation.color(context, _navy, 'ink'), fontSize: TrexvenPresentation.fontSize(context, 12))))],
             SizedBox(height: TrexvenPresentation.spacing(context, 18)),
             if (TrexvenPresentation.isPos(context))
-              _card(child: Wrap(spacing: 24, runSpacing: 12, children: [
-                _compactMetric('Registers', '${registers.length}'),
-                _compactMetric('Open shifts', '$openCount'),
-                _compactMetric('Handovers', '$pendingCount'),
-              ]))
+              Row(children: [
+                Expanded(child: _posMetric('Registers', '${registers.length}', Icons.point_of_sale_outlined)),
+                const SizedBox(width: 8),
+                Expanded(child: _posMetric('Open', '$openCount', Icons.lock_open_rounded)),
+                const SizedBox(width: 8),
+                Expanded(child: _posMetric('Pending', '$pendingCount', Icons.swap_horiz_rounded)),
+              ])
             else
-            Row(children: [
-              Expanded(child: _metric('Registers', '${registers.length}', Icons.point_of_sale_rounded)),
-              const SizedBox(width: 8),
-              Expanded(child: _metric('Open shifts', '$openCount', Icons.account_balance_wallet_outlined)),
-              const SizedBox(width: 8),
-              Expanded(child: _metric('Handovers', '$pendingCount', Icons.swap_horiz_rounded)),
-            ]),
+              Row(children: [
+                Expanded(child: _metric('Registers', '${registers.length}', Icons.point_of_sale_rounded)),
+                const SizedBox(width: 8),
+                Expanded(child: _metric('Open shifts', '$openCount', Icons.account_balance_wallet_outlined)),
+                const SizedBox(width: 8),
+                Expanded(child: _metric('Handovers', '$pendingCount', Icons.swap_horiz_rounded)),
+              ]),
             SizedBox(height: TrexvenPresentation.spacing(context, 23)),
-            _heading('Cash registers', registers.length),
+            _heading(TrexvenPresentation.isPos(context) ? 'Cash drawers' : 'Cash registers', registers.length),
             SizedBox(height: TrexvenPresentation.spacing(context, 10)),
             if (widget.owner) ...[
               _card(child: _action(Icons.add_circle_outline_rounded, 'Configure register assignments', 'Create a named register and assign employees', busy ? null : configure)),
@@ -431,20 +433,27 @@ context: context,
             ],
             if (registers.isEmpty) _empty('No shared cash registers configured.'),
             for (final r in registers) ...[
-              _card(child: Row(children: [
-                _iconBox(Icons.point_of_sale_outlined),
-                SizedBox(width: TrexvenPresentation.spacing(context, 11)),
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('${r['name'] ?? 'Register'}', style: TextStyle(color: TrexvenPresentation.color(context, _navy, 'ink'), fontWeight: FontWeight.w800, fontSize: TrexvenPresentation.fontSize(context, 13))),
-                  const SizedBox(height: 4),
-                  Text('Shared cash register', style: TextStyle(color: TrexvenPresentation.color(context, _muted, 'muted'), fontSize: TrexvenPresentation.fontSize(context, 11))),
-                ])),
-                TextButton(onPressed: busy ? null : () => open(r), child: const Text('Open')),
+              _card(child: Column(children: [
+                Row(children: [
+                  _iconBox(Icons.point_of_sale_outlined),
+                  const SizedBox(width: 11),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('${r['name'] ?? 'Register'}', style: TextStyle(color: TrexvenPresentation.color(context, _navy, 'ink'), fontWeight: FontWeight.w800, fontSize: TrexvenPresentation.fontSize(context, 13))),
+                    const SizedBox(height: 4),
+                    Text('Shared cash register', style: TextStyle(color: TrexvenPresentation.color(context, _muted, 'muted'), fontSize: TrexvenPresentation.fontSize(context, 11))),
+                  ])),
+                ]),
+                const SizedBox(height: 10),
+                SizedBox(width: double.infinity, child: FilledButton.icon(
+                  onPressed: busy ? null : () => open(r),
+                  icon: const Icon(Icons.lock_open_rounded, size: 17),
+                  label: const Text('Open drawer'),
+                )),
               ])),
               SizedBox(height: TrexvenPresentation.spacing(context, 9)),
             ],
             SizedBox(height: TrexvenPresentation.spacing(context, 15)),
-            _heading('Shift history', shifts.length),
+            _heading(TrexvenPresentation.isPos(context) ? 'Recent shifts' : 'Shift history', shifts.length),
             SizedBox(height: TrexvenPresentation.spacing(context, 10)),
             if (shifts.isEmpty) _empty('No cash shifts yet.'),
             for (final s in shifts) ...[
@@ -452,7 +461,7 @@ context: context,
               SizedBox(height: TrexvenPresentation.spacing(context, 10)),
             ],
             SizedBox(height: TrexvenPresentation.spacing(context, 14)),
-            _heading('Employee handovers', handovers.length),
+            _heading(TrexvenPresentation.isPos(context) ? 'Handovers' : 'Employee handovers', handovers.length),
             SizedBox(height: TrexvenPresentation.spacing(context, 10)),
             if (handovers.isEmpty) _empty('No handover requests.'),
             for (final h in handovers) ...[
@@ -546,6 +555,23 @@ context: context,
     style: TrexvenPresentation.isPos(context) ? Theme.of(context).outlinedButtonTheme.style
       : OutlinedButton.styleFrom(visualDensity: VisualDensity.compact, padding: EdgeInsets.symmetric(horizontal: TrexvenPresentation.spacing(context, 11), vertical: 8)),
     child: Text(title, style: TextStyle(fontSize: TrexvenPresentation.fontSize(context, 11))),
+  );
+
+  Widget _posMetric(String label, String value, IconData icon) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+    decoration: BoxDecoration(
+      color: const Color(0xFF1C2D46),
+      borderRadius: BorderRadius.circular(13),
+      border: Border.all(color: const Color(0xFF344963)),
+    ),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Icon(icon, color: const Color(0xFF9EBFFF), size: 17),
+      const SizedBox(height: 7),
+      Text(value, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
+      const SizedBox(height: 3),
+      Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+        style: const TextStyle(color: Color(0xFFA9BDD8), fontSize: 11)),
+    ]),
   );
 
   Widget _compactMetric(String label, String value) => Column(
