@@ -29,20 +29,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Center(
+      body: SafeArea(child: Center(
         child: SingleChildScrollView(
-          padding: TrexvenSpacing.pagePadding,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo and Branding Header
+              // Preserve the original POS logo and business slogan.
               Column(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                      shape: BoxShape.circle,
+                      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.05),
@@ -53,7 +55,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     child: Image.asset('assets/trexvenpos_logo.png', height: 56),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
                   Text(
                     'Trexven POS',
                     style: TextStyle(
@@ -73,9 +75,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
-              // Login Form Card
+              // Compact POS login surface
               Card(
                 elevation: 0,
                 color: Theme.of(context).colorScheme.surface,
@@ -87,30 +89,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 child: Container(
                   constraints: const BoxConstraints(maxWidth: 420),
-                  padding: TrexvenSpacing.cardPadding,
+                  padding: const EdgeInsets.all(20),
                   child: Form(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          'Sign In',
+                          'Welcome back',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 4),
+                        Text('Sign in to access your business', style: Theme.of(context).textTheme.bodySmall),
+                        const SizedBox(height: 16),
                         Material(
                           color: Theme.of(context)
                               .colorScheme
                               .primary
-                              .withValues(alpha: 0.06),
+                              .withValues(alpha: 0.10),
                           borderRadius:
                               BorderRadius.circular(TrexvenRadii.card),
                           child: SwitchListTile(
                             contentPadding:
-                                const EdgeInsets.symmetric(horizontal: 16),
+                                const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                             title: Text(
                               'Business owner sign-in',
                               style: TextStyle(
@@ -137,7 +141,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     setState(() => _ownerLogin = value),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 18),
                         for (final context in authState.contexts)
                           if (authState.employee == null)
                             Padding(
@@ -222,7 +226,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 18),
                         if (authState.error != null)
                           Container(
                             margin: const EdgeInsets.only(bottom: 16.0),
@@ -305,7 +309,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       const Icon(Icons.login_rounded, size: 20),
                                       const SizedBox(width: 8),
                                       Text(
-                                        'Login',
+                                        'Sign In',
                                         style: TextStyle(
                                           fontSize: TrexvenFontSize.input,
                                           fontWeight: FontWeight.w700,
@@ -315,12 +319,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   ),
                           ),
                         ),
+                        const SizedBox(height: 12),
+                        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                          Icon(Icons.shield_outlined, size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          const SizedBox(width: 6),
+                          Text('Secure business access', style: Theme.of(context).textTheme.bodySmall),
+                        ]),
                       ],
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               Text(
                 '© 2026 ODT Web Ecosystem',
                 style: TextStyle(
@@ -331,7 +341,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ],
           ),
         ),
-      ),
+      )),
     );
   }
 }
