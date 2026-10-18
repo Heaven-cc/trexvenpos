@@ -1,3 +1,4 @@
+import 'package:uuid/uuid.dart';
 
 import 'package:trexven_design_system/trexven_design_system.dart';
 import 'package:trexven_operations/trexven_operations.dart';
@@ -129,7 +130,10 @@ Widget build(BuildContext context, WidgetRef ref) {
               Expanded(child: _HomeActionTile(
                 icon: Icons.search_rounded, title: 'Search',
                 subtitle: 'Find products',
-                onTap: () => open(const ProductSearchScreen()),
+                onTap: () => open(ProductSearchScreen(
+                  onAddProduct: (product) => _addRecognizedProduct(
+                    context, ref, product, const Uuid().v4()),
+                )),
               )),
               const SizedBox(width: 12),
               Expanded(child: _HomeActionTile(
