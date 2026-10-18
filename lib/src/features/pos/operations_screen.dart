@@ -18,7 +18,7 @@ class PosOperationsScreen extends ConsumerWidget {
     if (auth.activeBusiness == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Operations')),
-        body: const Center(child: TrexvenEmptyState(title: 'Select a business.')),
+        body: Center(child: TrexvenEmptyState(title: 'Select a business.')),
       );
     }
 
@@ -152,6 +152,7 @@ class _WorkflowCard extends StatelessWidget {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 padding: const EdgeInsets.all(9),
@@ -169,7 +170,7 @@ class _WorkflowCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(workflow.subtitle, maxLines: 2, overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(color: muted)),
-              const Spacer(),
+              const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerRight,
                 child: Icon(Icons.arrow_outward_rounded, size: 17, color: muted),
