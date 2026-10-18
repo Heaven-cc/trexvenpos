@@ -53,6 +53,7 @@ class _InventoryOperationsScreenState extends State<InventoryOperationsScreen>
   bool _allSessions = false;
   String _sessionQuery = '';
   String _sessionFilter = 'active';
+  int _posSection = 0;
   String? _pendingRpc;
   late final String? _user;
   Map<String, dynamic>? _business;
@@ -985,13 +986,50 @@ context: context,
     ), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4)),
   );
 
+  Widget _posSectionPicker() {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: scheme.outlineVariant),
+        ),
+        child: Row(children: [
+          for (final option in const [(0, 'Stocktaking'), (1, 'Operations')])
+            Expanded(child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: Material(
+                color: _posSection == option.$1
+                    ? scheme.primaryContainer : Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () => setState(() => _posSection = option.$1),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Text(option.$2, textAlign: TextAlign.center,
+                      style: TextStyle(fontWeight: FontWeight.w600,
+                        color: _posSection == option.$1
+                            ? scheme.onPrimaryContainer : scheme.onSurfaceVariant)),
+                  ),
+                ),
+              ),
+            )),
+        ]),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final posLayout = TrexvenPresentation.isPos(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Inventory'),
+        title: Text(posLayout ? 'Stocktaking' : 'Inventory'),
         centerTitle: false, elevation: 0, scrolledUnderElevation: 0,
         backgroundColor: theme.scaffoldBackgroundColor,
         actions: [
@@ -1057,6 +1095,10 @@ context: context,
                     Padding(padding: EdgeInsets.only(bottom: TrexvenPresentation.spacing(context, 10)),
                       child: Text(widget.branchName!, style: theme.textTheme.labelLarge)),
                   _summary(rows),
+                  if (posLayout) ...[
+                    const SizedBox(height: 14),
+                    _posSectionPicker(),
+                  ],
                   if (_branchesEnabled && _owner && widget.branchId == null) ...[
                     SizedBox(height: TrexvenPresentation.spacing(context, 14)),
                     (TrexvenPresentation.isPos(context) ? TrexvenDropdown<String>(gap: 0,
@@ -1091,7 +1133,7 @@ context: context,
                     )),
                   ],
                   SizedBox(height: TrexvenPresentation.spacing(context, 14)),
-                  if (_can('stocktake'))
+                  if ((!posLayout || _posSection == 0) && _can('stocktake'))
                     FilledButton.icon(
                       style: FilledButton.styleFrom(
                         minimumSize: const Size(0, 50),
@@ -1114,10 +1156,13 @@ context: context,
                         : 'Branch inventory is available to view. Stock changes are currently unavailable for this branch.',
                       icon: Icons.store_outlined),
                   ],
-                  _heading('Stock management'),
-                  _management(rows[0]),
-                  _sessions(rows),
-                  if (_branchesEnabled)
+                  if (!posLayout || _posSection == 1) ...[
+                    _heading('Stock management'),
+                    _management(rows[0]),
+                  ],
+                  if (!posLayout || _posSection == 0)
+                    _sessions(rows),
+                  if ((!posLayout || _posSection == 1) && _branchesEnabled)
                     _records('Branch inventory', 'On-hand and reserved quantities',
                       [
                         for (final row in rows[5])
@@ -1125,14 +1170,16 @@ context: context,
                             subtitle: '${branches[row['branch_id']] ?? 'Branch'} · On hand ${row['quantity']} · Reserved ${row['reserved_quantity']}',
                             icon: Icons.store_outlined),
                       ], empty: 'No branch inventory records available.', icon: Icons.store_outlined),
-                  _records('Non-sellable stock', 'Condition ledger and recorded reasons',
+                  if (!posLayout || _posSection == 1)
+                    _records('Non-sellable stock', 'Condition ledger and recorded reasons',
                     [
                       for (final row in rows[2])
                         _entry(title: '${names[row['product_id']] ?? 'Product'} · ${row['quantity']}',
                           subtitle: '${CustomerPresentation.label(row['kind'])} · ${row['reason'] ?? ''}',
                           status: row['condition'], icon: Icons.inventory_2_outlined),
                     ], empty: 'No non-sellable stock entries yet.', icon: Icons.inventory_2_outlined),
-                  _records('Supplier returns', '${rows[4].where((r) => r['status'] == 'dispatched').length} awaiting acknowledgment',
+                  if (!posLayout || _posSection == 1)
+                    _records('Supplier returns', '${rows[4].where((r) => r['status'] == 'dispatched').length} awaiting acknowledgment',
                     [
                       for (final row in rows[4])
                         _entry(title: '${row['supplier_name']} · ${row['quantity']}',
@@ -1142,7 +1189,8 @@ context: context,
                               !_can('approve_supplier_returns', sensitive: true)
                             ? null : () => _prepare(() => supplier(row))),
                     ], empty: 'No supplier returns yet.', icon: Icons.local_shipping_outlined),
-                  _records('Offline reconciliation', 'Review late stock movements',
+                  if (!posLayout || _posSection == 1)
+                    _records('Offline reconciliation', 'Review late stock movements',
                     [
                       for (final row in rows[3])
                         _entry(title: 'Late stock movement · ${row['quantity']}',
