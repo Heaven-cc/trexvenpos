@@ -70,8 +70,11 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
     setState(() => _addingProductId = product.id);
     try {
       final added = await widget.onAddProduct!(product);
-      if (mounted && added) ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${product.name} added to cart')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(added ? '${product.name} added to cart' : 'Product not added. Check price or permissions.')));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to add product. Please try again.')));
     } finally {
       if (mounted) setState(() => _addingProductId = null);
     }
@@ -321,7 +324,7 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
               return IconButton(tooltip: 'Add to cart', icon: _addingProductId == product.id
                 ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.add_circle_outline),
-                onPressed: _addingProductId != null || !product.isActive || product.sellingPrice == null ? null : () => _addToCart(product));
+                onPressed: _addingProductId != null || !product.isActive ? null : () => _addToCart(product));
             })
           else Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant, size: 20),
         ]),
