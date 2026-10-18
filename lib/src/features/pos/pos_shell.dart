@@ -253,6 +253,52 @@ class _MoreScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           _MoreMenuContainer(
             children: [
+              if (!auth.offlineCashOnly &&
+                  business?.branchesEnabled == true &&
+                  canSwitchPosBranch(access))
+                _MoreMenuItem(
+                  icon: Icons.storefront_outlined,
+                  title: 'Switch Branch',
+                  subtitle: 'Change your authorized working branch',
+                  onTap: () async {
+                    try {
+                      final branches = await ref.read(authorizedBranchesProvider.future);
+                      if (!context.mounted) return;
+                      final current = ref.read(branchContextProvider);
+                      final chosen = await showDialog<AuthorizedBranch>(
+                        context: context,
+                        builder: (dialogContext) => SimpleDialog(
+                          title: const Text('Select Branch'),
+                          children: [
+                            for (final branch in branches)
+                              SimpleDialogOption(
+                                onPressed: () => Navigator.pop(dialogContext, branch),
+                                child: Row(children: [
+                                  Icon(branch.id == current?.id
+                                      ? Icons.check_circle_outline
+                                      : Icons.storefront_outlined),
+                                  const SizedBox(width: 12),
+                                  Expanded(child: Text(branch.name)),
+                                ]),
+                              ),
+                          ],
+                        ),
+                      );
+                      if (chosen != null && context.mounted &&
+                          chosen.id != current?.id) {
+                        await selectPosBranch(ref, chosen, branches);
+                      }
+                    } catch (error) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(error is StateError
+                              ? error.message
+                              : 'Unable to switch branches. Verify access and pending sales.')),
+                        );
+                      }
+                    }
+                  },
+                ),
               if (!auth.offlineCashOnly)
                 _MoreMenuItem(
                   icon: Icons.business_outlined,
