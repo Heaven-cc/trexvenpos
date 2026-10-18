@@ -87,9 +87,30 @@ abstract final class PosThemeData {
         foregroundColor: WidgetStatePropertyAll(dark ? accent : blue))),
       cardTheme: base.cardTheme.copyWith(color: surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-      dialogTheme: base.dialogTheme.copyWith(backgroundColor: surface),
-      bottomSheetTheme: base.bottomSheetTheme.copyWith(backgroundColor: surface,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24)))),
+      dialogTheme: base.dialogTheme.copyWith(
+        backgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: border),
+        ),
+        titleTextStyle: TextStyle(
+          color: ink, fontSize: 18, fontWeight: FontWeight.w700),
+        contentTextStyle: TextStyle(
+          color: muted, fontSize: 14, height: 1.4),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+      ),
+      bottomSheetTheme: base.bottomSheetTheme.copyWith(
+        backgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        showDragHandle: true,
+        dragHandleColor: muted,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      ),
       navigationBarTheme: base.navigationBarTheme.copyWith(backgroundColor: surface,
         indicatorColor: blue.withValues(alpha: .16), height: 72,
         iconTheme: WidgetStateProperty.resolveWith((s) => IconThemeData(size: 22,
@@ -102,7 +123,15 @@ abstract final class PosThemeData {
       snackBarTheme: base.snackBarTheme.copyWith(backgroundColor: ink,
         contentTextStyle: TextStyle(color: background, fontSize: 14)),
       datePickerTheme: base.datePickerTheme.copyWith(backgroundColor: surface),
-      popupMenuTheme: base.popupMenuTheme.copyWith(color: surface),
+      popupMenuTheme: base.popupMenuTheme.copyWith(
+        color: surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: border)),
+        textStyle: TextStyle(color: ink, fontSize: 14),
+      ),
       iconTheme: IconThemeData(color: muted, size: 22),
       listTileTheme: base.listTileTheme.copyWith(iconColor: muted, textColor: ink,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4)),
