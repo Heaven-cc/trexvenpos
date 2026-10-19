@@ -6,12 +6,18 @@ import 'operations_client.dart';
 
 class NotificationCenterScreen extends StatefulWidget {
   final OperationsClient api;
+  final String? branchId;
+  final bool posScoped;
+  final bool Function()? contextIsCurrent;
   final void Function(BuildContext context, String route, String? referenceId)
   open;
   const NotificationCenterScreen({
     super.key,
     required this.api,
     required this.open,
+    this.branchId,
+    this.posScoped = false,
+    this.contextIsCurrent,
   });
   @override
   State<NotificationCenterScreen> createState() =>
@@ -25,12 +31,14 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
   String? error;
   String _posFilter = 'all';
   StreamSubscription<AuthState>? accountChanges;
+  Timer? refreshTimer;
+  bool get current => mounted && widget.api.client.auth.currentUser?.id == user && (widget.contextIsCurrent?.call() ?? true);
   @override
   void initState() {
     super.initState();
     user = widget.api.client.auth.currentUser?.id;
     accountChanges = widget.api.client.auth.onAuthStateChange.listen((_) {
-      if (mounted && widget.api.client.auth.currentUser?.id != user) {
+      if (mounted && !current) {
         setState(() {
           rows = Future.value([]);
           error = null;
@@ -38,29 +46,34 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
       }
     });
     rows = load();
+    refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (current && !busy && ModalRoute.of(context)?.isCurrent == true) setState(() => rows = load());
+    });
   }
 
   @override
   void dispose() {
+    refreshTimer?.cancel();
     accountChanges?.cancel();
     super.dispose();
   }
 
   Future<List<Map<String, dynamic>>> load() async {
-    if (user == null || widget.api.client.auth.currentUser?.id != user) {
+    if (user == null || !current) {
       throw StateError('Original authenticated account required.');
     }
     final result = <Map<String, dynamic>>[];
     // Bounded pages; no broad direct table access or Vision endpoint in POS.
     for (var offset = 0; offset < 1000; offset += 100) {
       final page =
-          await widget.api.call('get_trexven_notifications', {
+          await widget.api.call(widget.posScoped ? 'get_pos_notifications' : 'get_trexven_notifications', {
                 'p_business_id': widget.api.businessId,
-                'p_application': widget.api.application,
+                if (!widget.posScoped) 'p_application': widget.api.application,
+                if (widget.posScoped) 'p_branch_id': widget.branchId,
                 'p_offset': offset,
-              })
+              }).timeout(const Duration(seconds: 20))
               as List;
-      if (widget.api.client.auth.currentUser?.id != user) {
+      if (!current) {
         throw StateError('Account changed during notification refresh.');
       }
       result.addAll(page.map((row) => Map<String, dynamic>.from(row as Map)));
@@ -76,13 +89,14 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
       error = null;
     });
     try {
-      if (widget.api.client.auth.currentUser?.id != user)
+      if (!current)
         throw StateError('Account changed.');
-      await widget.api.call('mark_trexven_notification_read', {
+      await widget.api.call(widget.posScoped ? 'mark_pos_notification_read' : 'mark_trexven_notification_read', {
         'p_business_id': widget.api.businessId,
         'p_alert_key': row['alert_key'],
         'p_read': row['read_at'] == null,
-        'p_application': widget.api.application,
+        if (!widget.posScoped) 'p_application': widget.api.application,
+        if (widget.posScoped) 'p_branch_id': widget.branchId,
       });
       if (mounted) setState(() => rows = load());
     } catch (_) {
@@ -203,7 +217,7 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                   child: Text(row['message']?.toString() ?? ''),
                 ),
                 onTap: busy ? null : () {
-                  if (widget.api.client.auth.currentUser?.id == user) {
+                  if (current) {
                     widget.open(context, row['route']?.toString() ?? '',
                       row['reference_id']?.toString());
                   }
@@ -219,13 +233,14 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
             ),
           ),
         ),
+        if (notifications.length == 1000) const Text('Showing the latest 1,000 authorized updates.'),
       ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.api.client.auth.currentUser?.id != user) {
+    if (!current) {
       return Scaffold(
         body: Center(
           child: Text(
@@ -289,7 +304,7 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                   onTap: busy
                       ? null
                       : () {
-                          if (widget.api.client.auth.currentUser?.id == user) {
+                          if (current) {
                             widget.open(
                               context,
                               row['route'] as String,

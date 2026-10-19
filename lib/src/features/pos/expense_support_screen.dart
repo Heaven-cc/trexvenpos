@@ -168,7 +168,7 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
         try { retained = await api.journal.pending(); } catch (_) { /* Keep the original journal intact. */ }
         if (mounted) setState(() {
           _pending = retained;
-          _error = CustomerPresentation.error(error,
+          _error = error is FormatException ? error.message : error is StateError ? error.message.toString() : CustomerPresentation.error(error,
             fallback: 'Save is unconfirmed. Recover the original request before recording again.');
         });
       }
@@ -223,6 +223,11 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    if ((_scopeKey != null && _scopeKey != _currentScope) ||
+        (!_canRecord && !_canReadBranch) || (_branchHistory && !_canReadBranch)) {
+      return Scaffold(appBar: AppBar(title: const Text('Expenses')),
+        body: const Center(child: Text('Verify your expense permission and reopen this workflow in the authorized branch.')));
+    }
     return Scaffold(
       appBar: AppBar(title: const Text('Expenses'),
         actions: [IconButton(
@@ -339,7 +344,7 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
               : 'Ask your owner for expense recording permission.'),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed: _loading || _busy || _pending != null || !_canRecord ? null : _save,
+              onPressed: _loading || _busy || _api == null || _pending != null || !_canRecord ? null : _save,
               icon: const Icon(Icons.add),
               label: Text(_busy ? 'Verifying expense…' : 'Save Expense'),
             ),

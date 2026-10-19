@@ -12,6 +12,8 @@ import 'pending_sale_provider.dart';
 import '../auth/branch_context.dart';
 import 'employee_settings_screen.dart';
 import 'help_safe_recovery_screen.dart';
+import 'credit_returns_screen.dart';
+import 'operation_history_screen.dart';
 import 'package:trexven_operations/trexven_operations.dart';
 
 /// Tabs retain the existing repositories and checkout. Auth, pending-sale and
@@ -152,6 +154,7 @@ class _MoreScreen extends ConsumerWidget {
     final access = ref.watch(permissionServiceProvider);
     final employee = auth.employee;
     final business = auth.activeBusiness;
+    final notificationBranch = ref.watch(branchContextProvider)?.id;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -319,6 +322,7 @@ class _MoreScreen extends ConsumerWidget {
                           'Finish or remove the unsubmitted cart before switching business.',
                         );
                       }
+                      if (await OperationJournal().pending() != null) throw StateError('Recover the retained operation before switching business.');
                       final rows =
                           await ref
                                   .read(supabaseProvider)
@@ -386,6 +390,11 @@ context: context,
                     context,
                     MaterialPageRoute(
                       builder: (_) => NotificationCenterScreen(
+                        posScoped: true,
+                        branchId: notificationBranch,
+                        contextIsCurrent: () => ref.read(authStateProvider).employee?.userId == employee?.userId &&
+                            ref.read(authStateProvider).activeBusiness?.id == business?.id &&
+                            ref.read(branchContextProvider)?.id == notificationBranch && !ref.read(authStateProvider).offlineCashOnly,
                         api: OperationsClient.pos(
                           ref.read(supabaseProvider),
                           auth.activeBusiness!.id,
@@ -402,6 +411,8 @@ context: context,
                                 builder: (_) => const PosOperationsScreen(),
                               ),
                             );
+                          } else if ((route == 'credit' || route == 'returns') && current.hasPermission('pos_access')) {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const PosCreditReturnsScreen()));
                           } else if (route == 'employees' &&
                               current.hasPermission('manage_employees')) {
                             Navigator.push(
@@ -429,6 +440,9 @@ context: context,
                     ),
                   ),
                 ),
+              _MoreMenuItem(icon: Icons.history_rounded, title: 'Operational history',
+                subtitle: 'Your confirmed actions & retained requests',
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PosOperationHistoryScreen()))),
               if (access.hasPermission('manage_employees') &&
                   auth.activeBusiness != null)
                 _MoreMenuItem(

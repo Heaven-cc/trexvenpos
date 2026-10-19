@@ -46,11 +46,13 @@ class DashboardScreen extends ConsumerWidget {
               onPressed: !canSwitchPosBranch(access) ? null : () async {
                 try {
                   final pending = await (await ref.read(pendingSaleStoreProvider.future)).read();
+                  if (await OperationJournal().pending() != null) throw StateError('Recover the retained operation before switching branches.');
                   ref.read(branchContextProvider.notifier).clear(hasCart: ref.read(cartProvider).isNotEmpty,
                     hasPendingSale: pending != null, canSwitch: canSwitchPosBranch(ref.read(permissionServiceProvider)));
                   ref.invalidate(authorizedBranchesProvider);
-                } on StateError catch (error) {
-                  _showScanError(context, CustomerPresentation.error(error));
+                } catch (error) {
+                  if (context.mounted) _showScanError(context, CustomerPresentation.error(error,
+                    fallback: error is StateError ? error.message.toString() : 'Unable to verify branch access.'));
                 }
               },
             ),
@@ -83,7 +85,7 @@ class DashboardScreen extends ConsumerWidget {
               child: InkWell(
                 onTap: () => open(scan),
                 child: Padding(
-                  padding: const EdgeInsets.all(18),
+                  padding: const EdgeInsets.all(14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -104,7 +106,7 @@ class DashboardScreen extends ConsumerWidget {
                             ),
                           ),
                           Icon(Icons.qr_code_scanner_rounded,
-                              size: 36, color: scheme.onPrimary),
+                              size: 28, color: scheme.onPrimary),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -224,7 +226,7 @@ class _HomeActionTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          constraints: const BoxConstraints(minHeight: 116),
+          constraints: const BoxConstraints(minHeight: 100),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             border: Border.all(color: scheme.outlineVariant),

@@ -6,6 +6,8 @@ import '../../ui/trexven_ui.dart';
 import '../auth/permission_service.dart';
 import 'offline_cash_screen.dart';
 import 'credit_returns_screen.dart';
+import 'branch_transfers_screen.dart';
+import 'expense_support_screen.dart';
 import '../inventory/inventory_operations_screen.dart';
 
 class PosOperationsScreen extends ConsumerWidget {
@@ -23,6 +25,12 @@ class PosOperationsScreen extends ConsumerWidget {
     }
 
     final workflows = <_Workflow>[
+      if (access.hasPermission('record_expenses') || access.hasPermission('view_pos_expenses'))
+        _Workflow('Expenses', 'Cash spending & history', Icons.payments_outlined,
+          () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PosExpenseSupportScreen()))),
+      if (auth.activeBusiness!.branchesEnabled && (access.isOwner || access.isManager) && access.hasPermission('transfer_stock'))
+        _Workflow('Branch Transfers', 'Dispatch & receive stock', Icons.local_shipping_outlined,
+          () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PosBranchTransfersScreen()))),
       if (access.hasPermission('cash_shifts'))
         _Workflow(
           'Cash Drawers', 'Shifts & balances', Icons.account_balance_wallet_outlined,

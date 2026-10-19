@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:trexven_operations/trexven_operations.dart';
 import '../../ui/trexven_ui.dart';
 import 'package:trexven_design_system/trexven_design_system.dart';
 import 'package:flutter/material.dart';
@@ -128,6 +129,7 @@ Future<void> selectPosBranch(
   List<AuthorizedBranch> available,
 ) async {
   final pending = await (await ref.read(pendingSaleStoreProvider.future)).read();
+  if (await OperationJournal().pending() != null) throw StateError('Recover the retained operation before switching branches.');
   ref.read(branchContextProvider.notifier).select(
     branch, available,
     hasCart: ref.read(cartProvider).isNotEmpty,

@@ -58,7 +58,7 @@ abstract final class PosThemeData {
         error: error, border: border, muted: muted, cardBackground: surface)],
       textTheme: base.textTheme.apply(bodyColor: ink, displayColor: ink).copyWith(
         headlineLarge: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: ink),
-        headlineSmall: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: ink),
+        headlineSmall: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: ink),
         titleLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: ink),
         titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: ink),
         bodyLarge: TextStyle(fontSize: 16, height: 1.35, color: ink),

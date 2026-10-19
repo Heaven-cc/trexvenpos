@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import '../models/sale.dart';
 
 /// One interrupted online submission, not an offline sale queue.
@@ -96,6 +97,12 @@ class PendingSaleSubmission {
     // Payment may already have moved before submission. A server rejection does
     // not prove that it is safe to forget the money or reuse this request key.
     // Only a verified receipt or an explicit no-money-moved recovery may clear it.
-    return await send(existing?.sale ?? sale);
+    final receipt = await send(existing?.sale ?? sale).timeout(const Duration(seconds: 30));
+    if (receipt.businessId != sale.businessId || receipt.employeeId != sale.employeeId ||
+        receipt.branchId != sale.branchId || !receipt.total.isFinite ||
+        (receipt.total * 100).round() != (sale.total * 100).round()) {
+      throw StateError('The server receipt does not match the retained sale. Keep it for recovery.');
+    }
+    return receipt;
   }
 }

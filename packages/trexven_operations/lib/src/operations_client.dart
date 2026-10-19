@@ -47,7 +47,7 @@ class OperationsClient {
     await client.rpc(
           'get_trexven_cash_context',
           params: {'p_business_id': businessId},
-        )
+        ).timeout(const Duration(seconds: 20))
         as Map,
   );
   Future<List<Map<String, dynamic>>> list(
@@ -81,14 +81,14 @@ class OperationsClient {
       }
       // Credit accounts are keyed by their sale; the other repositories use id.
       final orderColumn = table == 'credit_accounts' ? 'sale_id' : 'id';
-      final rows = await query.order(orderColumn).range(offset, offset + 199);
+      final rows = await query.order(orderColumn).range(offset, offset + 199).timeout(const Duration(seconds: 20));
       result.addAll(rows.map((x) => Map<String, dynamic>.from(x)));
       if (rows.length < 200) return result;
     }
   }
 
   Future<dynamic> call(String rpc, Map<String, dynamic> args) async {
-    if (!args.containsKey('p_request_id')) return client.rpc(rpc, params: args);
+    if (!args.containsKey('p_request_id')) return client.rpc(rpc, params: args).timeout(const Duration(seconds: 20));
     final user = client.auth.currentUser?.id;
     if (user == null) throw StateError('Sign in before an operation.');
     final reserved = await journal.reserve(user, businessId, rpc, args);
@@ -170,7 +170,7 @@ class OperationsClient {
         'p_business_id': businessId,
         'p_request_id': args['p_request_id'],
       },
-    );
+    ).timeout(const Duration(seconds: 20));
     if (receipt != null) {
       await journal.complete(
         pending['user'] as String,
