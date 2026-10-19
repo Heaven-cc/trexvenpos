@@ -49,7 +49,7 @@ class MyApp extends ConsumerWidget {
     }
 
     return MaterialApp(
-      key: ValueKey('pos:${ref.watch(supabaseProvider).auth.currentUser?.id}:${authState.employee?.membershipId}:${authState.activeBusiness?.id}:${authState.offlineCashOnly}'),
+      key: ValueKey('pos:${ref.watch(supabaseProvider).auth.currentUser?.id}:${authState.employee?.membershipId}:${authState.activeBusiness?.id}:${authState.offlineCashOnly}:${authState.activeBusiness?.branchesEnabled}'),
       title: 'Trexven POS',
       debugShowCheckedModeBanner: false,
 

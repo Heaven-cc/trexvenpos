@@ -66,7 +66,7 @@ final branchContextProvider =
     StateNotifierProvider<BranchContext, AuthorizedBranch?>((ref) {
       ref.watch(
         authStateProvider.select(
-          (s) => '${s.employee?.userId}:${s.activeBusiness?.id}',
+          (s) => '${s.employee?.userId}:${s.activeBusiness?.id}:${s.activeBusiness?.branchesEnabled}',
         ),
       );
       return BranchContext(
