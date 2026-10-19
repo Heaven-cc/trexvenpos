@@ -10,6 +10,7 @@ import '../../services/offline_cash_unsupported.dart'
     as storage;
 import '../../models/product.dart';
 import '../auth/auth_provider.dart';
+import '../auth/branch_context.dart';
 import 'cart_provider.dart';
 import 'checkout_screen.dart';
 
@@ -52,8 +53,8 @@ class _OfflineCashScreenState extends ConsumerState<OfflineCashScreen> {
     if (user == null || business == null) throw StateError('Sign in first.');
     if (auth.offlineCashOnly)
       throw StateError('Reconnect and verify access first.');
-    if (business.branchesEnabled)
-      throw StateError('Offline branch cash workflow is not activated.');
+    final branch = ref.read(branchContextProvider);
+    if (business.branchesEnabled && branch == null) throw StateError('Select an authorized branch first.');
     final device = await queue.store.mutate(
       (state) => state['device_id'] ??= Uuid().v4(),
     );
@@ -61,14 +62,16 @@ class _OfflineCashScreenState extends ConsumerState<OfflineCashScreen> {
     final shift = await chooseCashShift(
       context,
       OperationsClient.pos(ref.read(supabaseProvider), business.id),
+      branchId: branch?.id, restrictBranch: true,
     );
     final ticket = await ref
         .read(supabaseProvider)
         .rpc(
-          'issue_trexven_offline_scope',
+          business.branchesEnabled ? 'issue_pos_branch_offline_scope' : 'issue_trexven_offline_scope',
           params: {
             'p_business_id': business.id,
             'p_device_id': device,
+            if (business.branchesEnabled) 'p_branch_id': branch!.id,
             'p_shift_id': shift,
           },
         );
@@ -94,7 +97,7 @@ class _OfflineCashScreenState extends ConsumerState<OfflineCashScreen> {
       final value = await ref
           .read(supabaseProvider)
           .rpc(
-            'sync_trexven_offline_cash',
+            entry.sale.branchId == null ? 'sync_trexven_offline_cash' : 'sync_pos_branch_offline_cash',
             params: {
               'p_request_id': entry.requestId,
               'p_ticket': entry.ticket,
@@ -181,7 +184,9 @@ context: context,
                   scope?['user_id'] == auth.employee?.userId &&
                   scope?['business_id'] == auth.activeBusiness?.id &&
                   scope?['membership_id'] == auth.employee?.membershipId;
-              final products = own ? (scope?['products'] as List? ?? []) : [];
+              final expiry = DateTime.tryParse(scope?['expires_at']?.toString() ?? '');
+              final valid = own && expiry != null && DateTime.now().isBefore(expiry);
+              final products = valid ? (scope?['products'] as List? ?? []) : [];
               final entries = (state['entries'] as List? ?? [])
                   .map(
                     (x) => OfflineCashEntry.fromJson(

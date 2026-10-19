@@ -43,9 +43,11 @@ class DashboardScreen extends ConsumerWidget {
             IconButton(
               tooltip: 'Change branch',
               icon: const Icon(Icons.store_outlined),
-              onPressed: () {
+              onPressed: !canSwitchPosBranch(access) ? null : () async {
                 try {
-                  ref.read(branchContextProvider.notifier).clear(hasCart: cart.isNotEmpty);
+                  final pending = await (await ref.read(pendingSaleStoreProvider.future)).read();
+                  ref.read(branchContextProvider.notifier).clear(hasCart: ref.read(cartProvider).isNotEmpty,
+                    hasPendingSale: pending != null, canSwitch: canSwitchPosBranch(ref.read(permissionServiceProvider)));
                   ref.invalidate(authorizedBranchesProvider);
                 } on StateError catch (error) {
                   _showScanError(context, CustomerPresentation.error(error));

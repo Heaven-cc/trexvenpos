@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
@@ -76,7 +77,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     bool observeSession = true,
     Future<Map<String, dynamic>?> Function(String userId)? offlineContext,
   }) : _offlineContext = offlineContext,
-       super(AuthState()) {
+       super(AuthState(isLoading: observeSession && _supabase.auth.currentSession != null)) {
     if (!observeSession) return;
     _authEvents = _supabase.auth.onAuthStateChange.listen(
       (event) {
@@ -84,7 +85,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
           _generation++;
           if (mounted) state = AuthState();
         } else if (!_signingIn &&
-            (event.event == AuthChangeEvent.tokenRefreshed ||
+            (event.event == AuthChangeEvent.initialSession && event.session != null ||
+                event.event == AuthChangeEvent.tokenRefreshed ||
                 event.event == AuthChangeEvent.signedIn ||
                 event.event == AuthChangeEvent.userUpdated)) {
           unawaited(restoreSession());
@@ -110,13 +112,22 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
     if (!mounted) return;
     if (ownerOnly != null) _ownerOnly = ownerOnly;
-    final selected = businessId ?? state.activeBusiness?.id;
-    state = AuthState(isLoading: true);
+    var selected = businessId ?? state.activeBusiness?.id;
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final response = await _supabase.rpc(
+      SharedPreferences? prefs;
+      try { prefs = await SharedPreferences.getInstance(); } catch (_) {}
+      final fromHint = selected == null;
+      selected ??= prefs?.getString('pos_business_$user');
+      var response = await _supabase.rpc(
         'get_trexven_pos_context',
         params: {'p_business_id': selected},
-      );
+      ).timeout(const Duration(seconds: 20));
+      if (fromHint && selected != null && response is List && response.isEmpty) {
+        selected = null;
+        response = await _supabase.rpc('get_trexven_pos_context')
+            .timeout(const Duration(seconds: 20));
+      }
       if (!mounted ||
           generation != _generation ||
           user != _supabase.auth.currentUser?.id) {
@@ -150,6 +161,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final business = Business.fromJson(
         Map<String, dynamic>.from(context['business'] as Map),
       );
+      // A preference is only a hint; it is saved after current server authorization.
+      try { await prefs?.setString('pos_business_$user', business.id); } catch (_) {}
+      if (!mounted || generation != _generation || user != _supabase.auth.currentUser?.id) return;
       state = AuthState(
         employee: employee,
         activeBusiness: business,
