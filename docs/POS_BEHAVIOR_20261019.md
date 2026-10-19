@@ -57,3 +57,12 @@ Existing stocktake approval code applies counted-minus-expected deltas to curren
 - Notifications here are the in-app operational feed. Native push delivery was not added.
 - Existing receipt display remains; PDF export and physical printing were not added by this behavior patch.
 - No new frontend package dependencies or cross-repository frontend packages were introduced.
+
+## Final static and access review
+
+All 77 POS application/package Dart files were reviewed for relative import targets and basic string/delimiter consistency; no missing relative targets or delimiter issues were found. This lightweight source check is not Dart analysis or compilation. All 58 statically referenced RPC names found in the POS source exist in production. New endpoint named arguments were compared with live catalog signatures.
+
+Postflight: all seven new public RPCs deny anonymous EXECUTE and allow authenticated EXECUTE; all are SECURITY DEFINER with empty search_path. Direct authenticated/anonymous execution of private.pos_notification_feed is denied. The new device table has RLS, denies anonymous SELECT and authenticated INSERT, and remains empty.
+
+Security advisor notices after deployment: 85 authenticated SECURITY DEFINER notices (78 before this phase; the seven new endpoints are intentional authorized RPCs); two anonymous SECURITY DEFINER notices, unchanged and outside these changes; 17 existing private RLS/no-policy informational notices; existing disabled leaked-password protection. No new anonymous RPC exposure was introduced.
+References: [authenticated endpoint notice](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), [anonymous endpoint notice](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable), [RLS informational notice](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy), [password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
