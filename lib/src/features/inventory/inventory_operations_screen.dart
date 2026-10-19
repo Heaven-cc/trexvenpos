@@ -67,7 +67,7 @@ class PosInventoryOperationsScreen extends ConsumerWidget {
       scanBarcode: (context) async {
         final product = await Navigator.push<Product>(context,
           MaterialPageRoute(builder: (_) => const ScannerScreen()));
-        return product?.barcode;
+        return product == null ? null : 'product:${product.id}';
       },
       onRecordsChanged: () => ref.invalidate(productSearchProvider),
     );

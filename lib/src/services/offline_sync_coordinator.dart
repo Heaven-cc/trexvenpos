@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
+import '../features/auth/branch_context.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/auth/auth_provider.dart';
 import '../features/pos/offline_cash_screen.dart';
@@ -47,6 +50,16 @@ class _OfflineSyncCoordinatorState extends ConsumerState<OfflineSyncCoordinator>
     _running = true;
     try {
       final queue = await ref.read(offlineCashQueueProvider.future);
+      final branch = ref.read(branchContextProvider)?.id;
+      if (current() && (!business.branchesEnabled || branch != null)) {
+        try {
+          final device = await queue.store.mutate((state) => state['device_id'] ??= const Uuid().v4());
+          if (current()) await ref.read(supabaseProvider).rpc('register_pos_device', params: {
+            'p_business_id': business.id, 'p_device_id': device,
+            'p_branch_id': branch, 'p_platform': kIsWeb ? 'web' : defaultTargetPlatform.name,
+          }).timeout(const Duration(seconds: 10));
+        } catch (_) { /* Device telemetry must not replace or remove cash intents. */ }
+      }
       for (final entry in await queue.entries()) {
         if (!current()) return;
         if (entry.receipt != null ||
@@ -75,6 +88,7 @@ class _OfflineSyncCoordinatorState extends ConsumerState<OfflineSyncCoordinator>
   }
   @override
   Widget build(BuildContext context) {
+    ref.listen(branchContextProvider, (_, next) { if (next != null) unawaited(_sync()); });
     ref.listen(authStateProvider, (_, next) {
       if (!next.isLoading && !next.offlineCashOnly) unawaited(_sync());
     });

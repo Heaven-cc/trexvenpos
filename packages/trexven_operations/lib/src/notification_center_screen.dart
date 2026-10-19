@@ -112,7 +112,8 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
 
   bool _isPriority(Map<String, dynamic> row) {
     final priority = (row['priority'] ?? row['severity'])?.toString().toLowerCase();
-    return priority == 'high' || priority == 'critical' ||
+    final key = row['alert_key']?.toString() ?? '';
+    return key.startsWith('cash_review:') || key.startsWith('inventory_review:') || key.startsWith('credit_approval:') || priority == 'high' || priority == 'critical' ||
         priority == 'urgent' || priority == 'priority';
   }
 

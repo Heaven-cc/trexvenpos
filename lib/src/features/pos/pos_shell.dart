@@ -413,6 +413,8 @@ context: context,
                             );
                           } else if ((route == 'credit' || route == 'returns') && current.hasPermission('pos_access')) {
                             Navigator.push(context, MaterialPageRoute(builder: (_) => const PosCreditReturnsScreen()));
+                          } else if (route == 'employees' && referenceId == ref.read(authStateProvider).employee?.id) {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const EmployeeSettingsScreen()));
                           } else if (route == 'employees' &&
                               current.hasPermission('manage_employees')) {
                             Navigator.push(

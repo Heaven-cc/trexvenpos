@@ -2,6 +2,7 @@ import 'package:trexven_design_system/trexven_design_system.dart';
 import 'customer_presentation.dart';
 import 'package:flutter/material.dart';
 import 'operations_client.dart';
+import 'text_controller_scope.dart';
 
 /// Cash context is chosen before payment confirmation and retained in its journal.
 Future<String?> chooseCashShift(
@@ -98,7 +99,7 @@ class _CashShiftScreenState extends State<CashShiftScreen> {
     final result = await showDialog<Map<String, String>>(
       animationStyle: TrexvenPresentation.motion(context),
 context: context,
-      builder: (context) => StatefulBuilder(
+      builder: (context) => TextControllerScope(controllers: controls.values.toList(), child: StatefulBuilder(
         builder: (context, update) => AlertDialog(
           scrollable: true,
           title: Text(title),
@@ -159,11 +160,8 @@ context: context,
             ),
           ],
         ),
-      ),
+      )),
     );
-    for (final c in controls.values) {
-      c.dispose();
-    }
     return result;
   }
 

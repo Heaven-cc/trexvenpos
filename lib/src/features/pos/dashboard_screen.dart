@@ -297,7 +297,7 @@ Future<bool> _addRecognizedProduct(
     }
     if (business.branchesEnabled) {
       final branch = ref.read(branchContextProvider);
-      if (branch == null || branch.businessId != business.id) {
+      if (branch == null || branch.businessId != business.id || branch.id != originalBranch) {
         _showScanError(context, 'Branch changed. Scan again after selecting a branch.');
         return false;
       }

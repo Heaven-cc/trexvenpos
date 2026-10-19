@@ -82,6 +82,7 @@ class Product {
     String? imageUrl,
     ProductStatus? status,
     String? businessId,
+    num? stock,
   }) {
     return Product(
       id: id ?? this.id,
@@ -93,7 +94,7 @@ class Product {
       imageUrl: imageUrl ?? this.imageUrl,
       status: status ?? this.status,
       businessId: businessId ?? this.businessId,
-      stock:stock,lowStockThreshold:lowStockThreshold,description:description,sellingPrice:sellingPrice, unit: unit, catalogGroupId: catalogGroupId, variantAttributes: variantAttributes,
+      stock:stock ?? this.stock,lowStockThreshold:lowStockThreshold,description:description,sellingPrice:sellingPrice, unit: unit, catalogGroupId: catalogGroupId, variantAttributes: variantAttributes,
     );
   }
 

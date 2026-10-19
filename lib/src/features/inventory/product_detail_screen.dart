@@ -128,7 +128,7 @@ class ProductDetailScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           _buildStatusBadge(context),
           const SizedBox(height: 8),
-          Text('Catalog stock: ${product.stock} ${product.unit}',
+          Text('Available stock: ${product.stock} ${product.unit}',
             style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
         ])),
       ]),

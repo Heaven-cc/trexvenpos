@@ -5,11 +5,13 @@ class StockCountBatch {
     List<Map<String, dynamic>> products,
     List<Map<String, dynamic>> counts,
   ) {
+    final key = barcode.trim();
+    final productId = key.startsWith('product:') ? key.substring(8) : null;
     final matches = products
-        .where((p) => p['barcode'] == barcode.trim())
+        .where((p) => productId == null ? p['barcode'] == key : p['id'] == productId)
         .toList();
     if (matches.length != 1)
-      throw StateError('Barcode is missing or ambiguous.');
+      throw StateError('The recognized product is missing or ambiguous in this stocktake.');
     final count = counts
         .where((c) => c['product_id'] == matches.single['id'])
         .toList();
