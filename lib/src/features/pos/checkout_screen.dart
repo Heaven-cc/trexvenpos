@@ -69,6 +69,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       return;
     }
 
+    final originalBranch = ref.read(branchContextProvider)?.id;
+    if (business.branchesEnabled && originalBranch == null) {
+      _showError('Select an authorized branch before collecting payment.');
+      return;
+    }
     setState(() {
       _isProcessing = true;
     });
@@ -81,6 +86,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         pendingSaleStoreProvider.future,
       )).read();
       if (retained != null) {
+        if (widget.offlineCash) throw StateError('Recover the retained online sale before offline checkout.');
         if (!retained.belongsTo(
           employee.userId,
           business.id,
@@ -141,6 +147,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             api,
             allowNoDrawer: true,
             cashContext: cashContext,
+            branchId: originalBranch, restrictBranch: true,
           );
           cashAllowed = cashContext['configured'] != true || shiftId != null;
         }
@@ -173,6 +180,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       _cashChange = draft.cashChange;
       final afterConfirm = ref.read(authStateProvider);
       if (afterConfirm.employee?.userId != employee.userId ||
+          afterConfirm.employee?.membershipId != employee.membershipId ||
+          !ref.read(permissionServiceProvider).canCompleteSales ||
+          ref.read(branchContextProvider)?.id != originalBranch ||
           afterConfirm.activeBusiness?.id != business.id) {
         setState(() => _isProcessing = false);
         _showError('Original employee and business required.');
@@ -334,11 +344,17 @@ context: context,
         ),
       );
     } catch (e) {
-      final pendingRemains = store != null && await store.read() != null;
+      var pendingRemains = store != null;
+      try { if (store != null) pendingRemains = await store.read() != null; } catch (_) { /* Storage uncertainty keeps recovery locked. */ }
+      if (pendingRemains) ref.invalidate(pendingSaleProvider);
       if (!mounted) return;
       setState(() => _hasUnconfirmedSale = pendingRemains);
 
       _showError(saleErrorMessage(e));
+      if (pendingRemains) {
+        // Return to the global recovery gate; do not strand the cashier here.
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
     } finally {
       if (mounted) {
         setState(() {

@@ -9,6 +9,8 @@ Future<String?> chooseCashShift(
     OperationsClient api, {
       bool allowNoDrawer = false,
       Map<String, dynamic>? cashContext,
+      String? branchId,
+      bool restrictBranch = false,
     }) async {
   final current = cashContext ?? await api.cashContext();
   if (current['configured'] != true) return null;
@@ -26,7 +28,8 @@ context: context,
               (s) =>
           s['status'] == 'open' &&
               s['joined'] == true &&
-              s['register_active'] == true,
+              s['register_active'] == true &&
+              (!restrictBranch || s['branch_id'] == branchId),
         ))
           SimpleDialogOption(
             onPressed: () => Navigator.pop(context, s['id'] as String),

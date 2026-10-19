@@ -145,6 +145,7 @@ context: context,
           api,
           allowNoDrawer: true,
           cashContext: cashContext,
+          branchId: sale.branchId, restrictBranch: true,
         );
         if (!mounted) return;
         final draft = await confirmPayment(

@@ -283,7 +283,10 @@ class _FinancialOperationsScreenState extends State<FinancialOperationsScreen>
     }
     if (!mounted || version != _generation || !_current) return;
     _accounts = rows[0];
-    _entries = rows[1];
+    final visibleSales = rows[0].rows.map((r) => r['sale_id']).toSet();
+    _entries = widget.posWorkspace && widget.branchId != null
+        ? _SectionData(rows[1].rows.where((r) => visibleSales.contains(r['sale_id'])).toList(), rows[1].error)
+        : rows[1];
     _returns = rows[2];
     _approvals = rows[3];
     _offline = rows[4];
@@ -385,7 +388,7 @@ class _FinancialOperationsScreenState extends State<FinancialOperationsScreen>
     );
     if (input == null || !mounted || !_can('record_credit_repayment')) return;
     final shift = input['method'] == 'cash'
-        ? await chooseCashShift(context, widget.api)
+        ? await chooseCashShift(context, widget.api, branchId: widget.branchId, restrictBranch: widget.posWorkspace)
         : null;
     if (!mounted || !_current) return;
     await _run(() async {
@@ -650,13 +653,18 @@ context: context,
     final input = await _creditForm(
       context,
       'Approve inspected return',
-      const [
+      [
         _CreditField(
           'method',
           'Refund method (if money is due)',
           initial: 'cash',
           choices: ['cash', 'bank_transfer', 'card'],
         ),
+        if (widget.posWorkspace) const _CreditField(
+          'restock', 'Restock inspected sellable items', initial: 'yes',
+          choices: ['yes', 'no']),
+        if (widget.posWorkspace) const _CreditField(
+          'restock_reason', 'Reason when not restocking', required: false),
         _CreditField(
           'evidence',
           'Verified bank or terminal refund reference',
@@ -672,21 +680,27 @@ context: context,
     if (input == null || !mounted || !_can('approve_refund', sensitive: true)) {
       return;
     }
+    if (widget.posWorkspace && input['restock'] == 'no' &&
+        (input['restock_reason'] ?? '').isEmpty) {
+      throw const FormatException('Explain why inspected goods should not be restocked.');
+    }
     // A configured drawer may still be required; the backend alone determines
     // whether a cash refund is needed. Do not bypass its drawer checks.
     final shift = input['method'] == 'cash'
-        ? await chooseCashShift(context, widget.api, allowNoDrawer: true)
+        ? await chooseCashShift(context, widget.api, allowNoDrawer: true, branchId: widget.branchId, restrictBranch: widget.posWorkspace)
         : null;
     if (!mounted || !_current) return;
     await _run(() async {
       final result =
-          await widget.api.call('approve_trexven_return', {
+          await widget.api.call(widget.posWorkspace ? 'approve_pos_return' : 'approve_trexven_return', {
                 'p_return_id': request['id'],
                 'p_request_id': widget.api.requestId(),
                 'p_method': input['method'],
                 'p_confirmed': true,
                 'p_evidence': input['evidence'],
                 'p_shift_id': shift,
+                if (widget.posWorkspace) 'p_restock': input['restock'] != 'no',
+                if (widget.posWorkspace) 'p_restock_reason': input['restock_reason'],
               })
               as Map;
       _message =
@@ -715,7 +729,7 @@ context: context,
       throw const FormatException('A verified reversal reference is required.');
     }
     final shift = entry['method'] == 'cash'
-        ? await chooseCashShift(context, widget.api)
+        ? await chooseCashShift(context, widget.api, branchId: widget.branchId, restrictBranch: widget.posWorkspace)
         : null;
     if (!mounted || !_current) return;
     await _run(() async {
