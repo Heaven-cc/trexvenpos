@@ -153,10 +153,10 @@ class _PosExpenseSupportScreenState extends State<PosExpenseSupportScreen> {
                 'No expense will be saved from this screen.')),
             ])),
             const SizedBox(height: 16),
-            const FilledButton.icon(
+            FilledButton.icon(
               onPressed: null,
-              icon: Icon(Icons.add),
-              label: Text('Save Expense — Integration required'),
+              icon: const Icon(Icons.add),
+              label: const Text('Save Expense — Integration required'),
             ),
           ] else ...[
             Text('Expense History', style: Theme.of(context).textTheme.titleMedium),

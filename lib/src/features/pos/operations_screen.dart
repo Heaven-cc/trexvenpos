@@ -18,7 +18,7 @@ class PosOperationsScreen extends ConsumerWidget {
     if (auth.activeBusiness == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Operations')),
-        body: Center(child: TrexvenEmptyState(title: 'Select a business.')),
+        body: const Center(child: Text('Select a business.')),
       );
     }
 

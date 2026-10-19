@@ -509,7 +509,7 @@ context: context,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(children: [
-                        Icon(feedback == null ? Icons.scan_barcode_rounded
+                        Icon(feedback == null ? Icons.qr_code_scanner_rounded
                           : success ? Icons.check_circle_outline
                           : Icons.info_outline,
                           color: success ? const Color(0xFF70E0A9)

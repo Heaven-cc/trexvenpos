@@ -26,8 +26,8 @@ class BranchContext extends StateNotifier<AuthorizedBranch?> {
     AuthorizedBranch branch,
     List<AuthorizedBranch> available, {
     required bool hasCart,
-    required bool hasPendingSale,
-    required bool canSwitch,
+    bool hasPendingSale = false,
+    bool canSwitch = true,
   }) {
     if (state != null && state!.id != branch.id && !canSwitch) {
       throw StateError('Only managers and owners can switch branches.');
@@ -48,7 +48,7 @@ class BranchContext extends StateNotifier<AuthorizedBranch?> {
     state = branch;
   }
 
-  void clear({required bool hasCart, required bool hasPendingSale, required bool canSwitch}) {
+  void clear({required bool hasCart, bool hasPendingSale = false, bool canSwitch = true}) {
     if (!canSwitch) throw StateError('Only managers and owners can switch branches.');
     if (hasPendingSale) throw StateError('Recover the retained sale before switching branches.');
     if (hasCart)
