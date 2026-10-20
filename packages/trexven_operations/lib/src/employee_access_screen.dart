@@ -36,14 +36,27 @@ class _EmployeeAccessScreenState
     extends State<EmployeeAccessScreen> {
   late Future<List<Map<String, dynamic>>> rows;
   bool busy = false;
+  bool loaded = false;
+  bool get administrationBlocked =>
+      widget.api.application == 'pos' || TrexvenPresentation.isPos(context);
 
   @override
   void initState() {
     super.initState();
-    rows = widget.api.list('employees');
+    rows = Future.value(<Map<String, dynamic>>[]);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!loaded && !administrationBlocked) {
+      loaded = true;
+      rows = widget.api.list('employees');
+    }
   }
 
   void refresh() {
+    if (administrationBlocked) return;
     setState(() {
       rows = widget.api.list('employees');
     });
@@ -52,6 +65,9 @@ class _EmployeeAccessScreenState
   Future<void> permissions(
       Map<String, dynamic> employee,
       ) async {
+    if (administrationBlocked) {
+      throw StateError('Employee administration is available in the Owner App.');
+    }
     final client = widget.api.client;
     final user = client.auth.currentUser?.id;
 
@@ -90,7 +106,7 @@ class _EmployeeAccessScreenState
   Future<void> act(
       Future<void> Function() operation,
       ) async {
-    if (busy) return;
+    if (busy || administrationBlocked) return;
 
     setState(() => busy = true);
 
@@ -115,6 +131,12 @@ class _EmployeeAccessScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (administrationBlocked) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Employee access')),
+        body: const Center(child: Text('Employee administration is available in the Owner App.')),
+      );
+    }
     return Scaffold(
       backgroundColor: TrexvenPresentation.color(context, _AccessStyle.background, 'background'),
       appBar: AppBar(
@@ -397,6 +419,7 @@ class _PermissionOverridesState
   static const forbidden = {
     'owner_app',
     'manage_permissions',
+    'manage_employees',
     'assign_roles',
     'view_camera_events',
     'view_profit',

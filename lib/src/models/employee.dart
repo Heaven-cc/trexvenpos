@@ -190,12 +190,12 @@ class Employee {
     if (!isActive) return false;
     if (permission == 'view_profit') return false;
     if (role != EmployeeRole.owner &&
-        const {'view_camera_events', 'owner_app', 'manage_permissions', 'assign_roles'}.contains(permission)) {
+        const {'view_camera_events', 'owner_app', 'manage_permissions', 'assign_roles', 'manage_employees'}.contains(permission)) {
       return false;
     }
     if (role != EmployeeRole.owner && role != EmployeeRole.manager &&
         const {'override_price', 'edit_prices', 'change_prices', 'manage_prices',
-          'set_prices', 'branch_price_override', 'manage_employees', 'view_finance', 'view_pos_expenses', 'transfer_stock'}.contains(permission)) {
+          'set_prices', 'branch_price_override', 'view_finance', 'view_pos_expenses', 'transfer_stock'}.contains(permission)) {
       return false;
     }
     // Inventory staff must never change selling prices, even with a stale grant.
@@ -210,7 +210,7 @@ class Employee {
     if (deniedPermissions.contains(permission)) return false;
     final defaults = switch (role) {
       EmployeeRole.manager => const {'pos_access', 'complete_sales', 'view_inventory',
-        'add_products', 'edit_products', 'manage_employees', 'adjust_stock'},
+        'add_products', 'edit_products', 'adjust_stock'},
       EmployeeRole.cashier => const {'pos_access', 'complete_sales', 'view_inventory'},
       EmployeeRole.inventoryEmployee => const {'view_inventory', 'add_products', 'edit_products'},
       _ => const <String>{},
