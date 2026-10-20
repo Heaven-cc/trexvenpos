@@ -1,3 +1,5 @@
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:trexven_operations/trexven_operations.dart';
 import '../../ui/trexven_ui.dart';
 import 'package:trexven_design_system/trexven_design_system.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +22,7 @@ class AuthorizedBranch {
 
 class BranchContext extends StateNotifier<AuthorizedBranch?> {
   final String businessId;
+  bool restoreAttempted = false;
   BranchContext(this.businessId) : super(null);
 
   void select(
@@ -63,7 +66,7 @@ final branchContextProvider =
     StateNotifierProvider<BranchContext, AuthorizedBranch?>((ref) {
       ref.watch(
         authStateProvider.select(
-          (s) => '${s.employee?.userId}:${s.activeBusiness?.id}',
+          (s) => '${s.employee?.userId}:${s.activeBusiness?.id}:${s.activeBusiness?.branchesEnabled}',
         ),
       );
       return BranchContext(
@@ -85,7 +88,7 @@ final authorizedBranchesProvider = FutureProvider<List<AuthorizedBranch>>((
       .eq('business_id', business.id)
       .eq('is_active', true)
       .order('name');
-  return rows
+  final available = rows
       .map(
         (r) => AuthorizedBranch(
           id: r['id'].toString(),
@@ -94,6 +97,27 @@ final authorizedBranchesProvider = FutureProvider<List<AuthorizedBranch>>((
         ),
       )
       .toList();
+  final user = ref.read(authStateProvider).employee?.userId;
+  SharedPreferences? prefs;
+  try { prefs = await SharedPreferences.getInstance(); } catch (_) {}
+  final branchState = ref.read(branchContextProvider.notifier);
+  final canRestore = !branchState.restoreAttempted;
+  branchState.restoreAttempted = true;
+  if (canRestore && user != null && ref.read(authStateProvider).activeBusiness?.id == business.id &&
+      ref.read(branchContextProvider) == null && available.isNotEmpty) {
+    final hint = prefs?.getString('pos_branch_$user:${business.id}');
+    final matches = available.where((b) => b.id == hint);
+    final restore = matches.isNotEmpty ? matches.first : available.length == 1 ? available.single : null;
+    if (restore != null) {
+      final pending = await (await ref.read(pendingSaleStoreProvider.future)).read();
+      if (pending == null && ref.read(authStateProvider).employee?.userId == user &&
+          ref.read(authStateProvider).activeBusiness?.id == business.id) {
+        ref.read(branchContextProvider.notifier).select(restore, available,
+          hasCart: ref.read(cartProvider).isNotEmpty);
+      }
+    }
+  }
+  return available;
 });
 
 bool canSwitchPosBranch(PermissionService access) =>
@@ -105,12 +129,17 @@ Future<void> selectPosBranch(
   List<AuthorizedBranch> available,
 ) async {
   final pending = await (await ref.read(pendingSaleStoreProvider.future)).read();
+  if (await OperationJournal().pending() != null) throw StateError('Recover the retained operation before switching branches.');
   ref.read(branchContextProvider.notifier).select(
     branch, available,
     hasCart: ref.read(cartProvider).isNotEmpty,
     hasPendingSale: pending != null,
     canSwitch: canSwitchPosBranch(ref.read(permissionServiceProvider)),
   );
+  final user = ref.read(authStateProvider).employee?.userId;
+  if (user != null) {
+    try { await (await SharedPreferences.getInstance()).setString('pos_branch_$user:${branch.businessId}', branch.id); } catch (_) {}
+  }
 }
 
 class BranchGate extends ConsumerWidget {

@@ -174,7 +174,7 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
           ),
         if (!sellingMode && ref.watch(authStateProvider).activeBusiness?.branchesEnabled == true)
           Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: Text('Catalog quantities are shown here. Open stock operations for branch stock.',
+            child: Text('Available stock in your selected branch. Use stocktaking for physical counts.',
               style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12))),
         if (!sellingMode) Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),

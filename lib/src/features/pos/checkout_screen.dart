@@ -69,6 +69,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       return;
     }
 
+    DateTime? offlineExpires;
+    String? originalBranch = ref.read(branchContextProvider)?.id;
+    if (!widget.offlineCash && business.branchesEnabled && originalBranch == null) {
+      _showError('Select an authorized branch before collecting payment.');
+      return;
+    }
     setState(() {
       _isProcessing = true;
     });
@@ -77,10 +83,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     // another payment can be collected after a restart or route recreation.
     Sale? recoverySale;
     try {
+      if (widget.offlineCash) {
+        final ticket = await (await ref.read(offlineCashQueueProvider.future))
+            .authorizedTicket(employee.userId, business.id, employee.membershipId, DateTime.now());
+        originalBranch = (ticket['scope'] as Map)['branch_id'] as String?;
+        offlineExpires = DateTime.parse((ticket['scope'] as Map)['expires_at'] as String);
+      }
       final retained = await (await ref.read(
         pendingSaleStoreProvider.future,
       )).read();
       if (retained != null) {
+        if (widget.offlineCash) throw StateError('Recover the retained online sale before offline checkout.');
         if (!retained.belongsTo(
           employee.userId,
           business.id,
@@ -141,6 +154,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             api,
             allowNoDrawer: true,
             cashContext: cashContext,
+            branchId: originalBranch, restrictBranch: true,
           );
           cashAllowed = cashContext['configured'] != true || shiftId != null;
         }
@@ -162,6 +176,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         total,
         _paymentMethod,
         offline: widget.offlineCash,
+        authorizationExpiresAt: offlineExpires,
+        contextIsCurrent: () {
+          final current = ref.read(authStateProvider);
+          return mounted && current.employee?.userId == employee.userId &&
+              current.employee?.membershipId == employee.membershipId &&
+              current.activeBusiness?.id == business.id &&
+              (widget.offlineCash || ref.read(branchContextProvider)?.id == originalBranch);
+        },
         cashAllowed: cashAllowed,
         currency: business.currency,
       );
@@ -173,14 +195,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       _cashChange = draft.cashChange;
       final afterConfirm = ref.read(authStateProvider);
       if (afterConfirm.employee?.userId != employee.userId ||
+          afterConfirm.employee?.membershipId != employee.membershipId ||
+          !ref.read(permissionServiceProvider).canCompleteSales ||
+          (!widget.offlineCash && ref.read(branchContextProvider)?.id != originalBranch) ||
           afterConfirm.activeBusiness?.id != business.id) {
         setState(() => _isProcessing = false);
         _showError('Original employee and business required.');
         return;
       }
       final branch = ref.read(branchContextProvider);
+      final branchId = widget.offlineCash ? originalBranch : branch?.id;
       if (business.branchesEnabled &&
-          (branch == null || branch.businessId != business.id)) {
+          (branchId == null || (!widget.offlineCash && branch?.businessId != business.id))) {
         setState(() => _isProcessing = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -192,14 +218,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       sale = Sale(
         id: ref.read(cartProvider.notifier).checkoutRequestId,
         businessId: business.id,
-        branchId: business.branchesEnabled ? branch!.id : null,
+        branchId: business.branchesEnabled ? branchId : null,
         employeeId: employee.membershipId,
         total: total,
         paymentMethod: widget.offlineCash ? "cash" : _paymentMethod,
         payments: widget.offlineCash ? null : draft.payments,
         credit: draft.credit,
         shiftId: shiftId,
-        timestamp: DateTime.now(),
+        timestamp: draft.confirmedAt,
         items: cartItems
             .map(
               (item) => SaleItem(
@@ -229,7 +255,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             sale: sale,
             userId: employee.userId,
             ticket: ticket,
-            occurredAt: time,
+            occurredAt: sale.timestamp,
           ),
           time,
         );
@@ -334,11 +360,17 @@ context: context,
         ),
       );
     } catch (e) {
-      final pendingRemains = store != null && await store.read() != null;
+      var pendingRemains = store != null;
+      try { if (store != null) pendingRemains = await store.read() != null; } catch (_) { /* Storage uncertainty keeps recovery locked. */ }
+      if (pendingRemains) ref.invalidate(pendingSaleProvider);
       if (!mounted) return;
       setState(() => _hasUnconfirmedSale = pendingRemains);
 
       _showError(saleErrorMessage(e));
+      if (pendingRemains) {
+        // Return to the global recovery gate; do not strand the cashier here.
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
     } finally {
       if (mounted) {
         setState(() {

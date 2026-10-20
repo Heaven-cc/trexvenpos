@@ -195,7 +195,7 @@ class Employee {
     }
     if (role != EmployeeRole.owner && role != EmployeeRole.manager &&
         const {'override_price', 'edit_prices', 'change_prices', 'manage_prices',
-          'set_prices', 'branch_price_override', 'manage_employees', 'view_finance'}.contains(permission)) {
+          'set_prices', 'branch_price_override', 'manage_employees', 'view_finance', 'view_pos_expenses', 'transfer_stock'}.contains(permission)) {
       return false;
     }
     // Inventory staff must never change selling prices, even with a stale grant.

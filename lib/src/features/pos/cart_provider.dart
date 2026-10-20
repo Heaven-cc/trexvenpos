@@ -2,9 +2,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../models/product.dart';
+import '../auth/auth_provider.dart';
 
 final cartProvider = StateNotifierProvider<CartNotifier, List<CartItem>>(
-      (ref) => CartNotifier(),
+      (ref) {
+        ref.watch(authStateProvider.select((s) => '${s.employee?.userId}:${s.employee?.membershipId}:${s.activeBusiness?.id}'));
+        return CartNotifier();
+      },
 );
 
 class CartItem {

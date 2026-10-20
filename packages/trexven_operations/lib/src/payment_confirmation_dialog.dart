@@ -11,7 +11,9 @@ class PaymentDraft {
   final Map<String, dynamic>? credit;
 
   final double? cashTendered, cashChange;
-  PaymentDraft(this.payments, this.credit, {this.cashTendered, this.cashChange});
+  final DateTime confirmedAt;
+  PaymentDraft(this.payments, this.credit, {this.cashTendered, this.cashChange, DateTime? confirmedAt})
+      : confirmedAt = confirmedAt ?? DateTime.now();
 }
 
 Future<PaymentDraft?> confirmPayment(
@@ -23,6 +25,8 @@ Future<PaymentDraft?> confirmPayment(
   bool recovery = false,
   bool allowCredit = true,
   DateTime? businessDate,
+  DateTime? authorizationExpiresAt,
+  bool Function()? contextIsCurrent,
   String? currency,
 }) async {
   final pos = TrexvenPresentation.isPos(context);
@@ -233,6 +237,10 @@ Future<PaymentDraft?> confirmPayment(
 
   void submit(BuildContext dialogContext, StateSetter update) {
     try {
+      if (contextIsCurrent?.call() == false) throw const FormatException('Employee or branch changed. Reopen checkout before confirming payment.');
+      if (authorizationExpiresAt != null && !DateTime.now().isBefore(authorizationExpiresAt)) {
+        throw const FormatException('Offline authorization expired. Reconnect before accepting cash.');
+      }
                                         final payments =
                                             <Map<String, dynamic>>[];
                                         var paid = 0;

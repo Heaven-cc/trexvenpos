@@ -47,8 +47,9 @@ class OfflineCashEntry {
         scope['business_id'] != sale.businessId ||
         scope['membership_id'] != sale.employeeId ||
         scope['branch_id'] != sale.branchId ||
+        !expires.isAfter(issued) ||
+        expires.difference(issued) > const Duration(hours: 24) ||
         now.isBefore(issued) ||
-        !now.isBefore(expires) ||
         occurredAt.isBefore(issued) ||
         !occurredAt.isBefore(expires) ||
         occurredAt.isAfter(now) ||
@@ -132,6 +133,27 @@ class OfflineCashQueue {
     return value == null ? null : Map<String, dynamic>.from(value as Map);
   }
 
+
+  Future<Map<String, dynamic>> authorizedTicket(String user, String business, String member, DateTime now) =>
+      store.mutate((state) {
+        final ticket = state['ticket'] as Map?;
+        final scope = ticket?['scope'] as Map?;
+        final issued = DateTime.tryParse(scope?['issued_at']?.toString() ?? '');
+        final expires = DateTime.tryParse(scope?['expires_at']?.toString() ?? '');
+        final last = DateTime.tryParse(state['last_seen']?.toString() ?? '');
+        if (ticket == null || scope == null || scope['version'] != 1 ||
+            (ticket['signature'] as String?)?.isEmpty != false ||
+            scope['user_id'] != user || scope['business_id'] != business ||
+            scope['membership_id'] != member || scope['device_id'] != state['device_id'] ||
+            issued == null || expires == null || last == null ||
+            !expires.isAfter(issued) || expires.difference(issued) > const Duration(hours: 24) ||
+            now.isBefore(issued) || now.isBefore(last) || !now.isBefore(expires)) {
+          throw StateError('Offline authorization expired or changed. Reconnect before collecting cash.');
+        }
+        state['last_seen'] = now.toUtc().toIso8601String();
+        return Map<String, dynamic>.from(ticket);
+      });
+
   Future<void> enqueue(OfflineCashEntry entry, DateTime now) => store.mutate((
     state,
   ) {
@@ -140,6 +162,9 @@ class OfflineCashQueue {
       throw StateError(
         'Device clock moved backwards. Reconnect before recording cash.',
       );
+    if ((entry.ticket['scope'] as Map)['device_id'] != state['device_id']) {
+      throw StateError('Original authorized device required.');
+    }
     entry.validateCashScope(now);
     final entries = List<dynamic>.from(state['entries'] as List? ?? const []);
     final existing = entries.where(
@@ -162,7 +187,8 @@ class OfflineCashQueue {
     final receipt = await send(entry);
     if (receipt['id'] == null ||
         receipt['business_id'] != entry.sale.businessId ||
-        receipt['employee_id'] != entry.sale.employeeId) {
+        receipt['employee_id'] != entry.sale.employeeId ||
+        receipt['branch_id'] != entry.sale.branchId) {
       throw StateError(
         'Server receipt does not match the original cash context.',
       );

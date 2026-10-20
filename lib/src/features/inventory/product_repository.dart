@@ -57,7 +57,7 @@ class ProductRepository {
   }
 
   /// Search products belonging only to the active business.
-  Future<List<Product>> searchProducts(
+  Future<List<Product>> _searchCatalog(
       String query,
       String businessId,
       ) async {
@@ -102,6 +102,24 @@ class ProductRepository {
       ),
     )
         .toList();
+  }
+
+
+  Future<List<Product>> searchProducts(String query, String businessId, {String? branchId}) async {
+    final products = await _searchCatalog(query, businessId);
+    return branchStock(products, businessId, branchId);
+  }
+
+  Future<List<Product>> branchStock(List<Product> products, String businessId, String? branchId) async {
+    if (branchId == null || products.isEmpty) return products;
+    final rows = await _supabase.from('inventory')
+        .select('product_id,quantity,reserved_quantity')
+        .eq('business_id', businessId).eq('branch_id', branchId)
+        .inFilter('product_id', products.map((p) => p.id).toList())
+        .timeout(const Duration(seconds: 20));
+    final stock = {for (final row in rows)
+      row['product_id']: ((row['quantity'] as num) - ((row['reserved_quantity'] as num?) ?? 0)).clamp(0, double.infinity)};
+    return [for (final p in products) p.copyWith(stock: stock[p.id] ?? 0)];
   }
 
   /// Get the price levels configured for a product.

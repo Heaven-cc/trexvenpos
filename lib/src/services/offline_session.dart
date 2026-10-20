@@ -46,11 +46,11 @@ Future<Map<String, dynamic>?> resumeOfflineCashContext(
       !employee.isActive ||
       !employee.hasPermission('complete_sales') ||
       !employee.hasPermission('pos_access') ||
-      business.branchesEnabled ||
-      scope['branch_id'] != null ||
+      (business.branchesEnabled ? scope['branch_id'] == null : scope['branch_id'] != null) ||
       issued == null ||
       expires == null ||
       lastSeen == null ||
+      !expires.isAfter(issued) ||
       expires.difference(issued) > const Duration(hours: 24) ||
       now.isBefore(issued) ||
       now.isBefore(lastSeen) ||
