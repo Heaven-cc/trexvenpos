@@ -81,8 +81,6 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
   }
 
   Future<void> _refresh() async {
-    if (_query.isEmpty) return;
-
     await ref.read(productSearchProvider(_query).notifier).search();
   }
 
@@ -192,7 +190,7 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
             ]))),
         Expanded(child: AnimatedSwitcher(
           duration: PosMotion.duration(context, PosMotion.component),
-          child: _query.isEmpty ? _buildInitialState() : searchResult.when(
+          child: searchResult.when(
             loading: _buildLoadingState,
             error: (_, _) => _buildErrorState(),
             data: (products) {
@@ -201,7 +199,7 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
                 'out' => product.isActive && product.stock <= 0,
                 _ => true,
               }).toList();
-              if (products.isEmpty) return _buildNoResultsState();
+              if (products.isEmpty) return _query.isEmpty ? _buildInitialState() : _buildNoResultsState();
               return RefreshIndicator(onRefresh: _refresh,
                 child: ListView(
                   key: const ValueKey('inventory-results'),
