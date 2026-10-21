@@ -532,7 +532,7 @@ context: context,
     Widget? footer,
   }) {
     return ListView(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, 20),
+      padding: TrexvenSpacing.pagePadding,
       children: [
         _buildSummaryHeader(itemCount, cart.length),
 
@@ -553,7 +553,7 @@ context: context,
 
   Widget _buildSummaryHeader(num itemCount, int uniqueItems) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(TrexvenSpacing.fieldGap - TrexvenSpacing.labelGap / 2),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.primary.withValues(alpha: .08),
         borderRadius: BorderRadius.circular(TrexvenRadii.card),
@@ -606,8 +606,8 @@ context: context,
   Widget _buildCartItem(CartItem item) {
     final theme = Theme.of(context);
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: PosSpace.md),
+      padding: const EdgeInsets.all(PosSpace.md),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(TrexvenRadii.card),
