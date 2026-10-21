@@ -36,7 +36,7 @@ class ProductSearchNotifier extends StateNotifier<AsyncValue<List<Product>>> {
   Future<void> search() async {
     if (!mounted) return;
     final generation = ++_generation;
-    if (_query.isEmpty || _businessId.isEmpty || (branchRequired && branchId == null)) {
+    if (_businessId.isEmpty || (branchRequired && branchId == null)) {
       state = const AsyncValue.data([]);
       return;
     }
