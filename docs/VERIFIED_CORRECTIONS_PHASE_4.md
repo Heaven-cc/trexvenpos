@@ -1,6 +1,6 @@
 # Verified corrections — Phase 4: checkout / transaction safety
 
-Status: frontend source implemented; legacy-execution restriction SQL prepared, NOT applied.
+Status: frontend source implemented; approved legacy-execution restriction deployed as 20261021010043.
 No current transaction, inventory mutation or historical receipt function was rewritten.
 
 ## Compatibility evidence
@@ -33,7 +33,7 @@ Owner/backend files:
 - docs/implementation/verified_corrections_phase_4.md
 No Owner Flutter source changed in Phase 4.
 
-## Prepared SQL (requires approval)
+## Approved SQL
 
 Revoke EXECUTE from PUBLIC/anon/authenticated on exactly:
 - public.complete_pos_sale(uuid,uuid,numeric,text,jsonb)
@@ -45,7 +45,7 @@ Do not drop functions, rewrite sales/stock/history, revoke schema usage, or gran
 Preserve modern complete_trexven_transaction; request-ID submit variants; recover_trexven_legacy_checkout; get_trexven_operation_receipt. Existing owner/employee/branch checks remain authoritative.
 Ten exact function-definition/ACL guards detect drift across affected and preserved paths before any privilege change.
 
-After approval: re-read live callers/definitions/grants, promote SQL with an actual generated migration version, apply once, compare ACLs and preserved definition hashes, confirm financial row counts. Current preparation is not a production migration record.
+The approved SQL was applied once; see deployment evidence below.
 
 ## Manual acceptance required (user)
 
@@ -61,4 +61,12 @@ After approval: re-read live callers/definitions/grants, promote SQL with an act
 No local build, analyzer, test suite, user login, payment or fabricated transaction ran.
 Source/catalog review does not prove runtime acceptance.
 Phase 3 password endpoint is deployed as v1 with verify_jwt=true, exact approved bundle confirmed; no credentials were changed during deployment.
-Phases 5–9 remain pending at the Phase 4 production-approval checkpoint.
+Phases 5–9 remain pending.
+
+## Approved production deployment — 2026-10-21
+
+Applied exactly once as 20261021010043_restrict_legacy_sale_writes after explicit approval. Source: supabase/migrations/20261021010043_restrict_legacy_sale_writes.sql.
+
+Read-only before/after catalog comparison confirmed all ten function definitions unchanged; all four obsolete functions deny authenticated and anonymous execution. The six modern/request-ID/recovery functions retain their previous grants. Ten checked row counts stayed unchanged: sales 4, sale_items 4, sale_payments 3, private.sale_requests 4, private.catalog_requests 7, inventory 0, inventory_movements 5, expenses 0, sale_returns 0, credit_entries 1. No runtime transactions were submitted.
+
+Phases 5–9 remain pending. Device acceptance remains pending.
