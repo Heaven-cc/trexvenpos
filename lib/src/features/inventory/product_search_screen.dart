@@ -243,12 +243,12 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
 
   Widget _buildInitialState() => const PosStateView(
     key: ValueKey('initial'),
-    title: 'Product results',
-    message: 'Search products by name, barcode or part number to browse your catalog.',
+    title: 'No products in this catalog',
+    message: 'Products added to the selected business will appear here. Check your branch or refresh if you expect products.',
     icon: Icons.inventory_2_outlined,
   );
   Widget _buildLoadingState() => const Center(key: ValueKey('loading'),
-    child: TrexvenLoading(message: 'Searching products…'));
+    child: TrexvenLoading(message: 'Loading products…'));
   Widget _buildNoResultsState() => PosStateView(key: const ValueKey('no-results'),
     title: 'No matching products', message: 'No products match "$_query".',
     icon: Icons.inventory_2_outlined, action: TextButton(onPressed: _clearSearch, child: const Text('Clear search')));
