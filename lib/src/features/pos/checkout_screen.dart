@@ -179,6 +179,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         offline: widget.offlineCash,
         authorizationExpiresAt: offlineExpires,
         contextIsCurrent: () {
+          if (!mounted) return false;
           final current = ref.read(authStateProvider);
           return mounted && current.employee?.userId == employee.userId &&
               current.employee?.membershipId == employee.membershipId &&
@@ -384,6 +385,7 @@ context: context,
         } catch (_) {
           retained = true; // Uncertain storage stays behind recovery.
         }
+        if (!mounted) return;
         ref.invalidate(pendingSaleProvider);
       }
       if (mounted) {

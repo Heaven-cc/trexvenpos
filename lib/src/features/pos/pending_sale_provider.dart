@@ -172,6 +172,7 @@ context: context,
           sale.paymentMethod,
           recovery: true,
           contextIsCurrent: () {
+            if (!mounted) return false;
             final current = ref.read(authStateProvider);
             return mounted && !current.offlineCashOnly && current.employee?.isActive == true &&
                 pending.belongsTo(current.employee?.userId ?? '',
