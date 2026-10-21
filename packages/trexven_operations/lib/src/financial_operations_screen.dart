@@ -853,7 +853,8 @@ context: context,
         );
 
   Widget _heading(String title, {String? count, Widget? action}) => Padding(
-    padding: const EdgeInsets.only(top: 20, bottom: 12),
+    padding: EdgeInsets.only(top: widget.posWorkspace ? TrexvenSpacing.fieldGap : 20,
+      bottom: widget.posWorkspace ? TrexvenSpacing.labelGap : 12),
     child: Row(
       children: [
         Expanded(child: Text(title, style: TrexvenPresentation.typography(context, TrexvenTypography.section))),
@@ -870,12 +871,12 @@ context: context,
     IconData icon = Icons.receipt_long_outlined,
   }) => _CreditCard(
     child: Padding(
-      padding: EdgeInsets.symmetric(vertical: TrexvenPresentation.spacing(context, 18)),
+      padding: EdgeInsets.symmetric(vertical: widget.posWorkspace ? TrexvenSpacing.fieldGap : TrexvenPresentation.spacing(context, 18)),
       child: Column(
         children: [
           Icon(
             icon,
-            size: 36,
+            size: widget.posWorkspace ? TrexvenSpacing.pageTitle : 36,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           const SizedBox(height: 12),
@@ -887,7 +888,7 @@ context: context,
           const SizedBox(height: 8),
           Text(description, textAlign: TextAlign.center),
           if (action != null) ...[
-            SizedBox(height: TrexvenPresentation.spacing(context, 18)),
+            SizedBox(height: widget.posWorkspace ? TrexvenSpacing.labelGap : TrexvenPresentation.spacing(context, 18)),
             SizedBox(width: double.infinity, child: action),
           ],
         ],
@@ -987,10 +988,10 @@ context: context,
                 const Icon(Icons.chevron_right_rounded),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: widget.posWorkspace ? TrexvenSpacing.labelGap : TrexvenSpacing.fieldGap),
             Wrap(
-              spacing: 12,
-              runSpacing: 8,
+              spacing: TrexvenSpacing.labelGap,
+              runSpacing: TrexvenSpacing.labelGap,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
@@ -1194,7 +1195,7 @@ context: context,
     final saleId = request['sale_id']?.toString() ?? '';
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: TrexvenSpacing.labelGap),
       child: _CreditCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1209,7 +1210,7 @@ context: context,
               _CreditBadge(CustomerPresentation.label(status),
                   active: status == 'inspected'),
             ]),
-            const SizedBox(height: 12),
+            const SizedBox(height: TrexvenSpacing.labelGap),
             Text('Original sale', style: Theme.of(context).textTheme.labelMedium),
             const SizedBox(height: 3),
             SelectableText(saleId.isEmpty ? 'Receipt unavailable' : saleId,
@@ -1222,7 +1223,7 @@ context: context,
             Text(CustomerPresentation.date(request['created_at'],
                 includeTime: true),
                 style: Theme.of(context).textTheme.bodySmall),
-            const Divider(height: 24),
+            const Divider(height: TrexvenSpacing.fieldGap),
             if (approved) ...[
               _posReturnAmount('Return value',
                   _money(request['value'], _currency)),
@@ -1502,32 +1503,6 @@ context: context,
     ),
   );
 
-  Widget _posShortcut(String title, String subtitle, IconData icon, int index) {
-    final scheme = Theme.of(context).colorScheme;
-    final active = _tab == index;
-    return Material(
-      color: active ? scheme.primary : scheme.surface,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () { _tab = index; _notify(); },
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 116),
-          padding: const EdgeInsets.all(14),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Icon(icon, color: active ? scheme.onPrimary : scheme.primary),
-            const SizedBox(height: 12),
-            Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: active ? scheme.onPrimary : scheme.onSurface)),
-            Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: active ? scheme.onPrimary : scheme.onSurfaceVariant)),
-          ]),
-        ),
-      ),
-    );
-  }
-
   Widget _posSecondary() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -1660,11 +1635,7 @@ context: context,
                   ),
                 const SizedBox(height: 16),
                 if (widget.posWorkspace)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text('Customer transactions & refunds',
-                      style: Theme.of(context).textTheme.bodySmall),
-                  ),
+                  const SizedBox(height: TrexvenSpacing.labelGap),
                 _notice(),
                 if (widget.owner)
                   _metricPair(
@@ -1689,20 +1660,19 @@ context: context,
                     ),
                   )
                 else
-                  _CreditCard(
-                    child: Row(
-                      children: [
-                        const Icon(Icons.shield_outlined),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            widget.branchId == null
-                                ? 'Authorized credit and return operations'
-                                : 'Operations for your selected branch',
-                          ),
-                        ),
-                      ],
-                    ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: TrexvenSpacing.labelGap),
+                    child: Row(children: [
+                      Icon(Icons.shield_outlined, size: TrexvenSpacing.pageTitle,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      const SizedBox(width: TrexvenSpacing.labelGap),
+                      Expanded(child: Text(
+                        widget.branchId == null
+                          ? 'Authorized credit and return operations'
+                          : 'Operations for your selected branch',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      )),
+                    ]),
                   ),
                 if (_totalsError != null && widget.owner)
                   const Padding(
@@ -1711,22 +1681,12 @@ context: context,
                       'Financial summary unavailable; no estimated totals shown.',
                     ),
                   ),
-                const SizedBox(height: 20),
-                if (widget.posWorkspace)
-                  Row(children: [
-                    Expanded(child: _posShortcut(
-                      'Credit', 'Balances & repayments',
-                      Icons.account_balance_wallet_outlined, 0)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _posShortcut(
-                      'Returns', 'Requests & refunds',
-                      Icons.assignment_return_outlined, 1)),
-                  ])
-                else
-                  _tabs(const ['Credit', 'Returns'], _tab, (i) {
-                    _tab = i;
-                    _notify();
-                  }),
+                SizedBox(height: widget.posWorkspace
+                  ? TrexvenSpacing.labelGap : TrexvenSpacing.sectionGap),
+                _tabs(const ['Credit', 'Returns'], _tab, (i) {
+                  _tab = i;
+                  _notify();
+                }),
                 ...(_tab == 0 ? _creditContent() : _returnContent()),
                 if (widget.posWorkspace)
                   _posSecondary()
