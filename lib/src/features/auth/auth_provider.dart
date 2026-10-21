@@ -69,6 +69,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   StreamSubscription<supabase.AuthState>? _authEvents;
   int _generation = 0;
   bool _signingIn = false;
+  bool _restoring = false;
   bool _ownerOnly = false;
   final Future<Map<String, dynamic>?> Function(String userId)? _offlineContext;
 
@@ -77,14 +78,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
     bool observeSession = true,
     Future<Map<String, dynamic>?> Function(String userId)? offlineContext,
   }) : _offlineContext = offlineContext,
-       super(AuthState(isLoading: observeSession && _supabase.auth.currentSession != null)) {
+       super(AuthState(isLoading: observeSession)) {
     if (!observeSession) return;
     _authEvents = _supabase.auth.onAuthStateChange.listen(
       (event) {
         if (event.event == AuthChangeEvent.signedOut) {
           _generation++;
+          _restoring = false;
           if (mounted) state = AuthState();
-        } else if (!_signingIn &&
+        } else if (!_signingIn && !_restoring &&
             (event.event == AuthChangeEvent.initialSession && event.session != null ||
                 event.event == AuthChangeEvent.tokenRefreshed ||
                 event.event == AuthChangeEvent.signedIn ||
@@ -93,28 +95,40 @@ class AuthNotifier extends StateNotifier<AuthState> {
         }
       },
       onError: (Object error, StackTrace stack) {
-        _generation++;
-        if (mounted) {
-          state = AuthState(error: _verificationError);
-          if (!_signingIn) unawaited(restoreSession());
-        }
+        // A refresh can emit its error while restoreSession is awaiting it.
+        // Let that restore finish its retry/offline path instead of invalidating
+        // its generation and recursively starting another restoration.
+        if (!mounted || _signingIn || _restoring) return;
+        state = AuthState(error: _verificationError);
+        unawaited(restoreSession());
       },
     );
-    if (_supabase.auth.currentSession != null) unawaited(restoreSession());
+    // Complete one startup decision behind the loading gate, including a
+    // genuinely empty session. Never render login while this decision runs.
+    unawaited(Future<void>.microtask(restoreSession));
   }
 
   Future<void> restoreSession({String? businessId, bool? ownerOnly}) async {
     final generation = ++_generation;
     final user = _supabase.auth.currentUser?.id;
     if (user == null) {
+      _restoring = false;
       if (mounted) state = AuthState();
       return;
     }
     if (!mounted) return;
+    _restoring = true;
     if (ownerOnly != null) _ownerOnly = ownerOnly;
     var selected = businessId ?? state.activeBusiness?.id;
     state = state.copyWith(isLoading: true, clearError: true);
     try {
+      // Supabase Flutter starts recovery asynchronously after initialize().
+      // Join its coalesced refresh before querying membership with an expired JWT.
+      if (_supabase.auth.currentSession?.isExpired == true) {
+        await _supabase.auth.refreshSession().timeout(const Duration(seconds: 20));
+      }
+      if (!mounted || generation != _generation ||
+          user != _supabase.auth.currentUser?.id) return;
       SharedPreferences? prefs;
       try { prefs = await SharedPreferences.getInstance(); } catch (_) {}
       final fromHint = selected == null;
@@ -174,6 +188,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           generation == _generation &&
           user == _supabase.auth.currentUser?.id &&
           (error is TimeoutException ||
+              error is AuthRetryableFetchException ||
               error is http.ClientException ||
               network.isNetworkFailure(error))) {
         try {
@@ -205,6 +220,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (mounted && generation == _generation) {
         state = AuthState(error: _verificationError);
       }
+    } finally {
+      if (generation == _generation) _restoring = false;
     }
   }
 
@@ -433,6 +450,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> logout() async {
     _generation++;
     _ownerOnly = false;
+    _restoring = false;
     if (mounted) state = AuthState();
     try {
       await _supabase.auth.signOut(scope: SignOutScope.local);

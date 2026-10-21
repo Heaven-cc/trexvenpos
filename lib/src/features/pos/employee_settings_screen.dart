@@ -391,23 +391,31 @@ class _ChangePasswordState extends ConsumerState<_ChangePassword> {
       final client = ref.read(supabaseProvider),
           auth = ref.read(authStateProvider);
       final actor = auth.employee?.userId;
-      if (auth.offlineCashOnly || actor == null) {
+      final business = auth.activeBusiness;
+      final membership = auth.employee?.membershipId;
+      if (auth.offlineCashOnly || actor == null || business == null ||
+          auth.employee?.isActive != true) {
         throw StateError('Online verification is required.');
       }
-      final verified = await client.auth.getUser();
-      final email = verified.user?.email;
-      if (verified.user?.id != actor || email == null) {
-        throw StateError('Original employee identity required.');
-      }
-      final signedIn = await client.auth.signInWithPassword(
-        email: email,
-        password: current.text,
-      );
-      if (signedIn.user?.id != actor ||
-          ref.read(authStateProvider).employee?.userId != actor) {
+      final response = await client.functions.invoke('change-employee-password',
+        body: {
+          'business_id': business.id,
+          'current_password': current.text,
+          'new_password': next.text,
+        }).timeout(const Duration(seconds: 45));
+      if (!mounted) return;
+      final latest = ref.read(authStateProvider);
+      if (client.auth.currentUser?.id != actor ||
+          latest.employee?.userId != actor ||
+          latest.employee?.membershipId != membership ||
+          latest.activeBusiness?.id != business.id) {
         throw StateError('Account changed during verification.');
       }
-      await client.auth.updateUser(UserAttributes(password: next.text));
+      if (response.status != 200 || response.data is! Map ||
+          (response.data as Map)['success'] != true ||
+          (response.data as Map)['user_id'] != actor) {
+        throw StateError('Password update could not be verified.');
+      }
       current.clear();
       next.clear();
       confirmation.clear();
@@ -421,7 +429,7 @@ class _ChangePasswordState extends ConsumerState<_ChangePassword> {
       if (mounted) {
         setState(
           () => message =
-              'Password change was not confirmed. Verify your current password and connection before retrying.',
+              'Password change was not confirmed. If the connection was interrupted, the new password may already be active. Do not retry automatically. Re-enter your credentials, or sign in again if secure reauthentication is required.',
         );
       }
     } finally {
