@@ -1,6 +1,6 @@
 # Verified corrections — Phase 3: secure session/password behavior
 
-Status: source prepared; new change-employee-password Edge Function NOT deployed.
+Status: approved change-employee-password Edge Function deployed as v1; verify_jwt=true. Exact deployed source matches approved Owner commit 9a94d50dd0a09f48be607329cb730156cd707e95.
 No Phase 3 SQL or Auth configuration changes. Frontend PR is not merged/released; device acceptance pending.
 
 ## Defects and implemented corrections
@@ -14,7 +14,7 @@ Its initialize() starts recoverSession asynchronously. POS's auth stream error h
 
 The old form already obtained canonical Auth email rather than employees.email; null employee profile email alone was not proof of the defect. The concrete disruption was its primary-client re-sign-in emitting authentication changes during the password flow.
 
-## Prepared backend extension (approval required)
+## Backend extension (approved and deployed)
 
 Files in Owner repository:
 - supabase/functions/change-employee-password/index.ts
@@ -35,7 +35,7 @@ Normal password-change security may invalidate OTHER devices' Auth sessions; pen
 
 ## Compatibility / evidence
 
-Read current production function list: no self-service password endpoint existed. Existing create/reset-password Owner endpoints are separate and unchanged.
+Read the predeployment production function list: no self-service password endpoint existed. Existing create/reset-password Owner endpoints are separate and unchanged.
 Read pinned Flutter SDK source for session recovery, LocalStorage defaults and token refresh coalescing, plus official Supabase Auth password verification/session-update source.
 No Owner Flutter/theme edits; no package/dependency changes. No queue, journal, encryption-key, request-ID, branch-authority or financial-write code is changed in this phase.
 
@@ -47,8 +47,7 @@ https://supabase.com/docs/guides/auth/password-security#password-strength-and-le
 
 ## Deployment / manual verification
 
-Approve only the new change-employee-password function from this PR, with verify_jwt=true. No migration, account credential mutation or Auth setting change is included in that deployment.
-After approved deployment, fetch its source back and compare exact bundle/JWT setting. Release frontend only after endpoint availability.
+The user explicitly approved the new change-employee-password deployment on 21 October 2026 (Lagos). Deployed v1 is ACTIVE with verify_jwt=true; its single source file was fetched back and exactly matched the approved source. No migration, credential mutation or Auth configuration change was performed. No credential-verification request was fabricated. Frontend remains unmerged and requires manual acceptance.
 User manual checks:
 1. Reopen with valid and expired access token + valid refresh token: loading/refresh then authorized workspace, without unnecessary login.
 2. Invalid/revoked refresh token: sign-in required; offline queue and original requests still retained.
@@ -63,4 +62,4 @@ User manual checks:
 
 No local build, analyzer, test suite, user login, credential change or fabricated transaction was performed.
 Source inspection does not prove the reported every-launch behavior is resolved on the device; user acceptance is required.
-Phases 4–9 and final handoff remain pending at this Phase 3 production-approval checkpoint.
+Phase 4 is proceeding; later phases and final handoff remain pending.
