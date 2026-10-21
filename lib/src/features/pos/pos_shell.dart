@@ -411,7 +411,7 @@ context: context,
                                 builder: (_) => const PosOperationsScreen(),
                               ),
                             );
-                          } else if ((route == 'credit' || route == 'returns') && current.hasPermission('pos_access')) {
+                          } else if ((route == 'credit' || route == 'returns') && current.canAccessCreditReturns) {
                             Navigator.push(context, MaterialPageRoute(builder: (_) => const PosCreditReturnsScreen()));
                           } else if (route == 'employees' && referenceId == ref.read(authStateProvider).employee?.id) {
                             Navigator.push(context, MaterialPageRoute(builder: (_) => const EmployeeSettingsScreen()));

@@ -152,13 +152,13 @@ class DashboardScreen extends ConsumerWidget {
                 Expanded(child: _HomeActionTile(
                   icon: Icons.account_balance_wallet_outlined, title: 'Expenses',
                   subtitle: 'Expense options',
-                  onTap: () => open(const PosExpenseSupportScreen()),
+                  onTap: access.canAccessExpenses ? () => open(const PosExpenseSupportScreen()) : null,
                 )),
                 const SizedBox(width: 12),
                 Expanded(child: _HomeActionTile(
                   icon: Icons.sync_alt_rounded, title: 'Credit & Return',
                   subtitle: 'Credit and refunds',
-                  onTap: () => open(const PosCreditReturnsScreen()),
+                  onTap: access.canAccessCreditReturns ? () => open(const PosCreditReturnsScreen()) : null,
                 )),
               ],
             ),
@@ -214,7 +214,7 @@ class _HomeActionTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {

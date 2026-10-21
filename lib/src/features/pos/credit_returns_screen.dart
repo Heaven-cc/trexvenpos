@@ -6,6 +6,7 @@ import 'package:trexven_operations/trexven_operations.dart';
 import '../auth/auth_provider.dart';
 import '../auth/branch_context.dart';
 import '../auth/permission_service.dart';
+import '../auth/pos_workflow_access.dart';
 import '../inventory/product_provider.dart';
 import 'sales_provider.dart';
 
@@ -24,6 +25,7 @@ class PosCreditReturnsScreen extends ConsumerWidget {
     if (business == null ||
         employee == null ||
         !employee.isActive ||
+        !access.canAccessCreditReturns ||
         auth.offlineCashOnly) {
       return Scaffold(
         appBar: AppBar(title: const Text('Credit & Returns')),
@@ -39,6 +41,7 @@ class PosCreditReturnsScreen extends ConsumerWidget {
       );
     }
     final branchId = business.branchesEnabled ? selectedBranch!.id : null;
+    final workflowAccess = PosWorkflowAccess.capture(ref);
     final permissions = <String>{
       for (final permission in const [
         'complete_sales',
@@ -56,18 +59,20 @@ class PosCreditReturnsScreen extends ConsumerWidget {
     final permissionKey = (permissions.toList()..sort()).join(',');
     return FinancialOperationsScreen(
       key: ValueKey(
-        '${business.id}:${employee.userId}:${employee.membershipId}:$branchId:${employee.role}:$permissionKey',
+        '${workflowAccess.key}:$permissionKey',
       ),
-      api: OperationsClient.pos(ref.watch(supabaseProvider), business.id),
+      api: OperationsClient.pos(ref.watch(supabaseProvider), business.id,
+        verifyAccess: () => workflowAccess.verify(ref)),
       owner: access.hasFullAccess,
       posWorkspace: true,
       manager: access.isManager,
       permissions: permissions,
       branchId: branchId,
       currency: business.currency,
+      verifyAccess: () => workflowAccess.verify(ref),
       contextIsCurrent: () {
         final current = ref.read(authStateProvider);
-        return !current.offlineCashOnly &&
+        return workflowAccess.isCurrent(ref) && !current.offlineCashOnly &&
             current.employee?.isActive == true &&
             current.employee?.userId == employee.userId &&
             current.employee?.membershipId == employee.membershipId &&

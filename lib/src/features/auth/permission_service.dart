@@ -75,6 +75,28 @@ class PermissionService {
     return _employee?.hasPermission(permission) ?? false;
   }
 
+  String get authorizationKey {
+    final grants = [...?_employee?.permissions]..sort();
+    final denials = [...?_employee?.deniedPermissions]..sort();
+    return '${_employee?.role.name}:${_employee?.status.name}:${grants.join(',')}:${denials.join(',')}:$offlineCashOnly';
+  }
+
+  bool get canRecordExpenses =>
+      !offlineCashOnly && hasPermission('pos_access') && hasPermission('record_expenses');
+
+  bool get canViewBranchExpenses =>
+      !offlineCashOnly && hasPermission('pos_access') &&
+      (isOwner || isManager) && hasPermission('view_pos_expenses');
+
+  bool get canAccessExpenses => canRecordExpenses || canViewBranchExpenses;
+
+  bool get canAccessCreditReturns =>
+      !offlineCashOnly && isActive &&
+      (isOwner || hasPermission('complete_sales') ||
+       hasPermission('record_credit_repayment') || hasPermission('inspect_returns') ||
+       hasPermission('view_finance') ||
+       (isManager && (hasPermission('approve_credit') || hasPermission('approve_refund'))));
+
   bool get canOverridePrice {
     return hasPermission(overridePricePermission);
   }

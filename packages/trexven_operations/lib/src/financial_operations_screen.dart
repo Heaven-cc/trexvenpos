@@ -24,6 +24,7 @@ class FinancialOperationsScreen extends StatefulWidget {
   final String? branchId;
   final String? currency;
   final bool Function()? contextIsCurrent;
+  final Future<void> Function()? verifyAccess;
   final VoidCallback? onRecordsChanged;
   const FinancialOperationsScreen({
     super.key,
@@ -35,6 +36,7 @@ class FinancialOperationsScreen extends StatefulWidget {
     this.branchId,
     this.currency,
     this.contextIsCurrent,
+    this.verifyAccess,
     this.onRecordsChanged,
   });
   @override
@@ -68,13 +70,27 @@ class _FinancialOperationsScreenState extends State<FinancialOperationsScreen>
   ModalRoute<dynamic>? _rootRoute;
   String? _freshAt;
 
+  bool _accessVerified = false;
+  bool get _verified => widget.verifyAccess == null || _accessVerified;
+
+  Future<void> _verifyAccess() async {
+    try {
+      await widget.verifyAccess?.call();
+      if (!_current) throw StateError('Workflow context changed. Reopen this workflow.');
+      _accessVerified = true;
+    } catch (_) {
+      _accessVerified = false;
+      rethrow;
+    }
+  }
+
   bool get _current =>
       mounted &&
       !_invalid &&
       widget.api.client.auth.currentUser?.id == _actor &&
       (widget.contextIsCurrent?.call() ?? true);
   bool _can(String permission, {bool sensitive = false}) =>
-      _current &&
+      _current && _verified &&
       (widget.owner ||
           (widget.permissions.contains(permission) &&
               (!sensitive || widget.manager)));
@@ -209,6 +225,19 @@ class _FinancialOperationsScreenState extends State<FinancialOperationsScreen>
       _loading = true;
       _notify();
     }
+    try {
+      await _verifyAccess();
+    } catch (_) {
+      if (mounted && version == _generation) {
+        _accounts = _entries = _returns = _approvals = _offline = _limits = const _SectionData();
+        _day = _totals = null;
+        _loading = _refreshing = false;
+        _message = 'Unable to verify current workflow access. Connect and refresh before continuing.';
+        _notify();
+      }
+      return;
+    }
+    if (!mounted || version != _generation || !_current) return;
     final canDecide = _can('approve_credit', sensitive: true);
     final broadReturns =
         _can('inspect_returns') ||
@@ -308,6 +337,7 @@ class _FinancialOperationsScreenState extends State<FinancialOperationsScreen>
     _notify();
     var confirmed = false;
     try {
+      // OperationsClient verifies after durable reservation for financial writes.
       await action();
       confirmed = true;
       if (!mounted || !_current) return;
@@ -342,6 +372,8 @@ class _FinancialOperationsScreenState extends State<FinancialOperationsScreen>
     _preparing = true;
     _notify();
     try {
+      await _verifyAccess();
+      if (!_current) return;
       await action();
     } catch (error) {
       if (mounted && _current) {
@@ -1589,7 +1621,7 @@ context: context,
           ),
       ],
     ),
-    body: !_current
+    body: !_current || (!_verified && !_loading)
         ? _empty(
             'Verify your account',
             'Return to the original authorized account and business to continue.',
