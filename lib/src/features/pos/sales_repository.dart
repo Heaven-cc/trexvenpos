@@ -162,6 +162,7 @@ class SalesRepository {
   Future<List<Sale>> getAuthorizedBusinessSales(
     String businessId, {
     String? branchId,
+    DateTime? since,
   }) async {
     if (businessId.trim().isEmpty) return const [];
     var query = _supabase
@@ -169,6 +170,7 @@ class SalesRepository {
         .select('*, sale_items(*)')
         .eq('business_id', businessId);
     if (branchId != null) query = query.eq('branch_id', branchId);
+    if (since != null) query = query.gte('created_at', since.toUtc().toIso8601String());
     final sales = <Sale>[];
     const pageSize = 200;
     for (var offset = 0; ; offset += pageSize) {
