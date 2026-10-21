@@ -151,12 +151,12 @@ extension _FinancialDetails on _FinancialOperationsScreenState {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text('Outstanding balance'),
-                              SizedBox(height: TrexvenPresentation.spacing(context, 14)),
+                              SizedBox(height: TrexvenPresentation.isPos(context) ? TrexvenSpacing.labelGap : TrexvenPresentation.spacing(context, 14)),
                               Text(
                                 _cash(outstanding, _currency),
                                 style: TrexvenPresentation.typography(context, TrexvenTypography.display),
                               ),
-                              const SizedBox(height: 20),
+                              SizedBox(height: TrexvenPresentation.isPos(context) ? TrexvenSpacing.fieldGap : 20),
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(
                                   TrexvenRadii.progress,
