@@ -1,6 +1,6 @@
 # Verified corrections — Phase 1: employee permissions
 
-Status: source prepared for review. No production deployment and no runtime verification.
+Status: approved Phase 1 backend deployed; frontend source awaits merge. Runtime acceptance remains pending.
 Latest baseline: POS c344c8550a2b70b382bf7423db32a6456f021893; Owner 8a57789e5564e0dd7f7a7d5aa8e27b2b19a5bca5.
 Owner's merged four-theme appearance work and POS's merged crash/UI fixes are preserved.
 
@@ -31,7 +31,7 @@ Owner:
 - packages/trexven_operations/lib/src/employee_access_screen.dart
 - supabase/functions/_shared/login-permissions.ts
 - supabase/functions/_shared/employee-access.ts
-- supabase/changes/phase_1_owner_only_employee_administration.sql
+- supabase/migrations/20261020235818_owner_only_employee_administration.sql
 - docs/implementation/verified_corrections_phase_1.md
 
 ## Compatibility evidence
@@ -42,7 +42,19 @@ Read deployed employee-login v6, create-employee v7 and manage-employee v4. The 
 
 Read live permission/context/staff functions, policies and employee triggers. Permission helper still requires active employee and membership and applies denials before defaults. Existing private.has_business_permission wrapper stays unchanged. No sales/inventory function, receipt contract, queue, theme or authentication session pipeline is modified in Phase 1.
 
-## Approval-required deployment
+## Approved production deployment — 21 October 2026 (Africa/Lagos)
+
+Applied migration 20261020235818_owner_only_employee_administration after explicit user approval.
+All six deployed function bodies match the approved replacements; existing ACLs are unchanged.
+All three restrictive owner-only employee write policies are present.
+Deployed and fetched back exact approved Edge bundles:
+employee-login v7 (verify_jwt=false), create-employee v8 (true), manage-employee v5 (true).
+Entrypoints and runtime files match predeployment source; only approved helper changes were deployed.
+Pre/post counts unchanged: employees 1, memberships 2, permissions 0, sales 4, expenses 0, returns 0, cash_events 0.
+Source/catalog verification only; no user transaction/auth mutation tests or local builds.
+Frontend PRs remain unmerged; Phase 2 is now proceeding.
+
+## Deployment procedure (completed for this approval)
 
 1. Review paired PRs and approve the exact Phase 1 production SQL + employee-login/create-employee/manage-employee deployment.
 2. Re-read current live function definitions. Prepared SQL contains six exact baseline hash guards; abort on drift and review rather than bypassing them.
@@ -67,5 +79,5 @@ Do not roll back by restoring manager privileges without explicit approval.
 ## Verification limits and next phases
 
 Source and read-only live catalog inspection only. No local build, analyzer, test suite, fabricated identity/session or application-data write.
-Prepared SQL has not been executed, including in a rollback transaction. Runtime and migration validation remain pending.
-Phases 2–9 and their final handoff remain pending at the Phase 1 production-approval checkpoint; nothing in this report claims they are complete.
+The approved SQL was applied once through Supabase migration tooling; read-only postflight matched approved definitions and preserved counts. Runtime acceptance remains pending.
+Phases 2–9 and final handoff remain pending; Phase 2 proceeds after the approved deployment. Nothing in this report claims those phases are complete.
