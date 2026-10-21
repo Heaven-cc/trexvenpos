@@ -1,3 +1,4 @@
+import 'package:trexven_design_system/trexven_design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trexven_operations/trexven_operations.dart';
@@ -67,13 +68,13 @@ class PosOperationsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Operations')),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        padding: TrexvenSpacing.pagePadding,
         children: [
           Text('Manage daily business workflows',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             )),
-          const SizedBox(height: 24),
+          const SizedBox(height: PosSpace.lg),
           Text('DAILY OPERATIONS',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: Theme.of(context).colorScheme.primary,
@@ -95,9 +96,9 @@ class PosOperationsScreen extends ConsumerWidget {
               ],
             );
           }),
-          const SizedBox(height: 20),
+          const SizedBox(height: PosSpace.lg),
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(PosSpace.md),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerLow,
               borderRadius: BorderRadius.circular(14),
@@ -139,52 +140,43 @@ class _WorkflowCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final background = dark ? const Color(0xFF1C2D46) : Theme.of(context).colorScheme.surface;
-    final foreground = dark ? Colors.white : Theme.of(context).colorScheme.onSurface;
-    final muted = dark ? const Color(0xFFA9BDD8) : Theme.of(context).colorScheme.onSurfaceVariant;
+    final scheme = Theme.of(context).colorScheme;
     return Material(
-      color: background,
-      borderRadius: BorderRadius.circular(16),
+      color: scheme.surface,
+      borderRadius: BorderRadius.circular(TrexvenRadii.card),
       child: InkWell(
         onTap: workflow.onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(TrexvenRadii.card),
         child: Container(
-          constraints: const BoxConstraints(minHeight: 150),
-          padding: const EdgeInsets.all(14),
+          constraints: const BoxConstraints(minHeight: 96),
+          padding: const EdgeInsets.all(PosSpace.md),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: dark
-              ? const Color(0xFF344761)
-              : Theme.of(context).colorScheme.outlineVariant),
+            borderRadius: BorderRadius.circular(TrexvenRadii.card),
+            border: Border.all(color: scheme.outlineVariant),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(9),
-                decoration: BoxDecoration(
-                  color: dark ? const Color(0xFF294A79) : Theme.of(context).colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(11),
-                ),
-                child: Icon(workflow.icon, size: 20,
-                  color: dark ? const Color(0xFFA9CBFF) : Theme.of(context).colorScheme.onPrimaryContainer),
+          child: Row(children: [
+            Container(
+              padding: const EdgeInsets.all(PosSpace.sm),
+              decoration: BoxDecoration(
+                color: scheme.primaryContainer,
+                borderRadius: BorderRadius.circular(PosSpace.md),
               ),
-              const SizedBox(height: 12),
-              Text(workflow.title, maxLines: 2, overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w700, color: foreground)),
-              const SizedBox(height: 4),
-              Text(workflow.subtitle, maxLines: 2, overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: muted)),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Icon(Icons.arrow_outward_rounded, size: 17, color: muted),
-              ),
-            ],
-          ),
+              child: Icon(workflow.icon, size: 20, color: scheme.onPrimaryContainer),
+            ),
+            const SizedBox(width: PosSpace.sm),
+            Expanded(child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(workflow.title, maxLines: 2, overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelLarge),
+                const SizedBox(height: PosSpace.xs),
+                Text(workflow.subtitle, maxLines: 2, overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall),
+              ],
+            )),
+          ]),
         ),
       ),
     );

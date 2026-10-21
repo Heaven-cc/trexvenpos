@@ -71,7 +71,9 @@ class _CreditCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: double.infinity,
-    padding: TrexvenSpacing.cardPadding,
+    padding: EdgeInsets.all(TrexvenPresentation.isPos(context)
+      ? TrexvenSpacing.fieldGap - TrexvenSpacing.labelGap / 2
+      : TrexvenSpacing.fieldGap),
     decoration: BoxDecoration(
       color: highlighted
           ? Theme.of(context).colorScheme.surfaceContainerHighest
@@ -124,9 +126,9 @@ class _CreditMetric extends StatelessWidget {
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: TrexvenPresentation.isPos(context) ? TrexvenSpacing.labelGap : TrexvenSpacing.fieldGap),
         Text(value, style: TrexvenPresentation.typography(context, TrexvenTypography.title)),
-        const SizedBox(height: 12),
+        SizedBox(height: TrexvenPresentation.isPos(context) ? TrexvenSpacing.labelGap : TrexvenSpacing.fieldGap),
         Text(caption, style: Theme.of(context).textTheme.bodySmall),
       ],
     ),
