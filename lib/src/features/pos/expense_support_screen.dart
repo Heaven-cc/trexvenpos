@@ -113,8 +113,8 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
         'p_branch_id': ref.read(branchContextProvider)?.id,
         'p_branch_history': branchHistory,
         'p_limit': 50,
-        'p_before_created_at': more ? _cursor?['created_at'] : null,
-        'p_before_id': more ? _cursor?['id'] : null,
+        'p_before_created_at': more && _cursor != null ? _cursor!['created_at'] : null,
+        'p_before_id': more && _cursor != null ? _cursor!['id'] : null,
       }).timeout(const Duration(seconds: 20));
       if (!mounted || key != _currentScope) return;
       final page = Map<String, dynamic>.from(result as Map);

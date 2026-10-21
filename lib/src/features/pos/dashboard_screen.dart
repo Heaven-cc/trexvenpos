@@ -262,6 +262,7 @@ Future<bool> _addRecognizedProduct(
     final auth = ref.read(authStateProvider);
     final business = auth.activeBusiness;
     final employee = auth.employee;
+    final originalBranch = ref.read(branchContextProvider)?.id;
     if (business == null || employee == null ||
         !ref.read(permissionServiceProvider).canCompleteSales ||
         employee.businessId != business.id ||

@@ -24,7 +24,7 @@ class DisplayRepository extends ProductRepository {
     status: ProductStatus.active,
   );
   @override
-  Future<List<Product>> searchProducts(String query, String business) async {
+  Future<List<Product>> searchProducts(String query, String business, {String? branchId}) async {
     searches++;
     return [product];
   }
