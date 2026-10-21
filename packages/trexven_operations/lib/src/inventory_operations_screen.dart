@@ -765,7 +765,9 @@ context: context,
       Theme.of(context).colorScheme.primary;
 
   Widget _surface(Widget child, {EdgeInsetsGeometry? padding}) => Container(
-    padding: padding ?? const EdgeInsets.all(16),
+    padding: padding ?? EdgeInsets.all(TrexvenPresentation.isPos(context)
+      ? TrexvenSpacing.fieldGap - TrexvenSpacing.labelGap / 2
+      : TrexvenSpacing.fieldGap),
     decoration: BoxDecoration(
       color: Theme.of(context).trexvenColors.cardBackground ??
           Theme.of(context).colorScheme.surfaceContainerLow,
@@ -806,7 +808,9 @@ context: context,
   );
 
   Widget _empty(String title, String description, IconData icon) => Padding(
-    padding: EdgeInsets.symmetric(vertical: TrexvenPresentation.spacing(context, 22), horizontal: 12),
+    padding: EdgeInsets.symmetric(
+      vertical: TrexvenPresentation.isPos(context) ? TrexvenSpacing.fieldGap : TrexvenPresentation.spacing(context, 22),
+      horizontal: TrexvenSpacing.fieldGap - TrexvenSpacing.labelGap / 2),
     child: Column(children: [
       Icon(icon, size: 32, color: Theme.of(context).colorScheme.onSurfaceVariant),
       const SizedBox(height: 12),
@@ -819,7 +823,9 @@ context: context,
   );
 
   Widget _heading(String title, {Widget? action}) => Padding(
-    padding: EdgeInsets.only(top: TrexvenPresentation.spacing(context, 22), bottom: 12),
+    padding: EdgeInsets.only(top: TrexvenPresentation.isPos(context)
+      ? TrexvenSpacing.fieldGap : TrexvenPresentation.spacing(context, 22),
+      bottom: TrexvenSpacing.labelGap),
     child: Row(children: [
       Expanded(child: Text(title,
         style: TextStyle(fontSize: TrexvenPresentation.fontSize(context, 17), fontWeight: FontWeight.w700))),
@@ -865,7 +871,8 @@ context: context,
           child: Icon(Icons.sync_rounded, size: 18,
             color: Theme.of(context).colorScheme.onSurfaceVariant)),
       ]),
-      SizedBox(height: TrexvenPresentation.spacing(context, 18)),
+      SizedBox(height: TrexvenPresentation.isPos(context)
+        ? TrexvenSpacing.labelGap : TrexvenPresentation.spacing(context, 18)),
       LayoutBuilder(builder: (context, constraints) {
         final stacked = constraints.maxWidth < 280 ||
             MediaQuery.textScalerOf(context).scale(14) > 21;
@@ -989,7 +996,7 @@ context: context,
   Widget _posSectionPicker() {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: TrexvenSpacing.labelGap),
       child: Container(
         decoration: BoxDecoration(
           color: scheme.surfaceContainerLow,
