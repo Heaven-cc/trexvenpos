@@ -98,7 +98,7 @@ class PendingSaleSubmission {
     // not prove that it is safe to forget the money or reuse this request key.
     // Only a verified receipt or an explicit no-money-moved recovery may clear it.
     final receipt = await send(existing?.sale ?? sale).timeout(const Duration(seconds: 30));
-    if (receipt.businessId != sale.businessId || receipt.employeeId != sale.employeeId ||
+    if (receipt.id.isEmpty || receipt.businessId != sale.businessId || receipt.employeeId != sale.employeeId ||
         receipt.branchId != sale.branchId || !receipt.total.isFinite ||
         (receipt.total * 100).round() != (sale.total * 100).round()) {
       throw StateError('The server receipt does not match the retained sale. Keep it for recovery.');

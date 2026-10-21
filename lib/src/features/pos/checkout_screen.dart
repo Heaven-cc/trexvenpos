@@ -79,6 +79,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       _isProcessing = true;
     });
 
+    try {
     // The durable journal, not this screen's transient flag, decides whether
     // another payment can be collected after a restart or route recreation.
     Sale? recoverySale;
@@ -362,8 +363,8 @@ context: context,
     } catch (e) {
       var pendingRemains = store != null;
       try { if (store != null) pendingRemains = await store.read() != null; } catch (_) { /* Storage uncertainty keeps recovery locked. */ }
-      if (pendingRemains) ref.invalidate(pendingSaleProvider);
       if (!mounted) return;
+      if (pendingRemains) ref.invalidate(pendingSaleProvider);
       setState(() => _hasUnconfirmedSale = pendingRemains);
 
       _showError(saleErrorMessage(e));
@@ -371,12 +372,27 @@ context: context,
         // Return to the global recovery gate; do not strand the cashier here.
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessing = false;
-        });
+    }
+    } catch (error) {
+      if (!mounted) return;
+      // Cover preparation/dialog failures as well as submission. Do not leave
+      // PopScope and payment controls permanently locked by a transient flag.
+      var retained = false;
+      if (!widget.offlineCash) {
+        try {
+          retained = await (await ref.read(pendingSaleStoreProvider.future)).read() != null;
+        } catch (_) {
+          retained = true; // Uncertain storage stays behind recovery.
+        }
+        ref.invalidate(pendingSaleProvider);
       }
+      if (mounted) {
+        setState(() => _hasUnconfirmedSale = retained);
+        _showError(saleErrorMessage(error));
+        if (retained) Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
@@ -708,7 +724,9 @@ context: context,
     final result = await showDialog<String>(
       animationStyle: AnimationStyle(duration: PosMotion.duration(context, PosMotion.component)),
 context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => TextControllerScope(
+        controllers: [controller],
+        child: AlertDialog(
         scrollable: true,
         title: Text('Quantity in ${item.product.unit}'),
         content: TrexvenTextField(
@@ -728,10 +746,9 @@ context: context,
             child: Text('Apply'),
           ),
         ],
-      ),
+      )),
     );
-    controller.dispose();
-    if (result == null || !mounted) return;
+    if (result == null || !mounted || _isProcessing || _hasUnconfirmedSale) return;
     try {
       final quantity = num.tryParse(result);
       if (quantity == null || quantity <= 0)

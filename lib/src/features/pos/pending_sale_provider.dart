@@ -28,9 +28,14 @@ class PendingSaleGate extends ConsumerStatefulWidget {
 
 class _PendingSaleGateState extends ConsumerState<PendingSaleGate> {
   bool busy = false;
+  bool confirmingCancellation = false;
   String? error;
   Future<void> cancelWithoutPayment(PendingSale pending) async {
-    final confirmed = await showDialog<bool>(
+    if (busy || confirmingCancellation) return;
+    setState(() => confirmingCancellation = true);
+    bool? confirmed;
+    try {
+    confirmed = await showDialog<bool>(
       animationStyle: AnimationStyle(duration: PosMotion.duration(context, PosMotion.component)),
 context: context,
       builder: (context) => AlertDialog(
@@ -51,6 +56,12 @@ context: context,
         ],
       ),
     );
+    } catch (_) {
+      if (mounted) setState(() => error = 'Cancellation could not be opened. The original request is retained.');
+      return;
+    } finally {
+      if (mounted) setState(() => confirmingCancellation = false);
+    }
     if (confirmed != true || !mounted || busy) return;
     setState(() {
       busy = true;
@@ -72,9 +83,15 @@ context: context,
           'p_request_id': pending.sale.id,
           'p_no_money_moved': true,
         },
-      );
+      ).timeout(const Duration(seconds: 20));
       if ((result as Map)['status'] != 'cancelled')
         throw StateError('Server cancellation not confirmed.');
+      if (!mounted) return;
+      final current = ref.read(authStateProvider);
+      if (!pending.belongsTo(current.employee?.userId ?? '',
+          current.activeBusiness?.id ?? '', current.employee?.membershipId ?? '')) {
+        throw StateError('The original employee must confirm cancellation.');
+      }
       await (await ref.read(
         pendingSaleStoreProvider.future,
       )).acknowledge(pending.sale.id);
@@ -93,7 +110,7 @@ context: context,
   }
 
   Future<void> recover(PendingSale pending) async {
-    if (busy) return;
+    if (busy || confirmingCancellation) return;
     setState(() {
       busy = true;
       error = null;
@@ -116,6 +133,7 @@ context: context,
       if (pending.sale.branchId != null) {
         ref.invalidate(authorizedBranchesProvider);
         final branches = await ref.read(authorizedBranchesProvider.future);
+        if (!mounted) return;
         if (!branches.any(
           (b) => b.id == pending.sale.branchId && b.businessId == business.id,
         )) {
@@ -153,6 +171,12 @@ context: context,
           sale.total,
           sale.paymentMethod,
           recovery: true,
+          contextIsCurrent: () {
+            final current = ref.read(authStateProvider);
+            return mounted && !current.offlineCashOnly && current.employee?.isActive == true &&
+                pending.belongsTo(current.employee?.userId ?? '',
+                  current.activeBusiness?.id ?? '', current.employee?.membershipId ?? '');
+          },
           allowCredit: false,
           currency: business.currency,
           cashAllowed: cashContext['configured'] != true || shift != null,
@@ -229,6 +253,7 @@ context: context,
       await store.acknowledge(pending.sale.id);
       ref.invalidate(pendingSaleProvider);
     } catch (failure) {
+      if (!mounted) return;
       ref.invalidate(pendingSaleProvider);
       if (mounted)
         setState(
@@ -292,18 +317,18 @@ context: context,
             ),
             const SizedBox(height: 18),
             FilledButton.icon(
-              onPressed: busy ? null : () => recover(pending),
+              onPressed: busy || confirmingCancellation ? null : () => recover(pending),
               icon: const Icon(Icons.refresh_rounded),
               label: Text(busy ? 'Checking original request…' : 'Check & Recover Sale'),
             ),
             const SizedBox(height: 10),
             OutlinedButton(
-              onPressed: busy ? null : () => cancelWithoutPayment(pending),
+              onPressed: busy || confirmingCancellation ? null : () => cancelWithoutPayment(pending),
               child: const Text('No payment received? Review cancellation'),
             ),
             const SizedBox(height: 10),
             TextButton(
-              onPressed: busy ? null : () =>
+              onPressed: busy || confirmingCancellation ? null : () =>
                 ref.read(authStateProvider.notifier).logout(),
               child: const Text('Sign out'),
             ),
