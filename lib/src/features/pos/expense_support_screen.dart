@@ -217,7 +217,7 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
 
   Widget _panel(Widget child) => Container(
     width: double.infinity,
-    padding: const EdgeInsets.all(16),
+    padding: const EdgeInsets.all(TrexvenSpacing.fieldGap - TrexvenSpacing.labelGap / 2),
     decoration: BoxDecoration(
       color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(16),
@@ -258,7 +258,7 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
           icon: const Icon(Icons.receipt_long_outlined),
         )]),
       body: SafeArea(child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: TrexvenSpacing.pagePadding,
         children: [
           Text('Record & manage cash spending',
             style: Theme.of(context).textTheme.bodySmall),
@@ -283,7 +283,7 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
             selected: {_tab},
             onSelectionChanged: (selection) => _selectTab(selection.first),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: TrexvenSpacing.fieldGap),
           if (_loading) const LinearProgressIndicator(),
           if (_error != null) ...[
             Text(_error!, style: TextStyle(color: scheme.error)),
@@ -317,7 +317,7 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
                   helperText: 'Currency follows the active business when connected',
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: TrexvenSpacing.fieldGap),
               DropdownButtonFormField<String>(
                 value: _category,
                 isExpanded: true,
@@ -330,7 +330,7 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
                   if (value != null) setState(() => _category = value);
                 },
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: TrexvenSpacing.fieldGap),
               TextField(
                 controller: _description,
                 enabled: !_busy && _pending == null && _canRecord,
@@ -342,14 +342,14 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
                   alignLabelWithHint: true,
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: TrexvenSpacing.fieldGap),
               Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 _lockedField('Payment method', 'Cash', Icons.payments_outlined),
                 const SizedBox(width: 10),
                 _lockedField('Date', _day ?? 'Checking business day…', Icons.calendar_today_outlined),
               ]),
             ])),
-            const SizedBox(height: 14),
+            const SizedBox(height: TrexvenSpacing.fieldGap),
             if (_shifts.isNotEmpty) DropdownButtonFormField<String>(
               value: _shift ?? '',
               decoration: const InputDecoration(labelText: 'Cash drawer (optional)'),
@@ -360,7 +360,7 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
               ],
               onChanged: _busy || _pending != null ? null : (value) => setState(() => _shift = value == '' ? null : value),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: TrexvenSpacing.fieldGap),
             Text(_canRecord
               ? 'The server records today in the business timezone. Select a drawer only when this spending came from it.'
               : 'Ask your owner for expense recording permission.'),
