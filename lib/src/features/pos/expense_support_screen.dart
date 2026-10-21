@@ -4,6 +4,7 @@ import 'package:trexven_operations/trexven_operations.dart';
 import '../auth/auth_provider.dart';
 import '../auth/branch_context.dart';
 import '../auth/permission_service.dart';
+import '../auth/pos_workflow_access.dart';
 
 /// Cash-only expense entry using server-authoritative, durable operations.
 class PosExpenseSupportScreen extends ConsumerStatefulWidget {
@@ -34,21 +35,15 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
   Map<String, dynamic>? _cursor;
   Map<String, dynamic>? _pending;
   OperationsClient? _api;
+  PosWorkflowAccess? _access;
 
   String get _currentScope {
-    final auth = ref.read(authStateProvider);
-    return '${auth.employee?.userId}:${auth.activeBusiness?.id}:${ref.read(branchContextProvider)?.id}';
+    try { return PosWorkflowAccess.capture(ref).key; }
+    catch (_) { return 'unavailable'; }
   }
 
-  bool get _canRecord => !ref.read(authStateProvider).offlineCashOnly &&
-      ref.read(permissionServiceProvider).hasPermission('pos_access') &&
-      ref.read(permissionServiceProvider).hasPermission('record_expenses');
-  bool get _canReadBranch {
-    final access = ref.read(permissionServiceProvider);
-    return !ref.read(authStateProvider).offlineCashOnly &&
-        (access.isOwner || access.isManager) &&
-        access.hasPermission('view_pos_expenses');
-  }
+  bool get _canRecord => ref.read(permissionServiceProvider).canRecordExpenses;
+  bool get _canReadBranch => ref.read(permissionServiceProvider).canViewBranchExpenses;
 
   @override
   void initState() {
@@ -68,12 +63,19 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
           (business.branchesEnabled && branch == null)) {
         throw StateError('Connect and select an authorized business and branch.');
       }
-      final api = OperationsClient.pos(ref.read(supabaseProvider), business.id);
+      if (!ref.read(permissionServiceProvider).canAccessExpenses) {
+        throw StateError('Expense access is not authorized.');
+      }
+      final workflowAccess = PosWorkflowAccess.capture(ref);
+      await workflowAccess.verify(ref);
+      if (!mounted || key != _currentScope) return;
+      final api = OperationsClient.pos(ref.read(supabaseProvider), business.id,
+        verifyAccess: () => workflowAccess.verify(ref));
       final pending = await api.journal.pending();
-      final day = await ref.read(supabaseProvider).rpc(
+      final day = _canRecord ? await ref.read(supabaseProvider).rpc(
         'get_trexven_business_day', params: {'p_business_id': business.id},
-      ).timeout(const Duration(seconds: 20));
-      final cash = ref.read(permissionServiceProvider).hasPermission('cash_shifts')
+      ).timeout(const Duration(seconds: 20)) : null;
+      final cash = _canRecord && ref.read(permissionServiceProvider).hasPermission('cash_shifts')
           ? await api.cashContext().timeout(const Duration(seconds: 20))
           : <String, dynamic>{'shifts': <dynamic>[]};
       if (!mounted || key != _currentScope) return;
@@ -82,8 +84,9 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
           .where((r) => r['status'] == 'open' && r['joined'] == true &&
               r['register_active'] == true && r['branch_id'] == branch?.id).toList();
       setState(() {
-        _api = api; _scopeKey = key; _pending = pending;
-        _day = (day as Map)['local_date']?.toString(); _shifts = shifts;
+        _api = api; _access = workflowAccess; _scopeKey = key; _pending = pending;
+        if (!_canRecord) { _tab = 1; _branchHistory = true; }
+        _day = day == null ? null : (day as Map)['local_date']?.toString(); _shifts = shifts;
         if (!shifts.any((s) => s['id'] == _shift)) _shift = null;
         _history = []; _cursor = null; _historyLoaded = false;
       });
@@ -97,21 +100,33 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
   }
 
   Future<void> _loadHistory({bool more = false}) async {
-    if (_busy || _api == null) return;
+    if (_busy || _api == null || _access == null || _scopeKey != _currentScope) return;
     final key = _scopeKey;
     setState(() { _busy = true; _error = null; });
     try {
+      if (!_canRecord && !_canReadBranch) throw StateError('Expense history is not authorized.');
+      final branchHistory = _canReadBranch && (_branchHistory || !_canRecord);
+      await _access!.verify(ref);
+      if (!mounted || key != _currentScope) return;
       final result = await ref.read(supabaseProvider).rpc('get_pos_expenses', params: {
         'p_business_id': ref.read(authStateProvider).activeBusiness!.id,
         'p_branch_id': ref.read(branchContextProvider)?.id,
-        'p_branch_history': _branchHistory && _canReadBranch,
+        'p_branch_history': branchHistory,
         'p_limit': 50,
         'p_before_created_at': more ? _cursor?['created_at'] : null,
         'p_before_id': more ? _cursor?['id'] : null,
       }).timeout(const Duration(seconds: 20));
       if (!mounted || key != _currentScope) return;
       final page = Map<String, dynamic>.from(result as Map);
+      if (page['scope'] != (branchHistory ? 'branch' : 'own')) {
+        throw StateError('Expense history scope could not be verified.');
+      }
       final rows = (page['items'] as List).map((r) => Map<String, dynamic>.from(r as Map)).toList();
+      if (rows.any((row) => row['business_id'] != _api!.businessId ||
+          row['branch_id'] != _access!.branchId ||
+          (!branchHistory && row['employee_id'] != _access!.membershipId))) {
+        throw StateError('Expense history context could not be verified.');
+      }
       setState(() {
         _history = more ? [..._history, ...rows] : rows;
         _cursor = page['next_cursor'] == null ? null : Map<String, dynamic>.from(page['next_cursor'] as Map);
@@ -126,12 +141,14 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
   }
 
   Future<void> _save({bool recover = false}) async {
-    if (_busy || _api == null || _scopeKey != _currentScope) return;
+    if (_busy || _api == null || _access == null || _scopeKey != _currentScope) return;
     final api = _api!;
     final key = _scopeKey;
     setState(() { _busy = true; _error = null; _notice = null; });
     try {
+      if (!_canRecord) throw StateError('Expense recording permission is required to submit or retry.');
       final pending = await api.journal.pending();
+      if (!mounted || key != _currentScope) return;
       dynamic response;
       if (recover) {
         if (pending == null || pending['rpc'] != 'record_pos_expense' ||
@@ -166,7 +183,7 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
       if (mounted && key == _currentScope) {
         Map<String, dynamic>? retained = _pending;
         try { retained = await api.journal.pending(); } catch (_) { /* Keep the original journal intact. */ }
-        if (mounted) setState(() {
+        if (mounted && key == _currentScope) setState(() {
           _pending = retained;
           _error = error is FormatException ? error.message : error is StateError ? error.message.toString() : CustomerPresentation.error(error,
             fallback: 'Save is unconfirmed. Recover the original request before recording again.');
@@ -178,6 +195,7 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
   }
 
   void _selectTab(int value) {
+    if (_busy || (value == 0 && !_canRecord)) return;
     setState(() => _tab = value);
     if (value == 1 && !_historyLoaded && !_busy) _loadHistory();
   }
@@ -222,6 +240,10 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
 
   @override
   Widget build(BuildContext context) {
+    // Subscribe before any locked-state return so revocations rebuild the route.
+    ref.watch(authStateProvider);
+    ref.watch(permissionServiceProvider);
+    ref.watch(branchContextProvider);
     final scheme = Theme.of(context).colorScheme;
     if ((_scopeKey != null && _scopeKey != _currentScope) ||
         (!_canRecord && !_canReadBranch) || (_branchHistory && !_canReadBranch)) {
@@ -254,9 +276,9 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
           ])),
           const SizedBox(height: 16),
           SegmentedButton<int>(
-            segments: const [
-              ButtonSegment(value: 0, label: Text('Record Expense')),
-              ButtonSegment(value: 1, label: Text('Expense History')),
+            segments: [
+              ButtonSegment(value: 0, label: const Text('Record Expense'), enabled: _canRecord),
+              const ButtonSegment(value: 1, label: Text('Expense History')),
             ],
             selected: {_tab},
             onSelectionChanged: (selection) => _selectTab(selection.first),
@@ -271,7 +293,7 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
           if (_pending != null) _panel(Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             const Text('A retained operation must be resolved before another expense.'),
             if (_pending!['rpc'] == 'record_pos_expense')
-              FilledButton(onPressed: _busy ? null : () => _save(recover: true),
+              FilledButton(onPressed: _busy || !_canRecord ? null : () => _save(recover: true),
                 child: const Text('Check & recover original expense'))
             else const Text('Use More → Operations to recover the original operation.'),
           ])),
@@ -353,10 +375,10 @@ class _PosExpenseSupportScreenState extends ConsumerState<PosExpenseSupportScree
             const SizedBox(height: 12),
             if (_canReadBranch) SwitchListTile(
               title: const Text('Branch expense history'),
-              subtitle: const Text('Off shows only your own records'),
+              subtitle: Text(_canRecord ? 'Off shows only your own records' : 'Read-only branch history; recording is not authorized.'),
               value: _branchHistory,
-              onChanged: _busy ? null : (value) {
-                setState(() { _branchHistory = value; _historyLoaded = false; });
+              onChanged: _busy || !_canRecord ? null : (value) {
+                setState(() { _branchHistory = value; _historyLoaded = false; _history = []; _cursor = null; });
                 _loadHistory();
               },
             ),

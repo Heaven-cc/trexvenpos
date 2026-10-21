@@ -27,7 +27,7 @@ class SalesRepository {
         'p_payment_method': payment,
         'p_branch_id': sale.branchId,
       },
-    );
+    ).timeout(const Duration(seconds: 20));
     return response == null
         ? null
         : Sale.fromJson(Map<String, dynamic>.from(response as Map));

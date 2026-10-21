@@ -15,13 +15,16 @@ class OperationsClient {
   final String businessId;
   final OperationJournal journal;
   final String application;
+  final Future<void> Function()? verifyAccess;
   OperationsClient(this.client, this.businessId, {OperationJournal? journal})
     : journal = journal ?? OperationJournal(),
-      application = 'owner';
+      application = 'owner',
+      verifyAccess = null;
   OperationsClient.pos(
     this.client,
     this.businessId, {
     OperationJournal? journal,
+    this.verifyAccess,
   }) : journal = journal ?? OperationJournal(),
        application = 'pos';
 
@@ -88,12 +91,19 @@ class OperationsClient {
   }
 
   Future<dynamic> call(String rpc, Map<String, dynamic> args) async {
-    if (!args.containsKey('p_request_id')) return client.rpc(rpc, params: args).timeout(const Duration(seconds: 20));
+    if (!args.containsKey('p_request_id')) {
+      await verifyAccess?.call();
+      return client.rpc(rpc, params: args).timeout(const Duration(seconds: 20));
+    }
     final user = client.auth.currentUser?.id;
     if (user == null) throw StateError('Sign in before an operation.');
     final reserved = await journal.reserve(user, businessId, rpc, args);
     dynamic response;
     try {
+      // Reserve the original intent before network verification; a failed check
+      // must retain its request ID and payload for safe recovery.
+      await verifyAccess?.call();
+      if (client.auth.currentUser?.id != user) throw StateError('Original employee required.');
       final params = Map<String, dynamic>.from(reserved);
       final credit = params['p_credit'];
       if (rpc == 'complete_trexven_transaction' &&
@@ -193,6 +203,7 @@ class OperationsClient {
         'Original context and no-money-moved confirmation required.',
       );
     }
+    await verifyAccess?.call();
     final request = (pending['args'] as Map)['p_request_id'] as String;
     final result = await client.rpc(
       'cancel_trexven_uncommitted_operation',

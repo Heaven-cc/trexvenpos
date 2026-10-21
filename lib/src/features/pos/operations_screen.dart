@@ -25,7 +25,7 @@ class PosOperationsScreen extends ConsumerWidget {
     }
 
     final workflows = <_Workflow>[
-      if (access.hasPermission('record_expenses') || access.hasPermission('view_pos_expenses'))
+      if (access.canAccessExpenses)
         _Workflow('Expenses', 'Cash spending & history', Icons.payments_outlined,
           () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PosExpenseSupportScreen()))),
       if (auth.activeBusiness!.branchesEnabled && (access.isOwner || access.isManager) && access.hasPermission('transfer_stock'))
@@ -49,7 +49,7 @@ class PosOperationsScreen extends ConsumerWidget {
             builder: (_) => const PosInventoryOperationsScreen(),
           )),
         ),
-      _Workflow(
+      if (access.canAccessCreditReturns) _Workflow(
         'Credit & Returns', 'Repayments & refunds', Icons.receipt_long_outlined,
         () => Navigator.push(context, MaterialPageRoute(
           builder: (_) => const PosCreditReturnsScreen(),

@@ -411,23 +411,10 @@ context: context,
                                 builder: (_) => const PosOperationsScreen(),
                               ),
                             );
-                          } else if ((route == 'credit' || route == 'returns') && current.hasPermission('pos_access')) {
+                          } else if ((route == 'credit' || route == 'returns') && current.canAccessCreditReturns) {
                             Navigator.push(context, MaterialPageRoute(builder: (_) => const PosCreditReturnsScreen()));
                           } else if (route == 'employees' && referenceId == ref.read(authStateProvider).employee?.id) {
                             Navigator.push(context, MaterialPageRoute(builder: (_) => const EmployeeSettingsScreen()));
-                          } else if (route == 'employees' &&
-                              current.hasPermission('manage_employees')) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => EmployeeAccessScreen(
-                                  api: OperationsClient.pos(
-                                    ref.read(supabaseProvider),
-                                    auth.activeBusiness!.id,
-                                  ),
-                                ),
-                              ),
-                            );
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -445,24 +432,6 @@ context: context,
               _MoreMenuItem(icon: Icons.history_rounded, title: 'Operational history',
                 subtitle: 'Your confirmed actions & retained requests',
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PosOperationHistoryScreen()))),
-              if (access.hasPermission('manage_employees') &&
-                  auth.activeBusiness != null)
-                _MoreMenuItem(
-                  icon: Icons.group_outlined,
-                  title: 'Employees & permissions',
-                  subtitle: 'Manage staff accounts and authority',
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => EmployeeAccessScreen(
-                        api: OperationsClient.pos(
-                          ref.read(supabaseProvider),
-                          auth.activeBusiness!.id,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
             ],
           ),
           const SizedBox(height: 20),

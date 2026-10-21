@@ -20,6 +20,10 @@ void main() async {
   await Supabase.initialize(
     url: SupabaseConstants.url,
     publishableKey: SupabaseConstants.anonKey,
+    authOptions: const FlutterAuthClientOptions(
+      persistSession: true,
+      autoRefreshToken: true,
+    ),
   );
 
   runApp(ProviderScope(child: MyApp()));
