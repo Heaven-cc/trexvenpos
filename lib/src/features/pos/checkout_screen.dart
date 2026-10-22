@@ -308,7 +308,7 @@ context: context,
       setState(() => _hasUnconfirmedSale = false);
 
       ref.read(cartProvider.notifier).clear();
-      ref.invalidate(recentSalesProvider(employee.membershipId));
+      ref.invalidate(recentSalesProvider);
 
       await showDialog<void>(
         animationStyle: AnimationStyle(duration: PosMotion.duration(context, PosMotion.component)),
