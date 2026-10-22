@@ -16,10 +16,13 @@ import '../pos/cart_provider.dart';
 import '../pos/checkout_screen.dart';
 
 class ProductSearchScreen extends ConsumerStatefulWidget {
-  const ProductSearchScreen({super.key, this.onAddProduct});
+  const ProductSearchScreen({super.key, this.onAddProduct, this.catalogOnly = false});
 
   /// Supplied by the POS selling entry point; inventory browsing stays unchanged.
   final Future<bool> Function(Product product)? onAddProduct;
+
+  /// Products is a destination inside Inventory; the parent displays only navigation.
+  final bool catalogOnly;
 
   @override
   ConsumerState<ProductSearchScreen> createState() =>
@@ -81,8 +84,6 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
   }
 
   Future<void> _refresh() async {
-    if (_query.isEmpty) return;
-
     await ref.read(productSearchProvider(_query).notifier).search();
   }
 
@@ -98,6 +99,7 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
     final scheme = Theme.of(context).colorScheme;
     final canView = ref.watch(permissionServiceProvider).hasPermission('view_inventory');
     final sellingMode = widget.onAddProduct != null;
+    final showCatalog = sellingMode || widget.catalogOnly;
     final cart = ref.watch(cartProvider);
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -121,14 +123,14 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
             Expanded(child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(sellingMode ? 'Find Products' : 'Inventory', style: TextStyle(
+                Text(sellingMode ? 'Find Products' : widget.catalogOnly ? 'Products' : 'Inventory', style: TextStyle(
                   fontSize: 22, fontWeight: FontWeight.w700,
                   color: scheme.onSurface)),
-                Text(sellingMode ? 'Search and add to checkout' : 'Products & stock management',
+                Text(sellingMode ? 'Search and add to checkout' : widget.catalogOnly ? 'Browse products and stock' : 'Products & stock management',
                   style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
               ],
             )),
-            if (canView && !sellingMode)
+            if (canView && !sellingMode && !widget.catalogOnly)
               IconButton(
                 tooltip: 'Stocktaking & stock management',
                 onPressed: _openOperations,
@@ -136,7 +138,8 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
               ),
           ]),
         ),
-        Padding(padding: const EdgeInsets.symmetric(horizontal: 16),
+        if (showCatalog)
+          Padding(padding: const EdgeInsets.symmetric(horizontal: 16),
           child: TrexvenTextField(
             controller: _searchController,
             variant: TrexvenFieldVariant.search,
@@ -151,7 +154,7 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
             ),
           ),
         ),
-        if (canView && !sellingMode)
+        if (canView && !sellingMode && !widget.catalogOnly)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Row(children: [
@@ -160,7 +163,9 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
                 title: 'Products',
                 subtitle: 'Browse catalog',
                 emphasized: true,
-                onTap: () { _clearSearch(); setState(() => _stockFilter = 'all'); },
+                onTap: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute(builder: (_) => const ProductSearchScreen(catalogOnly: true)),
+                ),
               )),
               const SizedBox(width: 12),
               Expanded(child: _InventoryShortcut(
@@ -172,11 +177,11 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
               )),
             ]),
           ),
-        if (!sellingMode && ref.watch(authStateProvider).activeBusiness?.branchesEnabled == true)
+        if (showCatalog && !sellingMode && ref.watch(authStateProvider).activeBusiness?.branchesEnabled == true)
           Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: Text('Available stock in your selected branch. Use stocktaking for physical counts.',
               style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12))),
-        if (!sellingMode) Padding(
+        if (showCatalog && !sellingMode) Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
           child: Align(
             alignment: Alignment.centerLeft,
@@ -184,7 +189,7 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
               style: Theme.of(context).textTheme.titleMedium),
           ),
         ),
-        if (!sellingMode) Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        if (showCatalog && !sellingMode) Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Align(alignment: Alignment.centerLeft, child: Wrap(spacing: 8, children: [
               for (final filter in const [('all', 'All results'), ('low', 'Low stock'), ('out', 'Out of stock')])
                 ChoiceChip(label: Text(filter.$2), selected: _stockFilter == filter.$1,
@@ -192,7 +197,13 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
             ]))),
         Expanded(child: AnimatedSwitcher(
           duration: PosMotion.duration(context, PosMotion.component),
-          child: _query.isEmpty ? _buildInitialState() : searchResult.when(
+          child: !showCatalog
+            ? const PosStateView(
+                title: 'Inventory',
+                message: 'Choose Products to browse the catalog or Stocktaking to count stock.',
+                icon: Icons.inventory_2_outlined,
+              )
+            : searchResult.when(
             loading: _buildLoadingState,
             error: (_, _) => _buildErrorState(),
             data: (products) {
@@ -201,7 +212,7 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
                 'out' => product.isActive && product.stock <= 0,
                 _ => true,
               }).toList();
-              if (products.isEmpty) return _buildNoResultsState();
+              if (products.isEmpty) return _query.isEmpty ? _buildInitialState() : _buildNoResultsState();
               return RefreshIndicator(onRefresh: _refresh,
                 child: ListView(
                   key: const ValueKey('inventory-results'),
@@ -245,12 +256,12 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
 
   Widget _buildInitialState() => const PosStateView(
     key: ValueKey('initial'),
-    title: 'Product results',
-    message: 'Search products by name, barcode or part number to browse your catalog.',
+    title: 'No products in this catalog',
+    message: 'Products added to the selected business will appear here. Check your branch or refresh if you expect products.',
     icon: Icons.inventory_2_outlined,
   );
   Widget _buildLoadingState() => const Center(key: ValueKey('loading'),
-    child: TrexvenLoading(message: 'Searching products…'));
+    child: TrexvenLoading(message: 'Loading products…'));
   Widget _buildNoResultsState() => PosStateView(key: const ValueKey('no-results'),
     title: 'No matching products', message: 'No products match "$_query".',
     icon: Icons.inventory_2_outlined, action: TextButton(onPressed: _clearSearch, child: const Text('Clear search')));
