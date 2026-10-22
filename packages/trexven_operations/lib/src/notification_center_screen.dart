@@ -291,7 +291,7 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                 _locallyDismissed.add(row['alert_key']?.toString() ?? '');
                 rows = load();
               });
-            }
+            },
             child: Card(
             margin: EdgeInsets.zero,
             child: Padding(
