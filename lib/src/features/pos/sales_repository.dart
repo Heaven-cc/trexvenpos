@@ -161,7 +161,12 @@ class SalesRepository {
   /// Receipts for the last seven business-local days, scoped by the backend
   /// to the active employee or explicitly authorized branch-history access.
   /// The RPC owns permissions and date boundaries; no client-side bypass.
-  Future<List<Sale>> getPosRecentSales(String businessId, {String? branchId}) async {
+  Future<List<Sale>> getPosRecentSales(String businessId, {
+    String? branchId,
+    String filter = 'week',
+    String? startDate,
+    String? endDate,
+  }) async {
     if (businessId.trim().isEmpty) return const [];
     final sales = <Sale>[];
     const pageSize = 100;
@@ -173,6 +178,9 @@ class SalesRepository {
           'p_branch_id': branchId,
           'p_offset': offset,
           'p_limit': pageSize,
+          'p_filter': filter,
+          'p_start_date': startDate,
+          'p_end_date': endDate,
         },
       );
       if (response is! List) {
