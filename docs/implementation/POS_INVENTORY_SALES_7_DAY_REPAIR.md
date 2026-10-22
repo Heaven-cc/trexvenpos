@@ -1,36 +1,37 @@
-# POS Inventory and Seven-Day Sales History — Repair Handoff
+# POS Products navigation and seven-day receipt history — Repair handoff
 
-## Findings verified against live Supabase (read-only)
+## Confirmed defects
 
-- `public.products` has 1 product. POS `ProductSearchNotifier.search()` explicitly returned an empty list when the search query was empty; `ProductSearchScreen` also bypassed results whenever the query was empty. The Inventory **Products** tab therefore appeared inaccessible without a typed search.
-- `public.sales` contains 4 transactions dated October 17–19, 2026. Thus records exist within the latest 7-day calendar window as of October 22, 2026.
-- POS Sales History currently calls `getAuthorizedBusinessSales()` and shows records filtered in Flutter. Before this repair the repository requested all accessible history rather than a 7-day bounded query.
-- `private.sales_history_access(business, sold_at)` currently grants non-owner POS access through a same-business-day check unless they have `view_finance`. However, `public.sales` also has other permissive SELECT policies. A same-day limitation in this helper is **not proof** of a complete denial, because permissive policies are OR-combined. Effective permissions and employee context must be verified before any policy change.
-- The product projection columns are granted individually to `authenticated` except sensitive `cost_price`; the absence of blanket table SELECT is intentional and is not a catalog read bug.
+1. The **Products** tile inside Inventory used an inline handler that only cleared the search/filter. Stocktaking opened a route, but Products never navigated.
+2. The source product provider required a nonempty search term, previously making an empty catalog appear even when products existed.
+3. The POS Sales History screen offered a seven-day filter, while restrictive live `public.sales` policies invoked `private.sales_history_access()` and limited ordinary POS access to the current business-local day. This blocked older receipts despite a client-side seven-day filter.
+4. Production has four sales dated October 17–19, 2026, including three tied to the active manager membership. These records were not removed or changed.
 
-## Implemented in Flutter
+## POS changes in this branch (PR #29)
 
-1. Empty search now fetches the first catalog page in the active business and selected branch. The display now renders results immediately, and refresh works without a query.
-2. No-products messaging reflects an empty catalog rather than prompting for search.
-3. Sales repository accepts an optional server-side `created_at` lower bound and POS recent-sales provider supplies the beginning of the last seven local calendar days. Existing business/branch filters and RLS remain in effect. No sales amounts are added to POS Home.
+- The Inventory **Products** tile now pushes `ProductSearchScreen(catalogOnly: true)` using standard Navigator; the catalog is a separate page with its own title, search, stock filters, rows, and product-detail tap navigation. Back returns to the Inventory navigation tiles.
+- Stocktaking still opens its existing, authorized stocktaking workflow unchanged.
+- Empty query now loads the catalog for the selected business/branch.
+- POS Sales History calls `get_pos_recent_sales` with business and branch and retrieves paginated, server-authorized receipts, rather than relying on raw SELECT from `public.sales`.
+- The default sales filter is seven days. Custom ranges cannot exceed the seven-day accessible window. Server business-local dates define the inclusive window.
 
-## Backend action requiring separate authorization
+## Companion backend change — not deployed
 
-If seven-day sales are still invisible to an authorized employee, inspect the effective `sales` and `sale_items` SELECT grants, all permissive RLS policies, `private.sales_history_access`, `private.branch_record_access`, and the actual logged-in employee-to-business membership mapping. Do not blindly change `private.sales_history_access` from one to seven days: it may expose all branch history to ordinary staff because the helper currently lacks employee identity and `sales` has permissive legacy policies.
+Owner App repository migration:
+`supabase/migrations/20261022130000_pos_scoped_seven_day_sales_history.sql`
 
-Prepare a forward-only, tested RLS design that provides:
-- Employees: their own authorized receipts from the last seven **business-local** days, with business and branch scope.
-- Managers: branch history only if explicitly granted.
-- Owners: full history only in the Owner App, not overall POS financial totals.
-- No cost/profit disclosure, cross-branch or cross-business access, or unauthorized list/aggregate leakage.
-- Correct behavior when `created_at` and `sold_at` differ, including timezone/DST and midnight boundaries.
-- Existence and matching of `sales.employee_id` to the active membership, and `sale_items` visibility through the same authorized parent sale.
+The new `public.get_pos_recent_sales` RPC checks:
+- Authenticated user and active business membership, active employee, POS authority
+- Business and account closure restrictions
+- Business-specific timezone and last seven business-local calendar days
+- Current branch membership/assignment, with no cross-business or cross-branch receipts
+- The user's own sale receipts, unless an explicit `view_finance` grant authorizes branch-wide operational receipt history
+- Bounded pagination, with sale-items nested into existing POS Sale models
 
-Review and approve database changes before deployment. Do not silently grant `view_finance` or `view_inventory` to resolve an issue.
+The existing restrictive RLS remains untouched, so other applications and existing read endpoints retain their previous boundaries.
 
-## Device verification needed
+**Deployment order:** Review and explicitly approve the SQL migration, deploy it to Supabase, then merge/release PR #29. PR #29 must not be released before the RPC is available, because its Sales History route depends on the new endpoint.
 
-- In the POS Inventory tab with an active manager and a selected branch, confirm Products immediately lists the existing product and opens its details.
-- Verify blank search, typed search, clear search, branch switching, retry, stock quantities, and price visibility.
-- In Sales History, select 7 days; verify Oct 17–19 receipts visible if authorized; no current-day-only truncation, no cross-branch receipts, and no business-wide financial totals.
-- No local Flutter build or runtime tests were performed.
+## Remaining verification
+
+No Flutter build or runtime tests were run. Device verification required for Products navigation, Back, catalog loading/filtering, product details, branch switching, seven-day receipts, and cross-employee/branch isolation. Backend RPC must be verified under a real authenticated manager and a non-permitted user after approval.
