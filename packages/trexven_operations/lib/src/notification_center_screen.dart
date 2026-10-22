@@ -30,6 +30,7 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
   bool busy = false;
   String? error;
   String _posFilter = 'all';
+  final Set<String> _locallyDismissed = <String>{};
   StreamSubscription<AuthState>? accountChanges;
   Timer? refreshTimer;
   bool get current => mounted && widget.api.client.auth.currentUser?.id == user && (widget.contextIsCurrent?.call() ?? true);
@@ -189,8 +190,9 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
 
   Widget _posNotifications(List<Map<String, dynamic>> notifications) {
     final scheme = Theme.of(context).colorScheme;
-    final unread = notifications.where((row) => row['read_at'] == null).length;
-    final visible = notifications.where((row) {
+    final available = notifications.where((row) => !_locallyDismissed.contains(row['alert_key']?.toString() ?? '')).toList();
+    final unread = available.where((row) => row['read_at'] == null).length;
+    final visible = available.where((row) {
       if (_posFilter == 'unread') return row['read_at'] == null;
       if (_posFilter == 'priority') return _isPriority(row);
       return true;
@@ -285,8 +287,11 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
             ),
             confirmDismiss: (_) => _dismiss(row),
             onDismissed: (_) {
-              if (mounted && current) setState(() => rows = load());
-            },
+              if (mounted && current) setState(() {
+                _locallyDismissed.add(row['alert_key']?.toString() ?? '');
+                rows = load();
+              });
+            }
             child: Card(
             margin: EdgeInsets.zero,
             child: Padding(
