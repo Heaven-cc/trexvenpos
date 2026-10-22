@@ -22,14 +22,11 @@ FutureProvider.family<List<Sale>, String>(
     if (auth.employee?.membershipId != employeeId || auth.activeBusiness == null) return const [];
     final branch = ref.watch(branchContextProvider);
     if (auth.activeBusiness!.branchesEnabled && branch == null) return const [];
-    // The POS history is operational (last seven local calendar days).
-    // Permissions and branch visibility remain enforced by Supabase RLS.
-    final now = DateTime.now();
-    final firstDay = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
+    // The backend enforces seven BUSINESS-LOCAL days and the active member/
+    // branch receipt scope. Do not substitute raw sales for an unauthorized RPC.
     return ref
         .watch(salesRepositoryProvider)
-        .getAuthorizedBusinessSales(auth.activeBusiness!.id,
-          since: firstDay,
+        .getPosRecentSales(auth.activeBusiness!.id,
           branchId: auth.activeBusiness!.branchesEnabled ? branch!.id : null);
   },
 );
