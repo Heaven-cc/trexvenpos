@@ -158,10 +158,46 @@ class SalesRepository {
         .toList();
   }
 
+  /// Receipts for the last seven business-local days, scoped by the backend
+  /// to the active employee or explicitly authorized branch-history access.
+  /// The RPC owns permissions and date boundaries; no client-side bypass.
+  Future<List<Sale>> getPosRecentSales(String businessId, {
+    String? branchId,
+    String filter = 'week',
+    String? startDate,
+    String? endDate,
+  }) async {
+    if (businessId.trim().isEmpty) return const [];
+    final sales = <Sale>[];
+    const pageSize = 100;
+    for (var offset = 0; ; offset += pageSize) {
+      final response = await _supabase.rpc(
+        'get_pos_recent_sales',
+        params: {
+          'p_business_id': businessId,
+          'p_branch_id': branchId,
+          'p_offset': offset,
+          'p_limit': pageSize,
+          'p_filter': filter,
+          'p_start_date': startDate,
+          'p_end_date': endDate,
+        },
+      );
+      if (response is! List) {
+        throw const FormatException('Invalid authorized sales history response');
+      }
+      final rows = response.map((row) =>
+          Sale.fromJson(Map<String, dynamic>.from(row as Map))).toList();
+      sales.addAll(rows);
+      if (rows.length < pageSize) return sales;
+    }
+  }
+
   /// The database enforces the business-local day and branch assignments.
   Future<List<Sale>> getAuthorizedBusinessSales(
     String businessId, {
     String? branchId,
+    DateTime? since,
   }) async {
     if (businessId.trim().isEmpty) return const [];
     var query = _supabase
@@ -169,6 +205,7 @@ class SalesRepository {
         .select('*, sale_items(*)')
         .eq('business_id', businessId);
     if (branchId != null) query = query.eq('branch_id', branchId);
+    if (since != null) query = query.gte('created_at', since.toUtc().toIso8601String());
     final sales = <Sale>[];
     const pageSize = 200;
     for (var offset = 0; ; offset += pageSize) {
