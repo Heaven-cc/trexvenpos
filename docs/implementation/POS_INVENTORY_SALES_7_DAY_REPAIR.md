@@ -1,37 +1,25 @@
-# POS Products navigation and seven-day receipt history — Repair handoff
+# POS Inventory Products and date-filtered Sales History — Handoff
 
-## Confirmed defects
+## Merged separately
+Products navigation and empty-search catalog loading were isolated into [POS PR #30](https://github.com/Heaven-cc/trexvenpos/pull/30), merged into `main`. Its dedicated route opens when the Products tile is tapped; Stocktaking remains a separate workflow.
 
-1. The **Products** tile inside Inventory used an inline handler that only cleared the search/filter. Stocktaking opened a route, but Products never navigated.
-2. The source product provider required a nonempty search term, previously making an empty catalog appear even when products existed.
-3. The POS Sales History screen offered a seven-day filter, while restrictive live `public.sales` policies invoked `private.sales_history_access()` and limited ordinary POS access to the current business-local day. This blocked older receipts despite a client-side seven-day filter.
-4. Production has four sales dated October 17–19, 2026, including three tied to the active manager membership. These records were not removed or changed.
+## Pending Sales History work (this PR #29)
+Supabase production has four sales from October 17–19, 2026. The current restrictive raw-table RLS limits ordinary POS sales reads to the same business-local day. Filtering a raw list on the client cannot reliably show Yesterday or 7 Days.
 
-## POS changes in this branch (PR #29)
+The frontend now calls the prepared `public.get_pos_recent_sales` RPC using the selected filter:
+- Today: sales from the current **business-local** date.
+- Yesterday: sales from the previous **business-local** date.
+- 7 Days: the current day plus the previous six business-local dates.
+- Custom: any selected start/end calendar dates (not limited to seven days).
+- All: all authorized available sales with server-side pagination.
 
-- The Inventory **Products** tile now pushes `ProductSearchScreen(catalogOnly: true)` using standard Navigator; the catalog is a separate page with its own title, search, stock filters, rows, and product-detail tap navigation. Back returns to the Inventory navigation tiles.
-- Stocktaking still opens its existing, authorized stocktaking workflow unchanged.
-- Empty query now loads the catalog for the selected business/branch.
-- POS Sales History calls `get_pos_recent_sales` with business and branch and retrieves paginated, server-authorized receipts, rather than relying on raw SELECT from `public.sales`.
-- The default sales filter is seven days. Custom ranges cannot exceed the seven-day accessible window. Server business-local dates define the inclusive window.
+The backend does the authoritative timezone conversion and date filtering. Client filtering is limited to receipt/product text and payment type. The provider key includes filter and custom dates so changing a chip issues a new query.
 
-## Companion backend change — not deployed
+## Backend dependency — not deployed
+[Owner PR #5](https://github.com/Heaven-cc/Trexven/pull/5) prepares a forward-only SQL migration in `supabase/migrations/20261022130000_pos_scoped_seven_day_sales_history.sql`. The endpoint accepts `p_filter`, `p_start_date`, and `p_end_date`, checks the authenticated user, active employee/business membership, business-local dates, current branch assignment, and `pos_access`. Ordinary staff see only their own receipts; `view_finance` enables authorized branch-wide receipts, never cross-business or cross-branch.
 
-Owner App repository migration:
-`supabase/migrations/20261022130000_pos_scoped_seven_day_sales_history.sql`
+The endpoint is SECURITY DEFINER and has an authenticated-only EXECUTE grant, with all membership/branch/role checks internal. Existing table RLS policies are not changed.
 
-The new `public.get_pos_recent_sales` RPC checks:
-- Authenticated user and active business membership, active employee, POS authority
-- Business and account closure restrictions
-- Business-specific timezone and last seven business-local calendar days
-- Current branch membership/assignment, with no cross-business or cross-branch receipts
-- The user's own sale receipts, unless an explicit `view_finance` grant authorizes branch-wide operational receipt history
-- Bounded pagination, with sale-items nested into existing POS Sale models
+**Deployment order:** Review and approve the companion migration, deploy it, verify under authorized and unauthorized employee sessions, then merge/release POS PR #29. Merging this PR without deploying the RPC will break Sales History because the frontend expects the new endpoint.
 
-The existing restrictive RLS remains untouched, so other applications and existing read endpoints retain their previous boundaries.
-
-**Deployment order:** Review and explicitly approve the SQL migration, deploy it to Supabase, then merge/release PR #29. PR #29 must not be released before the RPC is available, because its Sales History route depends on the new endpoint.
-
-## Remaining verification
-
-No Flutter build or runtime tests were run. Device verification required for Products navigation, Back, catalog loading/filtering, product details, branch switching, seven-day receipts, and cross-employee/branch isolation. Backend RPC must be verified under a real authenticated manager and a non-permitted user after approval.
+No Flutter builds/tests or production mutations were performed.
