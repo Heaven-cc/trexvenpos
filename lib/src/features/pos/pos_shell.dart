@@ -471,13 +471,25 @@ context: context,
               _MoreMenuItem(
                 icon: Icons.info_outline_rounded,
                 title: 'About TREXVEN POS',
-                subtitle: 'Version and system information',
+                subtitle: 'About this point-of-sale application',
                 onTap: () => showDialog<void>(context: context,
                   animationStyle: AnimationStyle(duration: PosMotion.duration(context, PosMotion.component)),
                   builder: (_) => const AboutDialog(
                     applicationName: 'TREXVEN POS',
                     applicationVersion: String.fromEnvironment('TREXVEN_BUILD_VERSION',
                       defaultValue: 'Development build — version not supplied'),
+                    children: [
+                      SizedBox(height: 12),
+                      Text(
+                        'TREXVEN POS is the employee-facing point-of-sale application in the TREXVEN business ecosystem. '
+                        'It helps authorized staff record sales, manage checkout and receipts, access permitted inventory '
+                        'and stocktaking workflows, record expenses, and handle approved credit and returns. '
+                        'The business owner manages sensitive settings and financial oversight in the separate TREXVEN Owner App.',
+                      ),
+                      SizedBox(height: 16),
+                      Center(child: Text('Powered by TREXVEN',
+                        style: TextStyle(fontWeight: FontWeight.w700))),
+                    ],
                   )),
 
               ),
