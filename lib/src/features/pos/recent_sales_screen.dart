@@ -27,27 +27,22 @@ class _RecentSalesScreenState extends ConsumerState<RecentSalesScreen> {
     return amount == null || !amount.isFinite ? 'Amount unavailable' : money(amount);
   }
   String date(DateTime time) => DateFormat('dd MMM yyyy · HH:mm').format(time.toLocal());
-  bool matchesDate(DateTime timestamp) {
-    final day = DateUtils.dateOnly(timestamp.toLocal());
-    final today = DateUtils.dateOnly(DateTime.now());
-    switch (dateFilter) {
-      case 'today': return day == today;
-      case 'yesterday': return day == today.subtract(const Duration(days: 1));
-      case 'week': return true; // The RPC already enforces seven business-local days.
-      case 'custom':
-        return customRange != null &&
-          !day.isBefore(DateUtils.dateOnly(customRange!.start)) &&
-          !day.isAfter(DateUtils.dateOnly(customRange!.end));
-      default: return true;
-    }
-  }
+  ({String employeeId, String filter, String? startDate, String? endDate})
+      historyRequest(String employeeId) => (
+        employeeId: employeeId,
+        filter: dateFilter,
+        startDate: dateFilter == 'custom' && customRange != null
+            ? DateFormat('yyyy-MM-dd').format(customRange!.start) : null,
+        endDate: dateFilter == 'custom' && customRange != null
+            ? DateFormat('yyyy-MM-dd').format(customRange!.end) : null,
+      );
 
   Future<void> chooseRange() async {
     final now = DateTime.now();
     final picked = await showDateRangePicker(
       context: context,
-      firstDate: DateUtils.dateOnly(now).subtract(const Duration(days: 6)),
-      lastDate: DateUtils.dateOnly(now),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(now.year + 1),
       initialDateRange: customRange,
     );
     if (!mounted || picked == null) return;
@@ -63,8 +58,9 @@ class _RecentSalesScreenState extends ConsumerState<RecentSalesScreen> {
   );
 
   Future<void> refresh(String employee) async {
-    ref.invalidate(recentSalesProvider(employee));
-    await ref.read(recentSalesProvider(employee).future);
+    final request = historyRequest(employee);
+    ref.invalidate(recentSalesProvider(request));
+    await ref.read(recentSalesProvider(request).future);
   }
   @override
   Widget build(BuildContext context) {
@@ -74,15 +70,15 @@ class _RecentSalesScreenState extends ConsumerState<RecentSalesScreen> {
         onPressed: chooseRange)]),
       body: employee == null || employee.isEmpty
         ? const PosStateView(title: 'Sign in to view transactions', icon: Icons.person_outline)
-        : ref.watch(recentSalesProvider(employee)).when(
+        : ref.watch(recentSalesProvider(historyRequest(employee))).when(
           loading: () => const Center(child: TrexvenLoading(message: 'Loading transactions…')),
-          error: (_, _) => PosStateView(title: 'Sales unavailable', message: 'Unable to load authorized 7-day receipts. Check your connection or contact the owner if the sales-history update has not been activated.',
+          error: (_, _) => PosStateView(title: 'Sales unavailable', message: 'Unable to load authorized sales receipts. Check your connection or contact the owner if the sales-history update has not been activated.',
             icon: Icons.cloud_off_outlined,
             action: FilledButton(onPressed: () => refresh(employee), child: const Text('Retry'))),
           data: (sales) {
             final methods = sales.map((s) => s.paymentMethod).toSet().toList()..sort();
             final selected = method == 'all' || methods.contains(method) ? method : 'all';
-            final visible = sales.where((s) => matchesDate(s.timestamp) &&
+            final visible = sales.where((s) =>
               (selected == 'all' || s.paymentMethod == selected) &&
               ('${s.id} ${CustomerPresentation.label(s.paymentMethod)} ${s.items.map((i) => i.productName).join(' ')}')
                 .toLowerCase().contains(query)).toList();
@@ -100,6 +96,8 @@ class _RecentSalesScreenState extends ConsumerState<RecentSalesScreen> {
                     const SizedBox(height: 12),
                     SingleChildScrollView(scrollDirection: Axis.horizontal,
                       child: Row(children: [
+                        dateChip('all', 'All'),
+                        const SizedBox(width: 8),
                         dateChip('today', 'Today'),
                         const SizedBox(width: 8),
                         dateChip('yesterday', 'Yesterday'),
