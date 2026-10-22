@@ -16,7 +16,7 @@ class RecentSalesScreen extends ConsumerStatefulWidget {
 
 class _RecentSalesScreenState extends ConsumerState<RecentSalesScreen> {
   final search = TextEditingController();
-  String query = '', method = 'all', dateFilter = 'all';
+  String query = '', method = 'all', dateFilter = 'week';
   DateTimeRange? customRange;
   @override
   void dispose() { search.dispose(); super.dispose(); }
@@ -33,7 +33,7 @@ class _RecentSalesScreenState extends ConsumerState<RecentSalesScreen> {
     switch (dateFilter) {
       case 'today': return day == today;
       case 'yesterday': return day == today.subtract(const Duration(days: 1));
-      case 'week': return !day.isBefore(today.subtract(const Duration(days: 6))) && !day.isAfter(today);
+      case 'week': return true; // The RPC already enforces seven business-local days.
       case 'custom':
         return customRange != null &&
           !day.isBefore(DateUtils.dateOnly(customRange!.start)) &&
@@ -46,8 +46,8 @@ class _RecentSalesScreenState extends ConsumerState<RecentSalesScreen> {
     final now = DateTime.now();
     final picked = await showDateRangePicker(
       context: context,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(now.year + 1),
+      firstDate: DateUtils.dateOnly(now).subtract(const Duration(days: 6)),
+      lastDate: DateUtils.dateOnly(now),
       initialDateRange: customRange,
     );
     if (!mounted || picked == null) return;
@@ -76,7 +76,7 @@ class _RecentSalesScreenState extends ConsumerState<RecentSalesScreen> {
         ? const PosStateView(title: 'Sign in to view transactions', icon: Icons.person_outline)
         : ref.watch(recentSalesProvider(employee)).when(
           loading: () => const Center(child: TrexvenLoading(message: 'Loading transactions…')),
-          error: (_, _) => PosStateView(title: 'Sales unavailable', message: 'Check your connection and try again.',
+          error: (_, _) => PosStateView(title: 'Sales unavailable', message: 'Unable to load authorized 7-day receipts. Check your connection or contact the owner if the sales-history update has not been activated.',
             icon: Icons.cloud_off_outlined,
             action: FilledButton(onPressed: () => refresh(employee), child: const Text('Retry'))),
           data: (sales) {
@@ -100,8 +100,6 @@ class _RecentSalesScreenState extends ConsumerState<RecentSalesScreen> {
                     const SizedBox(height: 12),
                     SingleChildScrollView(scrollDirection: Axis.horizontal,
                       child: Row(children: [
-                        dateChip('all', 'All'),
-                        const SizedBox(width: 8),
                         dateChip('today', 'Today'),
                         const SizedBox(width: 8),
                         dateChip('yesterday', 'Yesterday'),
