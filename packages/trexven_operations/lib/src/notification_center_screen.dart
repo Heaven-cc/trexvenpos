@@ -110,6 +110,76 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
     }
   }
 
+  /// Open the entire message first. Navigation to a related workflow is optional.
+  /// This keeps notifications readable when the route is restricted or absent.
+  Future<void> _readMessage(Map<String, dynamic> row) async {
+    if (!current || busy) return;
+    final title = (row['title']?.toString() ?? 'Notification').trim();
+    final message = (row['message']?.toString() ?? '').trim();
+    final route = row['route']?.toString() ?? '';
+    final referenceId = row['reference_id']?.toString();
+    if (row['read_at'] == null) unawaited(mark(row));
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(20, 8, 20,
+            20 + MediaQuery.viewInsetsOf(sheetContext).bottom),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(title.isEmpty ? 'Notification' : title,
+                  style: Theme.of(sheetContext).textTheme.titleLarge),
+                const SizedBox(height: 12),
+                SelectableText(message.isEmpty ? 'No further message details were supplied.' : message,
+                  style: Theme.of(sheetContext).textTheme.bodyLarge),
+                const SizedBox(height: 16),
+                Wrap(spacing: 8, runSpacing: 8, children: [
+                  OutlinedButton(
+                    onPressed: () => Navigator.pop(sheetContext),
+                    child: const Text('Close'),
+                  ),
+                  if (route.isNotEmpty)
+                    FilledButton.icon(
+                      icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                      label: const Text('Open related'),
+                      onPressed: () {
+                        Navigator.pop(sheetContext);
+                        if (current) widget.open(context, route, referenceId);
+                      },
+                    ),
+                ]),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<bool> _dismiss(Map<String, dynamic> row) async {
+    if (busy || !current || !widget.posScoped) return false;
+    setState(() { busy = true; error = null; });
+    try {
+      await widget.api.call('dismiss_pos_notification', {
+        'p_business_id': widget.api.businessId,
+        'p_alert_key': row['alert_key'],
+        'p_branch_id': widget.branchId,
+      }).timeout(const Duration(seconds: 20));
+      return true;
+    } catch (_) {
+      if (mounted) setState(() => error =
+        'Could not delete the notification. Your message is unchanged; retry while connected.');
+      return false;
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
   bool _isPriority(Map<String, dynamic> row) {
     final priority = (row['priority'] ?? row['severity'])?.toString().toLowerCase();
     final key = row['alert_key']?.toString() ?? '';
@@ -196,7 +266,28 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
         ),
         for (final row in visible) Padding(
           padding: const EdgeInsets.only(top: 9),
-          child: Card(
+          child: Dismissible(
+            key: ValueKey('pos-notification-${row['alert_key']}'),
+            direction: DismissDirection.endToStart,
+            dismissThresholds: const {DismissDirection.endToStart: 0.5},
+            background: Container(
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                color: scheme.errorContainer,
+                borderRadius: BorderRadius.circular(TrexvenRadii.card),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.delete_outline_rounded, color: scheme.onErrorContainer),
+                const SizedBox(width: 6),
+                Text('Delete', style: TextStyle(color: scheme.onErrorContainer)),
+              ]),
+            ),
+            confirmDismiss: (_) => _dismiss(row),
+            onDismissed: (_) {
+              if (mounted && current) setState(() => rows = load());
+            },
+            child: Card(
             margin: EdgeInsets.zero,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
@@ -217,12 +308,7 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                   padding: const EdgeInsets.only(top: 5),
                   child: Text(row['message']?.toString() ?? ''),
                 ),
-                onTap: busy ? null : () {
-                  if (current) {
-                    widget.open(context, row['route']?.toString() ?? '',
-                      row['reference_id']?.toString());
-                  }
-                },
+                onTap: busy ? null : () => unawaited(_readMessage(row)),
                 trailing: IconButton(
                   tooltip: row['read_at'] == null ? 'Mark read' : 'Mark unread',
                   onPressed: busy ? null : () => mark(row),
@@ -232,6 +318,7 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                 ),
               ),
             ),
+          ),
           ),
         ),
         if (notifications.length == 1000) const Text('Showing the latest 1,000 authorized updates.'),
