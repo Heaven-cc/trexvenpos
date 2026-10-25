@@ -9,6 +9,9 @@ import '../../models/product.dart';
 import '../auth/auth_provider.dart';
 import 'product_provider.dart';
 import 'product_repository.dart';
+import 'angel_scan_client.dart';
+import 'angel_scan_review_screen.dart';
+import '../auth/branch_context.dart';
 import 'quick_add_screen.dart';
 import '../auth/permission_service.dart';
 
@@ -151,6 +154,50 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
     } catch (_) {
       _showError('Unable to restart camera. Reopen the scanner or use search.');
     }
+  }
+
+  Future<void> _visualScan() async {
+    if (_isProcessing) return;
+    final auth = ref.read(authStateProvider);
+    final business = auth.activeBusiness;
+    final employee = auth.employee;
+    if (business == null || employee == null || auth.offlineCashOnly ||
+        !ref.read(permissionServiceProvider).canCompleteSales) {
+      _showError('Connect and verify selling access before visual recognition.'); return;
+    }
+    final branch = business.branchesEnabled ? ref.read(branchContextProvider)?.id : null;
+    if (business.branchesEnabled && branch == null) { _showError('Select an authorized branch.'); return; }
+    setState(() => _isProcessing = true);
+    try {
+      await _scannerController.stop();
+      if (!mounted) return;
+      await Navigator.push<void>(context, MaterialPageRoute(builder: (_) => AngelScanReviewScreen(
+        api: AngelScanClient(ref.read(supabaseProvider), businessId: business.id, branchId: branch, inventoryMode: false),
+        contextIsCurrent: () => mounted && !ref.read(authStateProvider).offlineCashOnly &&
+          ref.read(authStateProvider).activeBusiness?.id == business.id &&
+          ref.read(authStateProvider).employee?.membershipId == employee.membershipId &&
+          (!business.branchesEnabled || ref.read(branchContextProvider)?.id == branch),
+        onSale: (match) async {
+          final api = ref.read(supabaseProvider);
+          final row = await api.from('products').select(ProductRepository.catalogProductColumns)
+            .eq('id', match['product_id']).eq('business_id', business.id).single();
+          if (!mounted || ref.read(authStateProvider).activeBusiness?.id != business.id ||
+              ref.read(authStateProvider).employee?.membershipId != employee.membershipId ||
+              (business.branchesEnabled && ref.read(branchContextProvider)?.id != branch)) return false;
+          final products = await ref.read(productRepositoryProvider).branchStock([Product.fromJson(row)], business.id, branch);
+          final product = products.single;
+          if (!product.isActive || product.sellingPrice == null) return false;
+          if (widget.onProductMatched == null) {
+            if (mounted) { Navigator.pop(context); Navigator.pop(context, product); }
+            return true;
+          }
+          final added = await widget.onProductMatched!(product, const Uuid().v4());
+          if (mounted && added) setState(() { _lastAddedBarcode = product.barcode; _scanFeedback = 'Added to checkout'; });
+          return added;
+        },
+      )));
+    } catch (_) { if (mounted) _showError('Visual scan unavailable. Use barcode or inventory search.'); }
+    finally { if (mounted) { setState(() => _isProcessing = false); await _restartCamera(); } }
   }
 
   void _allowRepeatScan() {
@@ -486,7 +533,7 @@ context: context,
                         fontWeight: FontWeight.w600)),
                     ]),
                     const SizedBox(height: 10),
-                    const Text('Align a product barcode inside the frame',
+                    const Text('Scan a barcode or recognize a product photo',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.white, fontSize: 14,
                         fontWeight: FontWeight.w600)),
@@ -542,6 +589,10 @@ context: context,
                     ],
                   ]),
                 ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(onPressed: _isProcessing ? null : _visualScan,
+                  icon: const Icon(Icons.camera_alt_outlined, color: Colors.white),
+                  label: const Text('Recognize product / gallery', style: TextStyle(color: Colors.white))),
                 const SizedBox(height: 18),
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   _GlassButton(
@@ -725,3 +776,4 @@ class _ScannerPainter extends CustomPainter {
     return oldDelegate.progress != progress;
   }
 }
+

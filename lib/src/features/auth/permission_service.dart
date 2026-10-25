@@ -117,6 +117,9 @@ class PermissionService {
     return hasPermission(quickAddProductPermission);
   }
 
+  bool get canAngelInventory => !offlineCashOnly && isActive && isManager &&
+      hasPermission('angel_scan_inventory') && hasPermission('view_inventory');
+
   bool get canCompleteSales =>
       hasPermission('pos_access') && hasPermission('complete_sales');
 
@@ -132,3 +135,4 @@ class PermissionService {
     return List.unmodifiable(_employee?.permissions ?? const []);
   }
 }
+

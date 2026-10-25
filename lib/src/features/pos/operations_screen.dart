@@ -10,6 +10,9 @@ import 'credit_returns_screen.dart';
 import 'branch_transfers_screen.dart';
 import 'expense_support_screen.dart';
 import '../inventory/inventory_operations_screen.dart';
+import '../inventory/angel_scan_review_screen.dart';
+import '../inventory/angel_scan_client.dart';
+import '../auth/branch_context.dart';
 
 class PosOperationsScreen extends ConsumerWidget {
   const PosOperationsScreen({super.key});
@@ -26,6 +29,22 @@ class PosOperationsScreen extends ConsumerWidget {
     }
 
     final workflows = <_Workflow>[
+      if (access.canAngelInventory)
+        _Workflow('Angel inventory', 'Scan & request owner approval', Icons.document_scanner_outlined, () {
+          final business = auth.activeBusiness!;
+          final employee = auth.employee!;
+          final branch = business.branchesEnabled ? ref.read(branchContextProvider)?.id : null;
+          if (business.branchesEnabled && branch == null) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Select an authorized branch.'))); return;
+          }
+          Navigator.push(context, MaterialPageRoute(builder: (_) => AngelScanReviewScreen(
+            api: AngelScanClient(ref.read(supabaseProvider), businessId: business.id, branchId: branch, inventoryMode: true),
+            contextIsCurrent: () => ref.read(permissionServiceProvider).canAngelInventory &&
+              ref.read(authStateProvider).activeBusiness?.id == business.id &&
+              ref.read(authStateProvider).employee?.membershipId == employee.membershipId &&
+              (!business.branchesEnabled || ref.read(branchContextProvider)?.id == branch),
+          )));
+        }),
       if (access.canAccessExpenses)
         _Workflow('Expenses', 'Cash spending & history', Icons.payments_outlined,
           () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PosExpenseSupportScreen()))),
@@ -182,3 +201,4 @@ class _WorkflowCard extends StatelessWidget {
     );
   }
 }
+
