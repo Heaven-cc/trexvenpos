@@ -11,6 +11,7 @@ import 'branch_transfers_screen.dart';
 import 'expense_support_screen.dart';
 import '../inventory/inventory_operations_screen.dart';
 import '../inventory/angel_scan_review_screen.dart';
+import '../inventory/angel_auto_camera_screen.dart';
 import '../inventory/angel_scan_client.dart';
 import '../auth/branch_context.dart';
 
@@ -37,12 +38,21 @@ class PosOperationsScreen extends ConsumerWidget {
           if (business.branchesEnabled && branch == null) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Select an authorized branch.'))); return;
           }
-          Navigator.push(context, MaterialPageRoute(builder: (_) => AngelScanReviewScreen(
-            api: AngelScanClient(ref.read(supabaseProvider), businessId: business.id, branchId: branch, inventoryMode: true),
-            contextIsCurrent: () => ref.read(permissionServiceProvider).canAngelInventory &&
+          final api = AngelScanClient(ref.read(supabaseProvider),
+            businessId: business.id, branchId: branch, inventoryMode: true);
+          bool stillAuthorized() => ref.read(permissionServiceProvider).canAngelInventory &&
               ref.read(authStateProvider).activeBusiness?.id == business.id &&
               ref.read(authStateProvider).employee?.membershipId == employee.membershipId &&
-              (!business.branchesEnabled || ref.read(branchContextProvider)?.id == branch),
+              (!business.branchesEnabled || ref.read(branchContextProvider)?.id == branch);
+          Navigator.push(context, MaterialPageRoute(builder: (_) => AngelAutoCameraScreen(
+            api: api,
+            contextIsCurrent: stillAuthorized,
+            onRecognized: (items,sourceHash) async {
+              if (!context.mounted || !stillAuthorized()) return;
+              await Navigator.push<void>(context, MaterialPageRoute(builder: (_) =>
+                AngelScanReviewScreen(api:api, initialItems:items,
+                  automaticSourceHash:sourceHash, contextIsCurrent:stillAuthorized)));
+            },
           )));
         }),
       if (access.canAccessExpenses)
