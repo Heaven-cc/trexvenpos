@@ -19,7 +19,8 @@ typedef ScannedProductHandler = Future<bool> Function(
 /// Opens only a clear camera surface; light and camera flip are the sole controls.
 /// Angel analyzes throttled stable snapshots and opens an existing review screen.
 class ScannerScreen extends ConsumerWidget {
-  const ScannerScreen({super.key, this.onProductMatched});
+  const ScannerScreen({super.key, this.onProductMatched, this.barcodeResult = false});
+  final bool barcodeResult;
   final ScannedProductHandler? onProductMatched;
 
   @override
@@ -75,7 +76,7 @@ class ScannerScreen extends ConsumerWidget {
               if (onProductMatched == null) {
                 if (context.mounted) {
                   Navigator.pop(context);
-                  Navigator.pop(context, product);
+                  Navigator.pop(context, barcodeResult ? product.barcode : product);
                 }
                 return true;
               }
