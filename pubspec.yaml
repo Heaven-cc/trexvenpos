@@ -28,6 +28,9 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  image_picker: 1.2.4
+  pdfx: 2.11.0
+  file_selector: 1.1.0
   trexven_design_system:
     path: packages/trexven_design_system
   http: ^1.2.2
@@ -128,4 +131,5 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
 
