@@ -260,8 +260,7 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
     message: 'Products added to the selected business will appear here. Check your branch or refresh if you expect products.',
     icon: Icons.inventory_2_outlined,
   );
-  Widget _buildLoadingState() => const Center(key: ValueKey('loading'),
-    child: TrexvenLoading(message: 'Loading products…'));
+  Widget _buildLoadingState() => const TrexvenSkeleton(key: ValueKey('loading'), kind: TrexvenSkeletonKind.inventory);
   Widget _buildNoResultsState() => PosStateView(key: const ValueKey('no-results'),
     title: 'No matching products', message: 'No products match "$_query".',
     icon: Icons.inventory_2_outlined, action: TextButton(onPressed: _clearSearch, child: const Text('Clear search')));
