@@ -16,6 +16,7 @@ class AngelScanReviewScreen extends StatefulWidget {
   final bool owner;
   final List<Map<String, dynamic>> initialItems;
   final String? existingRequestId;
+  final String? automaticSourceHash;
   final Future<String?> Function()? scanBarcode;
   final Future<bool> Function(Map<String, dynamic> product)? onSale;
   final bool Function()? contextIsCurrent;
@@ -27,6 +28,7 @@ class AngelScanReviewScreen extends StatefulWidget {
     this.contextIsCurrent,
     this.initialItems = const [],
     this.existingRequestId,
+    this.automaticSourceHash,
     this.scanBarcode,
   });
   @override
@@ -48,6 +50,7 @@ class _AngelScanReviewScreenState extends State<AngelScanReviewScreen> {
   void initState() {
     super.initState();
     _user = widget.api.client.auth.currentUser?.id;
+    if (widget.automaticSourceHash?.isNotEmpty == true) _sources.add(widget.automaticSourceHash!);
     _items.addAll(
       widget.initialItems.map(
         (i) => {
