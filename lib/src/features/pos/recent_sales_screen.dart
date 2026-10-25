@@ -71,7 +71,7 @@ class _RecentSalesScreenState extends ConsumerState<RecentSalesScreen> {
       body: employee == null || employee.isEmpty
         ? const PosStateView(title: 'Sign in to view transactions', icon: Icons.person_outline)
         : ref.watch(recentSalesProvider(historyRequest(employee))).when(
-          loading: () => const Center(child: TrexvenLoading(message: 'Loading transactions…')),
+          loading: () => const TrexvenSkeleton(kind: TrexvenSkeletonKind.salesHistory),
           error: (_, _) => PosStateView(title: 'Sales unavailable', message: 'Unable to load authorized sales receipts. Check your connection or contact the owner if the sales-history update has not been activated.',
             icon: Icons.cloud_off_outlined,
             action: FilledButton(onPressed: () => refresh(employee), child: const Text('Retry'))),
