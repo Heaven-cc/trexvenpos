@@ -11,6 +11,7 @@ import 'product_provider.dart';
 import 'product_repository.dart';
 import 'angel_scan_client.dart';
 import 'angel_scan_review_screen.dart';
+import 'angel_auto_camera_screen.dart';
 import '../auth/branch_context.dart';
 import 'quick_add_screen.dart';
 import '../auth/permission_service.dart';
@@ -466,148 +467,57 @@ context: context,
 
   @override
   Widget build(BuildContext context) {
-    final success = _scanFeedback == 'Added to checkout';
-    final feedback = _scanFeedback;
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A1222),
-      body: Stack(fit: StackFit.expand, children: [
-        MobileScanner(controller: _scannerController, onDetect: _onDetect),
-        _ScannerOverlay(animation: _scanAnimation),
-        SafeArea(child: LayoutBuilder(builder: (context, constraints) =>
-          SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight - 36),
-              child: Column(children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xDD0A1222),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Row(children: [
-                    _GlassButton(icon: Icons.arrow_back_rounded,
-                      onPressed: () => Navigator.pop(context)),
-                    const SizedBox(width: 10),
-                    const Expanded(child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Angel Scan', style: TextStyle(color: Colors.white,
-                          fontSize: 19, fontWeight: FontWeight.w700)),
-                        Text('Smart product scanner', style: TextStyle(
-                          color: Color(0xFFA0B5D8), fontSize: 12)),
-                      ],
-                    )),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1B2E4C),
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Icon(Icons.circle, size: 8,
-                          color: _isProcessing ? Colors.amberAccent : const Color(0xFF68D5A2)),
-                        const SizedBox(width: 6),
-                        Text(_isProcessing ? 'Checking' : 'Ready',
-                          style: const TextStyle(color: Colors.white, fontSize: 12)),
-                      ]),
-                    ),
-                  ]),
-                ),
-                SizedBox(height: (constraints.maxHeight * .37).clamp(115.0, 310.0)),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xE60A1222),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0xFF2A456A)),
-                  ),
-                  child: Column(children: [
-                    const Row(children: [
-                      Icon(Icons.qr_code_scanner_rounded, size: 18,
-                        color: Color(0xFF91B5FF)),
-                      SizedBox(width: 8),
-                      Text('LIVE CAMERA', style: TextStyle(
-                        color: Color(0xFFBBD0F4), fontSize: 11,
-                        fontWeight: FontWeight.w600)),
-                    ]),
-                    const SizedBox(height: 10),
-                    const Text('Scan a barcode or recognize a product photo',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white, fontSize: 14,
-                        fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 12),
-                    if (_isProcessing)
-                      const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        SizedBox(width: 17, height: 17,
-                          child: CircularProgressIndicator(strokeWidth: 2,
-                            color: Color(0xFF91B5FF))),
-                        SizedBox(width: 10),
-                        Text('Checking inventory…',
-                          style: TextStyle(color: Colors.white70)),
-                      ])
-                    else Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: success ? const Color(0xFF15382F)
-                          : const Color(0xFF172944),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(children: [
-                        Icon(feedback == null ? Icons.qr_code_scanner_rounded
-                          : success ? Icons.check_circle_outline
-                          : Icons.info_outline,
-                          color: success ? const Color(0xFF70E0A9)
-                            : const Color(0xFF8BB7FF)),
-                        const SizedBox(width: 10),
-                        Expanded(child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(feedback == null ? 'Ready to scan'
-                              : success ? 'Product added to cart' : 'Scan update',
-                              style: const TextStyle(color: Colors.white,
-                                fontWeight: FontWeight.w600)),
-                            const SizedBox(height: 3),
-                            Text(feedback ?? 'Point your camera at a product barcode.',
-                              style: const TextStyle(color: Color(0xFFC3D4EF),
-                                fontSize: 12)),
-                          ],
-                        )),
-                      ]),
-                    ),
-                    if (_lastAddedBarcode != null) ...[
-                      const SizedBox(height: 8),
-                      TextButton.icon(
-                        onPressed: _allowRepeatScan,
-                        icon: const Icon(Icons.add_circle_outline,
-                          color: Colors.white),
-                        label: const Text('Scan same item again',
-                          style: TextStyle(color: Colors.white)),
-                      ),
-                    ],
-                  ]),
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(onPressed: _isProcessing ? null : _visualScan,
-                  icon: const Icon(Icons.camera_alt_outlined, color: Colors.white),
-                  label: const Text('Recognize product / gallery', style: TextStyle(color: Colors.white))),
-                const SizedBox(height: 18),
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  _GlassButton(
-                    icon: _torchEnabled ? Icons.flash_on_rounded
-                      : Icons.flash_off_rounded,
-                    onPressed: _toggleTorch),
-                  const SizedBox(width: 18),
-                  _GlassButton(icon: Icons.flip_camera_ios_rounded,
-                    onPressed: _switchCamera),
-                ]),
-              ]),
-            ),
+    final auth = ref.watch(authStateProvider);
+    final business = auth.activeBusiness;
+    final employee = auth.employee;
+    if (business == null || employee == null || auth.offlineCashOnly ||
+        !ref.watch(permissionServiceProvider).canCompleteSales) {
+      return const Scaffold(body: Center(child: Text('Connect and verify sales access.')));
+    }
+    final branch = business.branchesEnabled ? ref.watch(branchContextProvider)?.id : null;
+    if (business.branchesEnabled && branch == null) {
+      return const Scaffold(body: Center(child: Text('Select an authorized branch.')));
+    }
+    final api = AngelScanClient(ref.watch(supabaseProvider),
+      businessId:business.id,branchId:branch,inventoryMode:false);
+    bool current() => mounted &&
+        ref.read(authStateProvider).activeBusiness?.id == business.id &&
+        ref.read(authStateProvider).employee?.membershipId == employee.membershipId &&
+        !ref.read(authStateProvider).offlineCashOnly &&
+        ref.read(permissionServiceProvider).canCompleteSales &&
+        (!business.branchesEnabled || ref.read(branchContextProvider)?.id == branch);
+    return AngelAutoCameraScreen(
+      api:api,
+      contextIsCurrent:current,
+      onRecognized:(items,sourceHash) async {
+        if (!mounted || !current()) return;
+        await Navigator.push<void>(context,MaterialPageRoute(builder: (_) =>
+          AngelScanReviewScreen(
+            api:api,
+            initialItems:items,
+            automaticSourceHash:sourceHash,
+            contextIsCurrent:current,
+            onSale:(match) async {
+              if (!current()) return false;
+              final db = ref.read(supabaseProvider);
+              final row = await db.from('products')
+                  .select(ProductRepository.catalogProductColumns)
+                  .eq('id',match['product_id']).eq('business_id',business.id).single();
+              if (!current()) return false;
+              final products=await ref.read(productRepositoryProvider).branchStock(
+                [Product.fromJson(row)],business.id,branch);
+              if(products.isEmpty) return false;
+              final product=products.single;
+              if(!product.isActive || product.sellingPrice==null) return false;
+              if(widget.onProductMatched==null) {
+                if(mounted) { Navigator.pop(context); Navigator.pop(context,product); }
+                return true;
+              }
+              return widget.onProductMatched!(product,const Uuid().v4());
+            },
           ),
-        )),
-      ]),
+        ));
+      },
     );
   }
 }
