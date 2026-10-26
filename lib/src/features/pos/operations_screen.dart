@@ -10,7 +10,7 @@ import 'credit_returns_screen.dart';
 import 'branch_transfers_screen.dart';
 import 'expense_support_screen.dart';
 import '../inventory/inventory_operations_screen.dart';
-import '../inventory/angel_scan_review_screen.dart';
+import '../inventory/product_review_screen.dart';
 import '../inventory/angel_auto_camera_screen.dart';
 import '../inventory/angel_scan_client.dart';
 import '../auth/branch_context.dart';
@@ -47,11 +47,10 @@ class PosOperationsScreen extends ConsumerWidget {
           Navigator.push(context, MaterialPageRoute(builder: (_) => AngelAutoCameraScreen(
             api: api,
             contextIsCurrent: stillAuthorized,
-            onRecognized: (items,sourceHash) async {
+            onRecognized: (result, singleProduct) async {
               if (!context.mounted || !stillAuthorized()) return;
-              await Navigator.push<void>(context, MaterialPageRoute(builder: (_) =>
-                AngelScanReviewScreen(api:api, initialItems:items,
-                  automaticSourceHash:sourceHash, contextIsCurrent:stillAuthorized)));
+              await showAngelProductReview(context, api: api, result: result,
+                singleProduct: singleProduct, contextIsCurrent: stillAuthorized);
             },
           )));
         }),

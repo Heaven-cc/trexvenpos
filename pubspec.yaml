@@ -28,6 +28,9 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  url_launcher: 6.3.2
+  csv: 6.0.0
+  excel: 4.0.6
   camera: ^0.11.2
   image_picker: 1.2.4
   pdfx: 2.11.0

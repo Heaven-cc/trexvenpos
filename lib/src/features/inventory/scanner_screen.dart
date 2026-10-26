@@ -9,15 +9,14 @@ import '../auth/permission_service.dart';
 import 'product_provider.dart';
 import 'product_repository.dart';
 import 'angel_scan_client.dart';
-import 'angel_scan_review_screen.dart';
+import 'product_review_screen.dart';
 import 'angel_auto_camera_screen.dart';
 
 /// Existing checkout callback contract. Stock remains unchanged until checkout.
 typedef ScannedProductHandler = Future<bool> Function(
     Product product, String scanEventId);
 
-/// Opens only a clear camera surface; light and camera flip are the sole controls.
-/// Angel analyzes throttled stable snapshots and opens an existing review screen.
+/// Selling always selects a current inventory record before the checkout callback.
 class ScannerScreen extends ConsumerWidget {
   const ScannerScreen({super.key, this.onProductMatched, this.barcodeResult = false});
   final bool barcodeResult;
@@ -52,13 +51,11 @@ class ScannerScreen extends ConsumerWidget {
     return AngelAutoCameraScreen(
       api: api,
       contextIsCurrent: current,
-      onRecognized: (items, sourceHash) async {
+      onRecognized: (result, singleProduct) async {
         if (!current()) return;
-        await Navigator.push<void>(context, MaterialPageRoute(builder: (_) =>
-          AngelScanReviewScreen(
-            api: api,
-            initialItems: items,
-            automaticSourceHash: sourceHash,
+        dynamic returnedProduct;
+        await showAngelProductReview(context,
+            api: api, result: result, singleProduct: true,
             contextIsCurrent: current,
             onSale: (match) async {
               if (!current()) return false;
@@ -70,20 +67,24 @@ class ScannerScreen extends ConsumerWidget {
               if (!current()) return false;
               final branchProducts = await ref.read(productRepositoryProvider)
                   .branchStock([Product.fromJson(row)], business.id, branch);
-              if (branchProducts.isEmpty) return false;
+              if (!current() || branchProducts.isEmpty) return false;
               final product = branchProducts.single;
               if (!product.isActive || product.sellingPrice == null) return false;
+              if (barcodeResult && (product.barcode?.trim().isEmpty ?? true)) {
+                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('This product has no barcode. Use inventory search.')));
+                return false;
+              }
               if (onProductMatched == null) {
                 if (context.mounted) {
-                  Navigator.pop(context);
-                  Navigator.pop(context, barcodeResult ? product.barcode : product);
+                  returnedProduct = barcodeResult ? product.barcode : product;
                 }
                 return true;
               }
               return onProductMatched!(product, const Uuid().v4());
             },
-          ),
-        ));
+        );
+        if (context.mounted && returnedProduct != null && current()) Navigator.pop(context, returnedProduct);
       },
     );
   }
