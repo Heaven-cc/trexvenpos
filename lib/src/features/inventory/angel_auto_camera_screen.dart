@@ -1,65 +1,90 @@
 import 'dart:async';
-import 'dart:typed_data';
-
+import 'dart:ui';
 import 'package:camera/camera.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart' as picker;
 import 'angel_scan_client.dart';
+import 'angel_document_reader.dart';
 
-/// Camera-only Angel experience. AI detection is throttled while a review is open.
-/// No shutter, barcode frame, mode picker, AI status pill or source-selection controls.
+/// Only one recognition/review can own the camera at a time.
 class AngelAutoCameraScreen extends StatefulWidget {
   final AngelScanClient api;
-  final Future<void> Function(List<Map<String, dynamic>> items, String documentHash) onRecognized;
+  final Future<void> Function(Map<String, dynamic> result, bool singleProduct)
+  onRecognized;
   final bool Function()? contextIsCurrent;
-
   const AngelAutoCameraScreen({
     super.key,
     required this.api,
     required this.onRecognized,
     this.contextIsCurrent,
   });
-
   @override
   State<AngelAutoCameraScreen> createState() => _AngelAutoCameraScreenState();
 }
 
-class _AngelAutoCameraScreenState extends State<AngelAutoCameraScreen> with WidgetsBindingObserver {
+class _AngelAutoCameraScreenState extends State<AngelAutoCameraScreen>
+    with WidgetsBindingObserver {
   CameraController? _camera;
   List<CameraDescription> _cameras = const [];
-  int _cameraIndex = 0;
-  bool _busy = false;
-  bool _torch = false;
-  bool _closed = false;
+  int _cameraIndex = 0, _generation = 0;
+  bool _busy = false, _opening = false, _torch = false, _closed = false;
+  bool _list = false, _suspended = false, _resumePending = false;
   DateTime _nextScan = DateTime.fromMillisecondsSinceEpoch(0);
   Timer? _timer;
   String? _error;
-
+  bool get _current =>
+      mounted && !_closed && widget.contextIsCurrent?.call() != false;
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     unawaited(_initialize());
+    _timer = Timer.periodic(
+      const Duration(seconds: 2),
+      (_) => unawaited(_recognize()),
+    );
   }
 
   Future<void> _initialize() async {
+    if (_opening || _closed || _suspended) return;
+    _opening = true;
     try {
-      _cameras = await availableCameras();
-      if (_cameras.isEmpty) throw StateError('No camera available');
-      final rear = _cameras.indexWhere((c) => c.lensDirection == CameraLensDirection.back);
-      _cameraIndex = rear < 0 ? 0 : rear;
+      if (_cameras.isEmpty) {
+        _cameras = await availableCameras();
+        if (_cameras.isEmpty) throw StateError('No camera available');
+        final rear = _cameras.indexWhere(
+          (c) => c.lensDirection == CameraLensDirection.back,
+        );
+        _cameraIndex = rear < 0 ? 0 : rear;
+      }
       await _openCamera();
-      _timer ??= Timer.periodic(const Duration(seconds: 2), (_) => unawaited(_recognize()));
     } catch (_) {
-      if (mounted) setState(() => _error = 'Camera unavailable. Check camera permission.');
+      if (_current) {
+        setState(
+          () => _error =
+              'Camera unavailable. Check camera permission. Gallery and File are available.',
+        );
+      }
+    } finally {
+      _opening = false;
+      _resumeIfNeeded();
+    }
+  }
+
+  void _resumeIfNeeded() {
+    if (_resumePending) {
+      _resumePending = false;
+      if (_current && !_suspended && _camera == null) { unawaited(_initialize()); }
     }
   }
 
   Future<void> _openCamera() async {
-    _busy = true;
+    final generation = ++_generation;
     final prior = _camera;
     _camera = null;
     await prior?.dispose();
-    if (_closed) return;
+    if (!_current || _suspended) return;
     final next = CameraController(
       _cameras[_cameraIndex],
       ResolutionPreset.medium,
@@ -68,7 +93,7 @@ class _AngelAutoCameraScreenState extends State<AngelAutoCameraScreen> with Widg
     );
     try {
       await next.initialize();
-      if (_closed || !mounted) {
+      if (!_current || _suspended || generation != _generation) {
         await next.dispose();
         return;
       }
@@ -76,71 +101,188 @@ class _AngelAutoCameraScreenState extends State<AngelAutoCameraScreen> with Widg
       _torch = false;
       _nextScan = DateTime.now().add(const Duration(seconds: 3));
       setState(() => _error = null);
-    } finally {
-      _busy = false;
+    } catch (_) {
+      await next.dispose();
+      rethrow;
     }
+  }
+
+  Future<void> _deliver(Map<String, dynamic> result) async {
+    if (!_current) return;
+    final items = result['items'] as List? ?? [];
+    if (items.isEmpty) return;
+    final document =
+        widget.api.inventoryMode &&
+        (result['type'] == 'document' || items.length > 1);
+    result['source_label'] ??= document
+        ? (result['document_kind'] == 'receipt'
+              ? 'Receipt scanned by Angel'
+              : 'Product list scanned by Angel')
+        : 'Product scanned by Angel';
+    await widget.onRecognized(result, !document);
+    _nextScan = DateTime.now().add(const Duration(seconds: 9));
   }
 
   Future<void> _recognize() async {
     final controller = _camera;
-    if (_closed || !mounted || _busy || controller == null ||
-        !controller.value.isInitialized || controller.value.isTakingPicture ||
-        DateTime.now().isBefore(_nextScan) ||
-        widget.contextIsCurrent?.call() == false) return;
+    if (!_current ||
+        _busy ||
+        _opening ||
+        _suspended ||
+        controller == null ||
+        !controller.value.isInitialized ||
+        controller.value.isTakingPicture ||
+        DateTime.now().isBefore(_nextScan)) {
+      return;
+    }
     _busy = true;
-    // Avoid per-frame billable API calls. Recognize one settled still at a time.
     _nextScan = DateTime.now().add(const Duration(seconds: 9));
     try {
+      final generation = _generation;
       final image = await controller.takePicture();
-      final Uint8List bytes = await image.readAsBytes();
-      if (!mounted || _closed || widget.contextIsCurrent?.call() == false) return;
-      if (bytes.length > 4000000) return;
-      // Inventory auto-detects both a single product and an itemized list.
-      // POS recognizes only one sellable product.
+      final bytes = await image.readAsBytes();
+      if (!_current || generation != _generation) return;
       final result = await widget.api.recognize(
         bytes,
-        document: widget.api.inventoryMode,
+        document: _list && widget.api.inventoryMode,
+        autoDetect: !_list && widget.api.inventoryMode,
       );
-      final items = (result['items'] as List?)
-              ?.map((x) => Map<String, dynamic>.from(x as Map))
-              .toList() ??
-          [];
-      if (items.isEmpty || !mounted || _closed) return;
-      await widget.onRecognized(items, (result['document_hash'] ?? '').toString());
-      // Avoid immediately submitting the same object after closing review.
-      _nextScan = DateTime.now().add(const Duration(seconds: 9));
+      if (generation == _generation) await _deliver(result);
     } catch (_) {
-      // False detections, blurry images, rate limits and transient network failures
-      // should not show an interrupting overlay over the clear camera.
+      // Blurry frames and transient provider failures do not interrupt the preview.
     } finally {
       _busy = false;
     }
   }
 
+  Future<void> _pick({required bool gallery}) async {
+    if (_busy || !_current) return;
+    _busy = true;
+    try {
+      if (gallery) {
+        final file = await picker.ImagePicker().pickImage(
+          source: picker.ImageSource.gallery,
+          maxWidth: 2400,
+          maxHeight: 3200,
+          imageQuality: 88,
+          requestFullMetadata: false,
+        );
+        if (file == null || !_current) return;
+        final result = await widget.api.recognize(
+          await file.readAsBytes(),
+          document: _list && widget.api.inventoryMode,
+          autoDetect: !_list && widget.api.inventoryMode,
+        );
+        await _deliver(result);
+      } else {
+        final file = await openFile(
+          acceptedTypeGroups: [
+            XTypeGroup(
+              label: widget.api.inventoryMode
+                  ? 'Product image, PDF, CSV or Excel'
+                  : 'Product image',
+              extensions: [
+                'jpg',
+                'jpeg',
+                'png',
+                'webp',
+                if (widget.api.inventoryMode) ...['pdf', 'csv', 'xlsx'],
+              ],
+              uniformTypeIdentifiers: [
+                'public.image',
+                if (widget.api.inventoryMode) ...[
+                  'com.adobe.pdf',
+                  'public.comma-separated-values-text',
+                  'org.openxmlformats.spreadsheetml.sheet',
+                ],
+              ],
+            ),
+          ],
+        );
+        if (file == null || !_current) return;
+        if (await file.length() > 20000000) {
+          throw StateError('Choose a file smaller than 20 MB.');
+        }
+        final bytes = await file.readAsBytes();
+        final extension = file.name.toLowerCase().split('.').last;
+        final result = ['csv', 'xlsx'].contains(extension)
+            ? await AngelDocumentReader.readSpreadsheet(
+                widget.api,
+                bytes,
+                file.name,
+              )
+            : extension == 'pdf'
+            ? await AngelDocumentReader.readPdf(
+                widget.api,
+                bytes,
+                contextIsCurrent: () => _current,
+              )
+            : await widget.api.recognize(
+                bytes,
+                document: _list && widget.api.inventoryMode,
+                autoDetect: !_list && widget.api.inventoryMode,
+              );
+        result['source_name'] = file.name;
+        await _deliver(result);
+      }
+    } catch (error) {
+      if (mounted && _current) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error is StateError
+                  ? error.message.toString()
+                  : 'Unable to read this file. Try a valid, unencrypted document.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      _busy = false;
+      _nextScan = DateTime.now().add(const Duration(seconds: 9));
+    }
+  }
+
   Future<void> _flip() async {
-    if (_busy || _cameras.length < 2) return;
-    final current = _cameras[_cameraIndex].lensDirection;
-    final target = _cameras.indexWhere((c) => c.lensDirection != current);
-    _cameraIndex = target >= 0 ? target : (_cameraIndex + 1) % _cameras.length;
-    try { await _openCamera(); } catch (_) {
-      if (mounted) setState(() => _error = 'Unable to switch camera.');
+    if (_busy || _opening || _cameras.length < 2) return;
+    _opening = true;
+    _cameraIndex = (_cameraIndex + 1) % _cameras.length;
+    try {
+      await _openCamera();
+    } catch (_) {
+      if (_current) setState(() => _error = 'Unable to switch camera.');
+    } finally {
+      _opening = false;
+      _resumeIfNeeded();
     }
   }
 
   Future<void> _toggleLight() async {
-    if (_busy || _camera == null) return;
+    final camera = _camera;
+    if (_opening || camera == null) return;
     try {
-      await _camera!.setFlashMode(_torch ? FlashMode.off : FlashMode.torch);
-      if (mounted) setState(() => _torch = !_torch);
-    } catch (_) {/* A camera may not have a torch. */}
+      await camera.setFlashMode(_torch ? FlashMode.off : FlashMode.torch);
+      if (_current && identical(camera, _camera)) {
+        setState(() => _torch = !_torch);
+      }
+    } catch (_) {
+      /* Torch may be unavailable on this lens. */
+    }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && !_closed && _camera == null) {
-      unawaited(_initialize());
-    } else if (state != AppLifecycleState.resumed) {
-      _busy = true;
+    _suspended = state != AppLifecycleState.resumed;
+    if (!_suspended) {
+      if (_camera == null) {
+        if (_opening) {
+          _resumePending = true;
+        } else {
+          unawaited(_initialize());
+        }
+      }
+    } else {
+      ++_generation;
       final old = _camera;
       _camera = null;
       unawaited(old?.dispose());
@@ -150,47 +292,207 @@ class _AngelAutoCameraScreenState extends State<AngelAutoCameraScreen> with Widg
   @override
   void dispose() {
     _closed = true;
+    ++_generation;
     _timer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     unawaited(_camera?.dispose());
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final controller = _camera;
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(fit: StackFit.expand, children: [
-        if (controller != null && controller.value.isInitialized)
-          Center(child: SizedBox.expand(child: CameraPreview(controller)))
-        else if (_error != null)
-          Center(child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(_error!, style: const TextStyle(color: Colors.white)),
-          )),
-        SafeArea(
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 22),
-              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                IconButton.filledTonal(
-                  tooltip: 'Light',
-                  onPressed: _toggleLight,
-                  icon: Icon(_torch ? Icons.flash_on_rounded : Icons.flash_off_rounded),
+  Widget _glass(Widget child) => ClipRRect(
+    borderRadius: BorderRadius.circular(24),
+    child: BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+      child: Container(
+        height: 44,
+        decoration: BoxDecoration(
+          color: const Color(0xB314213D),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withValues(alpha: .22)),
+        ),
+        child: child,
+      ),
+    ),
+  );
+  Widget _control(IconData icon, String label, VoidCallback action) => Expanded(
+    child: Tooltip(
+      message: label,
+      child: InkWell(
+        onTap: action,
+        child: SizedBox(
+          height: 44,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: Colors.white),
+              SizedBox(
+                height: 16,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        height: 1.1,
+                      ),
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 42),
-                IconButton.filledTonal(
-                  tooltip: 'Flip camera',
-                  onPressed: _flip,
-                  icon: const Icon(Icons.flip_camera_ios_rounded),
-                ),
-              ]),
-            ),
+              ),
+            ],
           ),
         ),
-      ]),
+      ),
+    ),
+  );
+  @override
+  Widget build(BuildContext context) {
+    final camera = _camera;
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (camera != null && camera.value.isInitialized)
+            ClipRect(
+              child: LayoutBuilder(
+                builder: (context, bounds) => FittedBox(
+                  fit: BoxFit.cover,
+                  child: SizedBox(
+                    width: bounds.maxWidth,
+                    height:
+                        bounds.maxWidth /
+                        (MediaQuery.orientationOf(context) ==
+                                Orientation.portrait
+                            ? 1 / camera.value.aspectRatio
+                            : camera.value.aspectRatio),
+                    child: CameraPreview(camera),
+                  ),
+                ),
+              ),
+            )
+          else if (_error != null)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(28),
+                child: Text(
+                  _error!,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      _glass(
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: Center(
+                            child: Text(
+                              'Angel Scan',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      if (widget.api.inventoryMode)
+                        Flexible(
+                          child: _glass(
+                            Tooltip(
+                              message: 'Receipt / Product List',
+                              child: InkWell(
+                                onTap: () {
+                                  if (!_busy) setState(() => _list = !_list);
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _list
+                                            ? Icons.receipt_long
+                                            : Icons.list_alt,
+                                        color: Colors.white,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Flexible(
+                                        child: Text(
+                                          _list
+                                              ? 'List scan'
+                                              : 'Receipt / List',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const Spacer(),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 360),
+                    child: _glass(
+                      Row(
+                        children: [
+                          _control(
+                            _torch
+                                ? Icons.flash_on_rounded
+                                : Icons.flash_off_rounded,
+                            'Flash',
+                            _toggleLight,
+                          ),
+                          _control(
+                            Icons.flip_camera_ios_outlined,
+                            'Flip',
+                            _flip,
+                          ),
+                          _control(
+                            Icons.photo_outlined,
+                            'Gallery',
+                            () => _pick(gallery: true),
+                          ),
+                          _control(
+                            Icons.upload_file_outlined,
+                            'File',
+                            () => _pick(gallery: false),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

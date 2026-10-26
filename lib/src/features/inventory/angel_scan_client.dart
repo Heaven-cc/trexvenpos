@@ -24,29 +24,34 @@ class AngelScanClient {
   }
 
   static Future<String> fingerprint(List<int> bytes) async =>
-      (await Sha256().hash(bytes)).bytes
-          .map((b) => b.toRadixString(16).padLeft(2, '0'))
-          .join();
+      (await Sha256().hash(
+        bytes,
+      )).bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
   static String imageType(Uint8List bytes) {
-    if (bytes.length > 3 && bytes[0] == 255 && bytes[1] == 216)
+    if (bytes.length > 3 && bytes[0] == 255 && bytes[1] == 216) {
       return 'image/jpeg';
-    if (bytes.length > 8 && bytes[0] == 137 && bytes[1] == 80)
+    }
+    if (bytes.length > 8 && bytes[0] == 137 && bytes[1] == 80) {
       return 'image/png';
+    }
     if (bytes.length > 12 &&
         ascii.decode(bytes.sublist(0, 4), allowInvalid: true) == 'RIFF' &&
-        ascii.decode(bytes.sublist(8, 12), allowInvalid: true) == 'WEBP')
+        ascii.decode(bytes.sublist(8, 12), allowInvalid: true) == 'WEBP') {
       return 'image/webp';
+    }
     throw StateError('Use a JPEG, PNG or WebP image.');
   }
 
   Future<Map<String, dynamic>> recognize(
     Uint8List bytes, {
     bool document = false,
+    bool autoDetect = false,
     bool research = false,
   }) async {
     checkSession();
-    if (bytes.isEmpty || bytes.length > 4000000)
+    if (bytes.isEmpty || bytes.length > 4000000) {
       throw StateError('Choose an image smaller than 4 MB.');
+    }
     final response = await client.functions.invoke(
       'angel-scan',
       body: {
@@ -54,6 +59,7 @@ class AngelScanClient {
         'branch_id': branchId,
         'purpose': inventoryMode ? 'inventory' : 'sale',
         'document': document,
+        'auto_detect': autoDetect,
         'research': research,
         'mime_type': imageType(bytes),
         'image_base64': base64Encode(bytes),
@@ -68,6 +74,55 @@ class AngelScanClient {
       );
     }
     return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<Map<String, dynamic>> researchProduct(
+    Map<String, dynamic> item,
+  ) async {
+    checkSession();
+    final response = await client.functions.invoke(
+      'angel-scan',
+      body: {
+        'business_id': businessId,
+        'branch_id': branchId,
+        'purpose': inventoryMode ? 'inventory' : 'sale',
+        'action': 'research',
+        'item': {
+          for (final key in ['name', 'brand', 'sku', 'barcode']) key: item[key],
+        },
+      },
+    );
+    checkSession();
+    if (response.status != 200 ||
+        response.data is! Map ||
+        response.data['success'] != true) {
+      throw StateError('Public research is unavailable. Try again later.');
+    }
+    return Map<String, dynamic>.from(response.data['research'] as Map);
+  }
+
+  Future<List<Map<String, dynamic>>> matchItems(
+    List<Map<String, dynamic>> items,
+  ) async {
+    checkSession();
+    final matched = <Map<String, dynamic>>[];
+    for (var offset = 0; offset < items.length; offset += 80) {
+      final end = offset + 80 < items.length ? offset + 80 : items.length;
+      final result = await client.rpc(
+        'match_angel_scan_items',
+        params: {
+          'p_business_id': businessId,
+          'p_branch_id': branchId,
+          'p_purpose': inventoryMode ? 'inventory' : 'sale',
+          'p_items': items.sublist(offset, end),
+        },
+      );
+      checkSession();
+      matched.addAll(
+        (result as List).map((i) => Map<String, dynamic>.from(i as Map)),
+      );
+    }
+    return matched;
   }
 
   Future<List<Map<String, dynamic>>> search(String name) async {
