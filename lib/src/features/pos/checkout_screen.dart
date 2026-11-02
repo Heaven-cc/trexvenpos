@@ -843,20 +843,8 @@ context: context,
     );
   }
 
-  String _priceLevelName(String level) {
-    if (level.isEmpty) {
-      return 'Price';
-    }
-
-    return level
-        .split(' ')
-        .map(
-          (word) => word.isEmpty
-              ? word
-              : '${word[0].toUpperCase()}${word.substring(1)}',
-        )
-        .join(' ');
-  }
+  String _priceLevelName(String level) =>
+      CustomerPresentation.label(level, fallback: 'Price');
 
   Widget _buildCheckoutBottom(double total) {
     return Container(

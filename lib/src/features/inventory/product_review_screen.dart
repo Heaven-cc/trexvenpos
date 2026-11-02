@@ -1,3 +1,4 @@
+import 'package:trexven_operations/trexven_operations.dart';
 import 'dart:convert';
 import 'dart:ui';
 
@@ -534,7 +535,7 @@ class _ProductReviewScreenState extends State<ProductReviewScreen> {
       _message =
           '${request['duplicate'] == true ? 'Document already submitted. ' : ''}'
           'Request ${request['id']}\nDecision: ${result['status']} • Stock: ${result['application_status']}'
-          '${result['application_error'] == null ? '' : '\n${result['application_error']}'}\n'
+          '${result['application_error'] == null ? '' : '\n${CustomerPresentation.operationError(result['application_error'])}'}\n'
           '${widget.owner ? 'Open Notifications to inspect the final request or retry a failed posting.' : 'No stock changes until the owner approves. Track the request in your inventory requests.'}';
     });
   });
@@ -574,7 +575,7 @@ class _ProductReviewScreenState extends State<ProductReviewScreen> {
                     subtitle: Text('${r['created_at']}\n${r['id']}'),
                     children: [
                       if (r['application_error'] != null)
-                        Text('${r['application_error']}'),
+                        Text(CustomerPresentation.operationError(r['application_error'])),
                       for (final i in r['items'] as List)
                         ListTile(
                           dense: true,
@@ -972,16 +973,14 @@ class _ProductReviewScreenState extends State<ProductReviewScreen> {
             filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: const Color(0xE614213D),
-                border: Border.all(color: Colors.white.withValues(alpha: .2)),
+                color: Theme.of(context).colorScheme.surface.withValues(alpha: .96),
+                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(24),
                 ),
               ),
               child: Theme(
-                data: ThemeData.dark(
-                  useMaterial3: true,
-                ).copyWith(scaffoldBackgroundColor: Colors.transparent),
+                data: Theme.of(context).copyWith(scaffoldBackgroundColor: Colors.transparent),
                 child: SafeArea(top: false, child: content),
               ),
             ),
@@ -1052,7 +1051,7 @@ Future<void> showAngelProductReview(
         maxHeight: MediaQuery.sizeOf(context).height * .82,
       ),
       builder: (_) =>
-          Theme(data: ThemeData.dark(useMaterial3: true), child: screen),
+          screen,
     );
   } else {
     await Navigator.push<void>(

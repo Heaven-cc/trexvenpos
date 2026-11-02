@@ -1,3 +1,4 @@
+import 'package:trexven_operations/trexven_operations.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -332,19 +333,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (!mounted || generation != _generation) return;
 
       if (response.status != 200) {
-        String message = 'Invalid Employee ID or password';
-
-        if (response.data is Map) {
-          final errorData = Map<String, dynamic>.from(response.data as Map);
-
-          final serverError = errorData['error']?.toString();
-
-          if (serverError != null && serverError.isNotEmpty) {
-            message = serverError;
-          }
-        }
-
-        _setError(message);
+        _setError(CustomerPresentation.employeeLoginError(
+          response.data is Map ? (response.data as Map)['error'] : null,
+          status: response.status,
+        ));
         return;
       }
 
@@ -411,15 +403,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       await restoreSession(businessId: business.id);
     } on FunctionsHttpException catch (e) {
       if (!mounted || generation != _generation) return;
-      String message = 'Unable to login';
-      if (e.details is Map) {
-        final details = Map<String, dynamic>.from(e.details as Map);
-        final serverError = details['error']?.toString();
-        if (serverError != null && serverError.isNotEmpty) {
-          message = serverError;
-        }
-      }
-      _setError(message);
+      _setError(CustomerPresentation.employeeLoginError(
+        e.details is Map ? (e.details as Map)['error'] : null,
+        status: e.status,
+      ));
     } on PostgrestException {
       if (mounted && generation == _generation)
         _setError('Unable to verify employee access. Please retry.');

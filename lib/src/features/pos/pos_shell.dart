@@ -236,7 +236,7 @@ class _MoreScreen extends ConsumerWidget {
                               BorderRadius.circular(TrexvenRadii.status),
                         ),
                         child: Text(
-                          employee?.role.name.toUpperCase() ?? 'EMPLOYEE',
+                          CustomerPresentation.label(employee?.role.name, fallback: 'Employee'),
                           style: TextStyle(
                             fontSize: TrexvenFontSize.caption,
                             fontWeight: FontWeight.w700,

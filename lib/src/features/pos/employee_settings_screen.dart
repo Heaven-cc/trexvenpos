@@ -1,3 +1,4 @@
+import 'package:trexven_operations/trexven_operations.dart';
 import 'package:trexven_design_system/trexven_design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,7 +51,7 @@ class EmployeeSettingsScreen extends ConsumerWidget {
     final employee = auth.employee;
     final scheme = Theme.of(context).colorScheme;
     final mode = ref.watch(posThemeProvider);
-    final role = employee?.role.name ?? 'Unavailable';
+    final role = CustomerPresentation.label(employee?.role.name);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,

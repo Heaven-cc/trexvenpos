@@ -20,7 +20,7 @@ class OfflineCashEntry {
       sale.businessId == business &&
       sale.employeeId == member;
   Map<String, dynamic> toJson() => {
-    'sale': sale.toJsonWithItems(),
+    'sale': sale.toJournalJson(),
     'user': userId,
     'ticket': ticket,
     'occurred_at': occurredAt.toUtc().toIso8601String(),

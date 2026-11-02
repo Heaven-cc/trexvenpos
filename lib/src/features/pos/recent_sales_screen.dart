@@ -26,7 +26,7 @@ class _RecentSalesScreenState extends ConsumerState<RecentSalesScreen> {
     final amount = num.tryParse('$value');
     return amount == null || !amount.isFinite ? 'Amount unavailable' : money(amount);
   }
-  String date(DateTime time) => DateFormat('dd MMM yyyy · HH:mm').format(time.toLocal());
+  String date(DateTime time) => CustomerPresentation.date(time, includeTime: true);
   ({String employeeId, String filter, String? startDate, String? endDate})
       historyRequest(String employeeId) => (
         employeeId: employeeId,

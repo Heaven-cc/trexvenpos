@@ -59,11 +59,13 @@ class CashShiftScreen extends StatefulWidget {
   final OperationsClient api;
   final bool owner;
   final bool reviewer;
+  final String? currency;
   const CashShiftScreen({
     super.key,
     required this.api,
     required this.owner,
     this.reviewer = false,
+    this.currency,
   });
   @override
   State<CashShiftScreen> createState() => _CashShiftScreenState();
@@ -73,6 +75,7 @@ class _CashShiftScreenState extends State<CashShiftScreen> {
   late Future<List<List<Map<String, dynamic>>>> data;
   bool busy = false;
   String? message;
+  String _money(Object? value) => CustomerPresentation.amount(value, currency: widget.currency);
   @override
   void initState() {
     super.initState();
@@ -503,11 +506,11 @@ context: context,
         _status(s['status']),
       ]),
       const SizedBox(height: 12),
-      _detail('Opening cash', s['opening_amount']),
-      _detail('Expected now', s['expected_current']),
-      _detail('Expected at close', s['expected_at_close']),
-      _detail('Counted', s['counted_amount']),
-      _detail('Difference', s['difference_at_close']),
+      _detail('Opening cash', _money(s['opening_amount'])),
+      _detail('Expected now', _money(s['expected_current'])),
+      _detail('Expected at close', _money(s['expected_at_close'])),
+      _detail('Counted', _money(s['counted_amount'])),
+      _detail('Difference', _money(s['difference_at_close'])),
       _detail('Review', s['review_status']),
       Divider(height: 22, color: TrexvenPresentation.color(context, _border, 'border')),
       if (isOpen) ...[
@@ -538,9 +541,9 @@ context: context,
               Icon(Icons.receipt_long_outlined, color: TrexvenPresentation.color(context, _blue, 'brand'), size: 17),
               SizedBox(width: TrexvenPresentation.spacing(context, 9)),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('${CustomerPresentation.label(e['kind'])} · ${e['amount'] ?? '—'}${e['late'] == true ? ' · Late sync' : ''}', style: TextStyle(color: TrexvenPresentation.color(context, _navy, 'ink'), fontSize: TrexvenPresentation.fontSize(context, 11), fontWeight: FontWeight.w700)),
+                Text('${CustomerPresentation.label(e['kind'])} · ${_money(e['amount'])}${e['late'] == true ? ' · Late sync' : ''}', style: TextStyle(color: TrexvenPresentation.color(context, _navy, 'ink'), fontSize: TrexvenPresentation.fontSize(context, 11), fontWeight: FontWeight.w700)),
                 SizedBox(height: TrexvenPresentation.spacing(context, 3)),
-                Text('${e['created_at'] ?? ''} · ${e['reason'] ?? ''}', style: TextStyle(color: TrexvenPresentation.color(context, _muted, 'muted'), fontSize: TrexvenPresentation.fontSize(context, 10))),
+                Text('${CustomerPresentation.date(e['created_at'], includeTime: true)} · ${e['reason'] ?? ''}', style: TextStyle(color: TrexvenPresentation.color(context, _muted, 'muted'), fontSize: TrexvenPresentation.fontSize(context, 10))),
               ])),
             ]),
           )],
@@ -550,7 +553,7 @@ context: context,
     if (TrexvenPresentation.isPos(context)) {
       return _card(child: ExpansionTile(tilePadding: EdgeInsets.zero, childrenPadding: EdgeInsets.zero,
         title: Text(registerName, style: Theme.of(context).textTheme.titleMedium),
-        subtitle: Text('${CustomerPresentation.label(s['status'])} · Expected ${s['expected_current'] ?? s['expected_at_close'] ?? 'Unavailable'}'),
+        subtitle: Text('${CustomerPresentation.label(s['status'])} · Expected ${_money(s['expected_current'] ?? s['expected_at_close'])}'),
         children: [details]));
     }
     return _card(child: details);
