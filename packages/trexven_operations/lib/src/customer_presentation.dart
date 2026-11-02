@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Presentation only. Never used as an authorization or payment-state contract.
 abstract final class CustomerPresentation {
+  static const unavailable = 'Not available';
+  static const retry = 'Try again';
   static String amount(Object? value, {String? currency}) {
     final number = value is num ? value : num.tryParse(value?.toString() ?? '');
     return number == null ? 'Not available' : money(number, currency: currency);
@@ -22,9 +24,9 @@ abstract final class CustomerPresentation {
   }
 
   static const _labels = {
-    'start': 'START',
-    'core': 'CORE',
-    'pro': 'PRO',
+    'start': 'Start',
+    'core': 'Core',
+    'pro': 'Pro',
     'sales_employee': 'Sales employee',
     'inventory_employee': 'Inventory employee',
     'owner': 'Owner',
@@ -76,43 +78,30 @@ abstract final class CustomerPresentation {
             .join(' ');
   }
 
-  static String _currencySymbol(String? currency) {
-    if (currency == null || currency.trim().isEmpty) return '₦';
-    final code = currency.trim().toUpperCase();
-    switch (code) {
-      case 'NGN':
-        return '₦';
-      case 'USD':
-      case 'CAD':
-      case 'AUD':
-        return '\$';
-      case 'EUR':
-        return '€';
-      case 'GBP':
-        return '£';
-      case 'GHS':
-        return 'GH₵';
-      case 'KES':
-        return 'KSh';
-      case 'ZAR':
-        return 'R';
-      case 'INR':
-        return '₹';
-      case 'JPY':
-      case 'CNY':
-        return '¥';
-      default:
-        if (currency.length <= 3 && !RegExp(r'^[A-Za-z]{3}$').hasMatch(currency)) {
-          return currency;
-        }
-        return '₦';
-    }
+  /// Normalize saved registration values without inferring a currency.
+  static String? currencyCode(String? currency) {
+    final raw = currency?.trim() ?? '';
+    if (raw.isEmpty) return null;
+    // Compatibility with the original registration dropdown's persisted labels.
+    const registrationLabels = {
+      'Nigerian Naira (₦)': 'NGN',
+      'Ghanaian Cedi (₵)': 'GHS',
+      'Kenyan Shilling (KSh)': 'KES',
+      'South African Rand (R)': 'ZAR',
+      'US Dollar (\$)': 'USD',
+      'British Pound (£)': 'GBP',
+    };
+    final code = registrationLabels[raw] ?? raw.toUpperCase();
+    return RegExp(r'^[A-Z]{3}$').hasMatch(code) ? code : null;
   }
 
-  static String money(num value, {String? currency}) => NumberFormat.currency(
-    symbol: _currencySymbol(currency),
-    decimalDigits: 2,
-  ).format(value);
+  static String money(num value, {String? currency}) {
+    if (!value.isFinite) return unavailable;
+    final code = currencyCode(currency);
+    if (code == null) return 'Currency unavailable';
+    // ISO code disambiguates currencies; intl supplies their decimal precision.
+    return NumberFormat.currency(name: code, symbol: '$code ').format(value);
+  }
   static String date(Object? value, {bool includeTime = false}) {
     final date = value is DateTime
         ? value
@@ -122,6 +111,59 @@ abstract final class CustomerPresentation {
             ? DateFormat('d MMM yyyy, h:mm a')
             : DateFormat('d MMM yyyy'))
         .format(date.toLocal());
+  }
+
+  static String operation(Object? value) => const {
+    'complete_trexven_transaction': 'Complete sale',
+    'submit_trexven_sale': 'Record sale',
+    'submit_trexven_branch_sale': 'Record branch sale',
+    'record_pos_expense': 'Record expense',
+    'request_trexven_credit_approval': 'Request credit approval',
+    'record_trexven_credit_repayment': 'Record credit repayment',
+    'request_trexven_return': 'Request customer return',
+    'approve_trexven_return': 'Approve customer return',
+    'dispatch_trexven_stock_transfer': 'Dispatch stock transfer',
+    'receive_trexven_stock_transfer': 'Receive stock transfer',
+    'open_trexven_cash_shift': 'Open cash drawer',
+    'close_trexven_cash_shift': 'Close cash drawer',
+    'join_trexven_cash_shift': 'Join cash drawer',
+  }[value?.toString()] ?? 'Business operation';
+
+  static String angelError(int status) => switch (status) {
+    429 => 'Angel is receiving too many requests. Wait a moment before trying again.',
+    401 => 'Your session expired. Sign in again to use Angel.',
+    403 => 'Angel access is unavailable for this account. Contact the business owner.',
+    502 || 503 || 504 => 'Angel is temporarily unavailable. Your request could not be completed.',
+    _ => 'Angel could not respond. Check your connection and try again.',
+  };
+
+  static String operationError(Object? value) {
+    final message = value?.toString().toLowerCase() ?? '';
+    if (message.contains('permission') || message.contains('not authorized')) {
+      return 'Your account cannot make this change. Contact the business owner.';
+    }
+    if (message.contains('stock') || message.contains('stale')) {
+      return 'Product details have changed. Review the current inventory before continuing.';
+    }
+    if (message.contains('duplicate') || message.contains('already')) {
+      return 'This request may already be recorded. Check its status before trying again.';
+    }
+    return 'The change could not be confirmed. Check its status and retain the original request.';
+  }
+
+  static String employeeLoginError(Object? value, {int? status}) {
+    final message = value?.toString().toLowerCase() ?? '';
+    if (status == 429 || message.contains('rate limit')) {
+      return 'Too many sign-in attempts. Wait a moment before trying again.';
+    }
+    if (message.contains('inactive') || message.contains('suspended')) {
+      return 'Your employee access is inactive. Contact the business owner.';
+    }
+    if (status == 401 || message.contains('invalid employee id or password')) {
+      return 'The Employee ID or password is incorrect.';
+    }
+    if (status == 403) return 'Employee access could not be verified. Contact the business owner.';
+    return 'Unable to sign in. Check your connection and try again.';
   }
 
   static String error(

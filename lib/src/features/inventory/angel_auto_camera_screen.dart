@@ -1,3 +1,5 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:trexven_operations/trexven_operations.dart';
 import 'dart:async';
 import 'dart:ui';
 import 'package:camera/camera.dart';
@@ -33,6 +35,7 @@ class _AngelAutoCameraScreenState extends State<AngelAutoCameraScreen>
   DateTime _nextScan = DateTime.fromMillisecondsSinceEpoch(0);
   Timer? _timer;
   String? _error;
+  String? _recognitionError;
   bool get _current =>
       mounted && !_closed && widget.contextIsCurrent?.call() != false;
   @override
@@ -147,9 +150,17 @@ class _AngelAutoCameraScreenState extends State<AngelAutoCameraScreen>
         document: _list && widget.api.inventoryMode,
         autoDetect: !_list && widget.api.inventoryMode,
       );
-      if (generation == _generation) await _deliver(result);
+      if (generation == _generation && _current) {
+        setState(() => _recognitionError = null);
+        await _deliver(result);
+      }
+    } on FunctionException catch (error) {
+      if (_current) {
+        _nextScan = DateTime.now().add(Duration(seconds: error.status == 429 ? 60 : 20));
+        setState(() => _recognitionError = CustomerPresentation.angelError(error.status));
+      }
     } catch (_) {
-      // Blurry frames and transient provider failures do not interrupt the preview.
+      // Blurry frames do not interrupt the preview.
     } finally {
       _busy = false;
     }
@@ -230,7 +241,9 @@ class _AngelAutoCameraScreenState extends State<AngelAutoCameraScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              error is StateError
+              error is FunctionException
+                  ? CustomerPresentation.angelError(error.status)
+                  : error is StateError
                   ? error.message.toString()
                   : 'Unable to read this file. Try a valid, unencrypted document.',
             ),
@@ -390,6 +403,14 @@ class _AngelAutoCameraScreenState extends State<AngelAutoCameraScreen>
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
+                  if (_recognitionError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _glass(Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(_recognitionError!, style: const TextStyle(color: Colors.white)),
+                      )),
+                    ),
                   Row(
                     children: [
                       _glass(

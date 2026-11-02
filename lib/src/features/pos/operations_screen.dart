@@ -66,6 +66,7 @@ class PosOperationsScreen extends ConsumerWidget {
           () => Navigator.push(context, MaterialPageRoute(
             builder: (_) => CashShiftScreen(
               api: OperationsClient.pos(ref.read(supabaseProvider), auth.activeBusiness!.id),
+              currency: auth.activeBusiness!.currency,
               owner: access.isOwner,
               reviewer: access.hasPermission('review_cash_shifts'),
             ),

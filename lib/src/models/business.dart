@@ -106,7 +106,7 @@ class Business {
 
   String get displayCurrency {
     if (currency == null || currency!.isEmpty) {
-      return 'NGN';
+      return 'Currency unavailable';
     }
 
     return currency!;

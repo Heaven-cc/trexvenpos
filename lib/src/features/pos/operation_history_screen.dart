@@ -332,7 +332,7 @@ class _PosOperationHistoryScreenState
             children: [
               Text('Retained operation', style: Theme.of(context)
                 .textTheme.labelLarge?.copyWith(color: scheme.onTertiaryContainer)),
-              Text(CustomerPresentation.label(pending!['rpc']),
+              Text(CustomerPresentation.operation(pending!['rpc']),
                 maxLines: 2, overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall
                   ?.copyWith(color: scheme.onTertiaryContainer)),

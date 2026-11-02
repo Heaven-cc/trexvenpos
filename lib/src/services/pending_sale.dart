@@ -10,7 +10,7 @@ class PendingSale {
   Map<String, dynamic> toJson() => {
     'version': 1,
     'user_id': userId,
-    'sale': sale.toJsonWithItems(),
+    'sale': sale.toJournalJson(),
   };
   factory PendingSale.decode(String value) {
     final json = jsonDecode(value) as Map<String, dynamic>;
@@ -60,7 +60,7 @@ class PendingSaleSubmission {
       throw StateError('The original legacy request must still be pending.');
     }
     final sale = Sale.fromJson({
-      ...original.sale.toJsonWithItems(),
+      ...original.sale.toJournalJson(),
       'payments': payments,
       if (shiftId != null) 'shift_id': shiftId,
     });

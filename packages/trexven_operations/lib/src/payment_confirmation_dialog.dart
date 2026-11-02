@@ -92,23 +92,7 @@ Future<PaymentDraft?> confirmPayment(
     return result;
   }
 
-  String money(int cents) {
-    if (pos) return CustomerPresentation.money(cents / 100, currency: currency);
-    final amount = (cents / 100).toStringAsFixed(2);
-    final parts = amount.split('.');
-    final digits = parts.first;
-
-    final buffer = StringBuffer();
-
-    for (var i = 0; i < digits.length; i++) {
-      if (i > 0 && (digits.length - i) % 3 == 0) {
-        buffer.write(',');
-      }
-      buffer.write(digits[i]);
-    }
-
-    return '${buffer.toString()}.${parts.last}';
-  }
+  String money(int cents) => CustomerPresentation.money(cents / 100, currency: currency);
 
   Widget field({
     required TextEditingController controller,

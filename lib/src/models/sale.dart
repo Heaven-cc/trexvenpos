@@ -32,11 +32,11 @@ class Sale {
       branchId: json['branch_id']?.toString(),
       employeeId: json['employee_id']?.toString() ?? '',
       total: _toDouble(json['total']),
-      paymentMethod: (json['payment_kind'] ?? json['payment_method'])?.toString() ?? 'cash',
+      paymentMethod: (json['payment_kind'] ?? json['payment_method'])?.toString() ?? 'unavailable',
       payments: json['payments'] is List ? (json['payments'] as List).map((p)=>Map<String,dynamic>.from(p as Map)).toList() : null,
       credit: json['credit'] is Map ? Map<String,dynamic>.from(json['credit'] as Map) : null,
       shiftId: json['shift_id']?.toString(),
-      timestamp: _toDateTime(json['created_at'] ?? json['sold_at']),
+      timestamp: _toDateTime(json['sold_at'] ?? json['created_at']),
       items: rawItems,
     );
   }
@@ -53,25 +53,19 @@ class Sale {
   }
 
   static double _toDouble(dynamic value) {
-    if (value == null) return 0.0;
-
-    if (value is num) {
-      return value.toDouble();
+    final number = value is num ? value.toDouble() : double.tryParse('$value');
+    if (number == null || !number.isFinite) {
+      throw const FormatException('Sale amount unavailable. Retain the original request for recovery.');
     }
-
-    return double.tryParse(value.toString()) ?? 0.0;
+    return number;
   }
 
   static DateTime _toDateTime(dynamic value) {
-    if (value == null) {
-      return DateTime.now();
+    final date = value is DateTime ? value : DateTime.tryParse('$value');
+    if (date == null) {
+      throw const FormatException('Sale date unavailable. Retain the original request for recovery.');
     }
-
-    if (value is DateTime) {
-      return value;
-    }
-
-    return DateTime.tryParse(value.toString()) ?? DateTime.now();
+    return date;
   }
 
   Sale copyWith({
@@ -114,6 +108,15 @@ class Sale {
   Map<String, dynamic> toJsonWithItems() {
     return {...toJson(), 'items': items.map((item) => item.toJson()).toList()};
   }
+
+  /// Local journal only; request serialization remains toJsonWithItems().
+  Map<String, dynamic> toJournalJson() => {
+    ...toJson(),
+    'items': items.map((item) => {
+      ...item.toJson(),
+      'product_name': item.productName,
+    }).toList(),
+  };
 
   num get itemCount {
     final units = items.fold<int>(0,(sum,item) => sum + (item.quantity * 1000).round());
@@ -167,30 +170,26 @@ class SaleItem {
       productId: json['product_id']?.toString() ?? '',
       quantity: _toQuantity(json['quantity']),
       unitPrice: _toDouble(json['unit_price']),
-      discount: _toDouble(json['discount']),
+      discount: _toDouble(json['discount'] ?? 0),
       total: _toDouble(json['total']),
       priceLevel: json['price_level']?.toString() ?? 'standard',
     );
   }
 
   static double _toDouble(dynamic value) {
-    if (value == null) return 0.0;
-
-    if (value is num) {
-      return value.toDouble();
+    final number = value is num ? value.toDouble() : double.tryParse('$value');
+    if (number == null || !number.isFinite) {
+      throw const FormatException('Sale item amount unavailable. Keep the original request for recovery.');
     }
-
-    return double.tryParse(value.toString()) ?? 0.0;
+    return number;
   }
 
   static num _toQuantity(dynamic value) {
-    if (value == null) return 0;
-
-    if (value is num) {
-      return value;
+    final number = value is num ? value : num.tryParse('$value');
+    if (number == null || !number.isFinite) {
+      throw const FormatException('Sale item quantity unavailable. Keep the original request for recovery.');
     }
-
-    return num.tryParse(value.toString()) ?? 0;
+    return number;
   }
 
   SaleItem copyWith({
